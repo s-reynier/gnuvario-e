@@ -699,9 +699,9 @@ void setup() {
 
 ///  while (!SerialPort) { ;}
   char tmpbuffer[100];
-  sprintf(tmpbuffer,"GNUVARIO compiled on %s\0", __DATE__); // at %s", __DATE__, __TIME__);
+  sprintf(tmpbuffer,"GNUVARIO compiled on %s", __DATE__); // at %s", __DATE__, __TIME__);
   SerialPort.println(tmpbuffer);
-  sprintf(tmpbuffer,"VERSION %i.%i - %s\0", VERSION,SUB_VERSION,DEVNAME); 
+  sprintf(tmpbuffer,"VERSION %i.%i - %s", VERSION,SUB_VERSION,DEVNAME); 
   SerialPort.println(tmpbuffer);
   if (BETA_CODE > 0) {
     SerialPort.print("Beta ");
@@ -761,7 +761,8 @@ void setup() {
     GnuSettings.setVersion(VERSION, SUB_VERSION, BETA_CODE);
 
     SerialPort.println("Chargement des parametres depuis le fichier params.jso");
-    GnuSettings.loadConfigurationVario("params.jso");
+    char fichier[] = "params.jso";
+    GnuSettings.loadConfigurationVario(fichier);
     
 #ifdef SDCARD_DEBUG
    //Debuuging Printing
