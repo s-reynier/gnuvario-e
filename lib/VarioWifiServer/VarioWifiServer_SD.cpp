@@ -251,8 +251,6 @@ boolean VarioWifiServer::begin(void)
 
 #ifdef SDFAT_LIB
     SerialPort.print("Lib SDCard : SDFAT");
-#elif defined(MYSD_LIB) 
-    SerialPort.print("Lib SDCard : MYSD");
 #else
     SerialPort.print("Lib SDCard : SD");
 #endif	
