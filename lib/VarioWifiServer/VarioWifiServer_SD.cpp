@@ -41,7 +41,7 @@
 /*    1.2.11 23/01/20   Ajout setClock()																				 */
 /*    1.2.12 25/01/20   Correction Upload                                        */
 /*                      Ajout HandleFirmwareVersion / HandleUpgradeWeb           */
-/*    1.2.13 27/01/20   Correction serveur.on handlefirwareversion               */
+/*    1.2.13 27/01/20   Correction serveur.on handlefirmwareversion               */
 /*                                                                               */
 /*********************************************************************************/
 

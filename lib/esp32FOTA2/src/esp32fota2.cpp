@@ -12,7 +12,7 @@
  *                                                                               *
  *  version    Date     Description                                              *
  *    1.0    18/01/20                                                            *
- *    1.0.1  19/01/20   Ajout execHTTPexist et execHTTPSexist										 *
+ *    1.0.1  19/01/20   Ajout execHTTPexist et execHTTPSexist					 *
  *                                                                               *
  *********************************************************************************/
 
@@ -29,7 +29,6 @@
 
 #define ARDUINOTRACE_SERIAL SerialPort
 #include <ArduinoTrace.h>
-//#include "myassert.h"
 
 #include "esp32fota2.h"
 #include "Arduino.h"
@@ -40,9 +39,8 @@
 #include "ArduinoJson.h"
 #include <WiFiClientSecure.h>
 
-
-// This is the root Certificate Authority that signed 
-// the server certifcate for server https://github.com 
+// This is the root Certificate Authority that signed
+// the server certifcate for server https://github.com
 /*const char* rootCACertificate = \
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIEIzCCAwugAwIBAgIQT5Qzz46+WowBY93PLJ+8CDANBgkqhkiG9w0BAQsFADBI\n" \
@@ -70,52 +68,51 @@
 "SEyFvvhD+w==\n" \
 "-----END CERTIFICATE-----\n";*/
 
-const char* rootCACertificate = \
-"-----BEGIN CERTIFICATE-----\n" \
-"MIIF6TCCA9GgAwIBAgIQBeTcO5Q4qzuFl8umoZhQ4zANBgkqhkiG9w0BAQwFADCB\n" \
-"iDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl\n" \
-"cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNV\n" \
-"BAMTJVVTRVJUcnVzdCBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTQw\n" \
-"OTEyMDAwMDAwWhcNMjQwOTExMjM1OTU5WjBfMQswCQYDVQQGEwJGUjEOMAwGA1UE\n" \
-"CBMFUGFyaXMxDjAMBgNVBAcTBVBhcmlzMQ4wDAYDVQQKEwVHYW5kaTEgMB4GA1UE\n" \
-"AxMXR2FuZGkgU3RhbmRhcmQgU1NMIENBIDIwggEiMA0GCSqGSIb3DQEBAQUAA4IB\n" \
-"DwAwggEKAoIBAQCUBC2meZV0/9UAPPWu2JSxKXzAjwsLibmCg5duNyj1ohrP0pIL\n" \
-"m6jTh5RzhBCf3DXLwi2SrCG5yzv8QMHBgyHwv/j2nPqcghDA0I5O5Q1MsJFckLSk\n" \
-"QFEW2uSEEi0FXKEfFxkkUap66uEHG4aNAXLy59SDIzme4OFMH2sio7QQZrDtgpbX\n" \
-"bmq08j+1QvzdirWrui0dOnWbMdw+naxb00ENbLAb9Tr1eeohovj0M1JLJC0epJmx\n" \
-"bUi8uBL+cnB89/sCdfSN3tbawKAyGlLfOGsuRTg/PwSWAP2h9KK71RfWJ3wbWFmV\n" \
-"XooS/ZyrgT5SKEhRhWvzkbKGPym1bgNi7tYFAgMBAAGjggF1MIIBcTAfBgNVHSME\n" \
-"GDAWgBRTeb9aqitKz1SA4dibwJ3ysgNmyzAdBgNVHQ4EFgQUs5Cn2MmvTs1hPJ98\n" \
-"rV1/Qf1pMOowDgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAwHQYD\n" \
-"VR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMCIGA1UdIAQbMBkwDQYLKwYBBAGy\n" \
-"MQECAhowCAYGZ4EMAQIBMFAGA1UdHwRJMEcwRaBDoEGGP2h0dHA6Ly9jcmwudXNl\n" \
-"cnRydXN0LmNvbS9VU0VSVHJ1c3RSU0FDZXJ0aWZpY2F0aW9uQXV0aG9yaXR5LmNy\n" \
-"bDB2BggrBgEFBQcBAQRqMGgwPwYIKwYBBQUHMAKGM2h0dHA6Ly9jcnQudXNlcnRy\n" \
-"dXN0LmNvbS9VU0VSVHJ1c3RSU0FBZGRUcnVzdENBLmNydDAlBggrBgEFBQcwAYYZ\n" \
-"aHR0cDovL29jc3AudXNlcnRydXN0LmNvbTANBgkqhkiG9w0BAQwFAAOCAgEAWGf9\n" \
-"crJq13xhlhl+2UNG0SZ9yFP6ZrBrLafTqlb3OojQO3LJUP33WbKqaPWMcwO7lWUX\n" \
-"zi8c3ZgTopHJ7qFAbjyY1lzzsiI8Le4bpOHeICQW8owRc5E69vrOJAKHypPstLbI\n" \
-"FhfFcvwnQPYT/pOmnVHvPCvYd1ebjGU6NSU2t7WKY28HJ5OxYI2A25bUeo8tqxyI\n" \
-"yW5+1mUfr13KFj8oRtygNeX56eXVlogMT8a3d2dIhCe2H7Bo26y/d7CQuKLJHDJd\n" \
-"ArolQ4FCR7vY4Y8MDEZf7kYzawMUgtN+zY+vkNaOJH1AQrRqahfGlZfh8jjNp+20\n" \
-"J0CT33KpuMZmYzc4ZCIwojvxuch7yPspOqsactIGEk72gtQjbz7Dk+XYtsDe3CMW\n" \
-"1hMwt6CaDixVBgBwAc/qOR2A24j3pSC4W/0xJmmPLQphgzpHphNULB7j7UTKvGof\n" \
-"KA5R2d4On3XNDgOVyvnFqSot/kGkoUeuDcL5OWYzSlvhhChZbH2UF3bkRYKtcCD9\n" \
-"0m9jqNf6oDP6N8v3smWe2lBvP+Sn845dWDKXcCMu5/3EFZucJ48y7RetWIExKREa\n" \
-"m9T8bJUox04FB6b9HbwZ4ui3uRGKLXASUoWNjDNKD/yZkuBjcNqllEdjB+dYxzFf\n" \
-"BT02Vf6Dsuimrdfp5gJ0iHRc2jTbkNJtUQoj1iM=\n" \
-"-----END CERTIFICATE-----\n";
-
+const char *rootCACertificate =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIF6TCCA9GgAwIBAgIQBeTcO5Q4qzuFl8umoZhQ4zANBgkqhkiG9w0BAQwFADCB\n"
+    "iDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0pl\n"
+    "cnNleSBDaXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNV\n"
+    "BAMTJVVTRVJUcnVzdCBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTQw\n"
+    "OTEyMDAwMDAwWhcNMjQwOTExMjM1OTU5WjBfMQswCQYDVQQGEwJGUjEOMAwGA1UE\n"
+    "CBMFUGFyaXMxDjAMBgNVBAcTBVBhcmlzMQ4wDAYDVQQKEwVHYW5kaTEgMB4GA1UE\n"
+    "AxMXR2FuZGkgU3RhbmRhcmQgU1NMIENBIDIwggEiMA0GCSqGSIb3DQEBAQUAA4IB\n"
+    "DwAwggEKAoIBAQCUBC2meZV0/9UAPPWu2JSxKXzAjwsLibmCg5duNyj1ohrP0pIL\n"
+    "m6jTh5RzhBCf3DXLwi2SrCG5yzv8QMHBgyHwv/j2nPqcghDA0I5O5Q1MsJFckLSk\n"
+    "QFEW2uSEEi0FXKEfFxkkUap66uEHG4aNAXLy59SDIzme4OFMH2sio7QQZrDtgpbX\n"
+    "bmq08j+1QvzdirWrui0dOnWbMdw+naxb00ENbLAb9Tr1eeohovj0M1JLJC0epJmx\n"
+    "bUi8uBL+cnB89/sCdfSN3tbawKAyGlLfOGsuRTg/PwSWAP2h9KK71RfWJ3wbWFmV\n"
+    "XooS/ZyrgT5SKEhRhWvzkbKGPym1bgNi7tYFAgMBAAGjggF1MIIBcTAfBgNVHSME\n"
+    "GDAWgBRTeb9aqitKz1SA4dibwJ3ysgNmyzAdBgNVHQ4EFgQUs5Cn2MmvTs1hPJ98\n"
+    "rV1/Qf1pMOowDgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAwHQYD\n"
+    "VR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMCIGA1UdIAQbMBkwDQYLKwYBBAGy\n"
+    "MQECAhowCAYGZ4EMAQIBMFAGA1UdHwRJMEcwRaBDoEGGP2h0dHA6Ly9jcmwudXNl\n"
+    "cnRydXN0LmNvbS9VU0VSVHJ1c3RSU0FDZXJ0aWZpY2F0aW9uQXV0aG9yaXR5LmNy\n"
+    "bDB2BggrBgEFBQcBAQRqMGgwPwYIKwYBBQUHMAKGM2h0dHA6Ly9jcnQudXNlcnRy\n"
+    "dXN0LmNvbS9VU0VSVHJ1c3RSU0FBZGRUcnVzdENBLmNydDAlBggrBgEFBQcwAYYZ\n"
+    "aHR0cDovL29jc3AudXNlcnRydXN0LmNvbTANBgkqhkiG9w0BAQwFAAOCAgEAWGf9\n"
+    "crJq13xhlhl+2UNG0SZ9yFP6ZrBrLafTqlb3OojQO3LJUP33WbKqaPWMcwO7lWUX\n"
+    "zi8c3ZgTopHJ7qFAbjyY1lzzsiI8Le4bpOHeICQW8owRc5E69vrOJAKHypPstLbI\n"
+    "FhfFcvwnQPYT/pOmnVHvPCvYd1ebjGU6NSU2t7WKY28HJ5OxYI2A25bUeo8tqxyI\n"
+    "yW5+1mUfr13KFj8oRtygNeX56eXVlogMT8a3d2dIhCe2H7Bo26y/d7CQuKLJHDJd\n"
+    "ArolQ4FCR7vY4Y8MDEZf7kYzawMUgtN+zY+vkNaOJH1AQrRqahfGlZfh8jjNp+20\n"
+    "J0CT33KpuMZmYzc4ZCIwojvxuch7yPspOqsactIGEk72gtQjbz7Dk+XYtsDe3CMW\n"
+    "1hMwt6CaDixVBgBwAc/qOR2A24j3pSC4W/0xJmmPLQphgzpHphNULB7j7UTKvGof\n"
+    "KA5R2d4On3XNDgOVyvnFqSot/kGkoUeuDcL5OWYzSlvhhChZbH2UF3bkRYKtcCD9\n"
+    "0m9jqNf6oDP6N8v3smWe2lBvP+Sn845dWDKXcCMu5/3EFZucJ48y7RetWIExKREa\n"
+    "m9T8bJUox04FB6b9HbwZ4ui3uRGKLXASUoWNjDNKD/yZkuBjcNqllEdjB+dYxzFf\n"
+    "BT02Vf6Dsuimrdfp5gJ0iHRc2jTbkNJtUQoj1iM=\n"
+    "-----END CERTIFICATE-----\n";
 
 //************************************
 esp32FOTA2::esp32FOTA2(String firwmareType, int firwmareVersion, int firwmareSubVersion, int firwmareBetaVersion)
 //************************************
 {
-    _firwmareType        = firwmareType;
-		DUMP(_firwmareType);
-    _firwmareVersion     = firwmareVersion;
-		_firwmareSubVersion  = firwmareSubVersion;
-		_firwmareBetaVersion = firwmareBetaVersion;
+    _firwmareType = firwmareType;
+    DUMP(_firwmareType);
+    _firwmareVersion = firwmareVersion;
+    _firwmareSubVersion = firwmareSubVersion;
+    _firwmareBetaVersion = firwmareBetaVersion;
     useDeviceID = false;
 }
 
@@ -133,15 +130,15 @@ void esp32FOTA2::execOTA()
 //************************************
 {
 
-		TRACE();
+    TRACE();
     WiFiClient client;
     int contentLength = 0;
     bool isValidContentType = false;
 
     SerialPort.println("Connecting to: " + String(_host));
     // Connect to Webserver
-//    if (client.connect(_host.c_str(), _port))
-		if (client.connect(_host.c_str(), _port))
+    //    if (client.connect(_host.c_str(), _port))
+    if (client.connect(_host.c_str(), _port))
     {
         // Connection Succeed.
         // Fecthing the bin
@@ -152,8 +149,6 @@ void esp32FOTA2::execOTA()
                      "Host: " + _host + "\r\n" +
                      "Cache-Control: no-cache\r\n" +
                      "Connection: close\r\n\r\n");
-
- 
 
         unsigned long timeout = millis();
         while (client.available() == 0)
@@ -239,7 +234,7 @@ void esp32FOTA2::execOTA()
         if (canBegin)
         {
 #ifdef WIFI_DEBUG
-           SerialPort.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
+            SerialPort.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
 #endif
             // No activity would appear on the Serial monitor
             // So be patient. This may take 2 - 5mins to complete
@@ -280,7 +275,7 @@ void esp32FOTA2::execOTA()
             else
             {
 #ifdef WIFI_DEBUG
-               SerialPort.println("Error Occurred. Error #: " + String(Update.getError()));
+                SerialPort.println("Error Occurred. Error #: " + String(Update.getError()));
 #endif
             }
         }
@@ -309,63 +304,64 @@ bool esp32FOTA2::execHTTPexist()
 //************************************
 {
 
-	String useURL;
+    String useURL;
 
-	if (useDeviceID)
-	{
-			// String deviceID = getDeviceID() ;
-		useURL = checkURL + "?id=" + getDeviceID();
-	}
-	else
-	{
-		useURL = checkURL;
-	}
+    if (useDeviceID)
+    {
+        // String deviceID = getDeviceID() ;
+        useURL = checkURL + "?id=" + getDeviceID();
+    }
+    else
+    {
+        useURL = checkURL;
+    }
 
-	WiFiClient client;
-	_port = 80;
+    WiFiClient client;
+    _port = 80;
 
 #ifdef WIFI_DEBUG
-	SerialPort.println("Getting HTTP");
-	SerialPort.println(useURL);
-	SerialPort.println("------");
+    SerialPort.println("Getting HTTP");
+    SerialPort.println(useURL);
+    SerialPort.println("------");
 #endif
-	if ((WiFi.status() == WL_CONNECTED))
-	{ //Check the current connection status
+    if ((WiFi.status() == WL_CONNECTED))
+    { //Check the current connection status
 
-		HTTPClient http;
+        HTTPClient http;
 
-		http.begin(useURL);        //Specify the URL
-		int httpCode = http.GET(); //Make the request
+        http.begin(useURL);        //Specify the URL
+        int httpCode = http.GET(); //Make the request
 
-		if (httpCode > 0)
-		{ //Check is a file was returned
-	
+        if (httpCode > 0)
+        { //Check is a file was returned
+
 #ifdef WIFI_DEBUG
-		  SerialPort.printf("[HTTP] GET... code: %d\n", httpCode);
+            SerialPort.printf("[HTTP] GET... code: %d\n", httpCode);
 #endif
 
-			// file found at server
-			if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-				String payload = http.getString();
+            // file found at server
+            if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
+            {
+                String payload = http.getString();
 #ifdef WIFI_DEBUG
-				SerialPort.println(payload);
+                SerialPort.println(payload);
 #endif
-			}
-			
-			http.end(); //Free the resources
-			return true;
-		}
-		else
-		{
+            }
+
+            http.end(); //Free the resources
+            return true;
+        }
+        else
+        {
 #ifdef WIFI_DEBUG
-			SerialPort.println("Error on HTTP request");
-      SerialPort.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+            SerialPort.println("Error on HTTP request");
+            SerialPort.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
 #endif
-			http.end(); //Free the resources
-			return false;
-		}
-	}
-	return false;
+            http.end(); //Free the resources
+            return false;
+        }
+    }
+    return false;
 }
 
 //***********************************
@@ -373,72 +369,74 @@ bool esp32FOTA2::execHTTPSexist()
 //***********************************
 {
 
-	String useURL;
+    String useURL;
 
-	if (useDeviceID)
-	{
-			// String deviceID = getDeviceID() ;
-		useURL = checkURL + "?id=" + getDeviceID();
-	}
-	else
-	{
-		useURL = checkURL;
-	}
+    if (useDeviceID)
+    {
+        // String deviceID = getDeviceID() ;
+        useURL = checkURL + "?id=" + getDeviceID();
+    }
+    else
+    {
+        useURL = checkURL;
+    }
 
-	WiFiClient client;
-	_port = 443;
+    WiFiClient client;
+    _port = 443;
 
 #ifdef WIFI_DEBUG
-	SerialPort.println("Getting HTTPS");
-	SerialPort.println(useURL);
-	SerialPort.println("------");		
+    SerialPort.println("Getting HTTPS");
+    SerialPort.println(useURL);
+    SerialPort.println("------");
 #endif
-	
-	if ((WiFi.status() == WL_CONNECTED))
-	{ //Check the current connection status
 
-		WiFiClientSecure *client = new WiFiClientSecure;
-		if(!client) {
+    if ((WiFi.status() == WL_CONNECTED))
+    { //Check the current connection status
+
+        WiFiClientSecure *client = new WiFiClientSecure;
+        if (!client)
+        {
 #ifdef WIFI_DEBUG
-			SerialPort.println("Unable to create client");
+            SerialPort.println("Unable to create client");
 #endif
-			return false;
-		}
-		
-		client -> setCACert(rootCACertificate);
+            return false;
+        }
 
-		HTTPClient https;
+        client->setCACert(rootCACertificate);
 
-		https.begin(*client, useURL);        //Specify the URL
-		int httpCode = https.GET(); //Make the request
+        HTTPClient https;
 
-		if (httpCode > 0)
-		{ //Check is a file was returned
-	
+        https.begin(*client, useURL); //Specify the URL
+        int httpCode = https.GET();   //Make the request
+
+        if (httpCode > 0)
+        { //Check is a file was returned
+
 #ifdef WIFI_DEBUG
-		  SerialPort.printf("[HTTPS] GET... code: %d\n", httpCode);
+            SerialPort.printf("[HTTPS] GET... code: %d\n", httpCode);
 #endif
 
-			// file found at server
-			if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-				String payload = https.getString();
-				SerialPort.println(payload);
-			}
-	
-			https.end(); //Free the resources
-			return true;
-		}
-		else
-		{
+            // file found at server
+            if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
+            {
+                String payload = https.getString();
+                SerialPort.println(payload);
+            }
+
+            https.end(); //Free the resources
+            return true;
+        }
+        else
+        {
 #ifdef WIFI_DEBUG
-			SerialPort.println("Error on HTTP request");
-      SerialPort.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+            SerialPort.println("Error on HTTP request");
+            SerialPort.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
 #endif
-			https.end(); //Free the resources
-			return false;
-		}
-	}
-	return false;
+            https.end(); //Free the resources
+            return false;
+        }
+    }
+    return false;
 }
 
 //************************************
@@ -477,150 +475,136 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
         if (httpCode == 200)
         { //Check is a file was returned
 
-					String payload = http.getString();
+            String payload = http.getString();
 
-					int str_len = payload.length() + 1;
-					char JSONMessage[str_len];
-					payload.toCharArray(JSONMessage, str_len);
-
-#ifdef WIFI_DEBUG
-					SerialPort.print("Parsing size : ");
-					SerialPort.println(str_len);
-//					SerialPort.println(JSONMessage);
-#endif
-
-					StaticJsonDocument<1300> JSONDocument; //Memory pool
-					DeserializationError err = deserializeJson(JSONDocument, JSONMessage);
-
-					if (err)
-					{ //Check for errors in parsing
-#ifdef WIFI_DEBUG
-							SerialPort.println("Parsing failed");
-#endif
-							delay(5000);
-							return MAJ_ERROR;
-					}
-
-
-					String tmp;
-					tmp = _firwmareType;
-					if (betaVersion) tmp = tmp + "b";
-#ifdef WIFI_DEBUG
-						SerialPort.print("Update Firmware : ");
-						SerialPort.println(tmp);
-#endif
-					
-					if (JSONDocument.containsKey(tmp)) {
-						JsonObject JSONDocumentUpdate = JSONDocument[tmp];
-
-//           const char *pltype = JSONDocument["type"];
-						int plversion     = JSONDocumentUpdate["version"];				
-						UpdateVersion = plversion;						
-						
-#ifdef WIFI_DEBUG
-						SerialPort.print("Version : ");		
-						SerialPort.println(plversion);
-#endif
-
-						int plsubversion  = JSONDocumentUpdate["subversion"];
-						UpdateSubVersion = plsubversion;
-						
-#ifdef WIFI_DEBUG
-						SerialPort.print("Sub Version : ");
-						SerialPort.println(plsubversion);
-#endif
-						
-						int plbetaversion = JSONDocumentUpdate["betaversion"];
-						UpdateBetaVersion = plbetaversion;	
-						
-#ifdef WIFI_DEBUG
-						SerialPort.print("Beta Version : ");
-						SerialPort.println(plbetaversion);
-#endif
-						
-						const char *plhost = JSONDocumentUpdate["host"];
-						
-						_port = JSONDocumentUpdate["port"];
-#ifdef WIFI_DEBUG
-						SerialPort.print("Port : ");
-						SerialPort.println(_port);
-#endif
-						
-						const char *plbin = JSONDocumentUpdate["bin"];
-
-						String jshost(plhost);
-						String jsbin(plbin);
-
-						_host = jshost;
-						_bin = jsbin;
+            int str_len = payload.length() + 1;
+            char JSONMessage[str_len];
+            payload.toCharArray(JSONMessage, str_len);
 
 #ifdef WIFI_DEBUG
-						SerialPort.print("Host : ");
-						SerialPort.println(_host);
-
-						SerialPort.print("Bin : ");
-						SerialPort.println(_bin);
-
-						SerialPort.print("Firmware Version : ");
-						SerialPort.println(_firwmareVersion);
-
-						SerialPort.print("Firmware Sub Version : ");
-						SerialPort.println(_firwmareSubVersion);
-
-						SerialPort.print("Firmware Beta Version : ");
-						SerialPort.println(_firwmareBetaVersion);
+            SerialPort.print("Parsing size : ");
+            SerialPort.println(str_len);
+            //SerialPort.println(JSONMessage);
 #endif
 
-//						String fwtype(pltype);
+            StaticJsonDocument<1300> JSONDocument; //Memory pool
+            DeserializationError err = deserializeJson(JSONDocument, JSONMessage);
 
-						if ((betaVersion) && (_firwmareBetaVersion == 0))    
-						{
-							//mise à jour betaVersion sur une version stable
-                            SerialPort.println("MAJ CAS 1");
-							http.end(); //Free the resources
-							return MAJ_AVAILABLE;
-						}		
-						else if ((!betaVersion) && (_firwmareBetaVersion > 0))    
-						{
-							//mise à jour version stabble sur une version beta
-                            SerialPort.println("MAJ CAS 2");
-							http.end(); //Free the resources
-							return MAJ_AVAILABLE;
-						}					
-
-						else if (plversion > _firwmareVersion)    // && fwtype == _firwmareType)
-						{
-                            SerialPort.println("MAJ CAS 3");
-							http.end(); //Free the resources
-							return MAJ_AVAILABLE;
-						}
-						else if ((plversion == _firwmareVersion) && (plsubversion > _firwmareSubVersion))
-						{
-                            SerialPort.println("MAJ CAS 4");
-							http.end(); //Free the resources
-							return MAJ_AVAILABLE;
-						}
-						else if ((plversion == _firwmareVersion) && (plsubversion == _firwmareSubVersion) && (plbetaversion > _firwmareBetaVersion))
-						{
-                            SerialPort.println("MAJ CAS 5");
-							http.end(); //Free the resources
-							return MAJ_AVAILABLE;
-						}
-						else 
-						{
-                            SerialPort.println("MAJ MAJ_NOTAVAILABLE");
-							http.end(); //Free the resources
-							return MAJ_NOTAVAILABLE;
-						}
-					}	
-					else
-					{
+            if (err)
+            { //Check for errors in parsing
 #ifdef WIFI_DEBUG
-            SerialPort.println("Erreur info firmware non trouvé");
+                SerialPort.println("Parsing failed");
 #endif
-						http.end(); //Free the resources
-            return MAJ_ERROR;
-					}
+                delay(5000);
+                return MAJ_ERROR;
+            }
+
+            String tmp;
+            tmp = _firwmareType;
+            if (betaVersion)
+                tmp = tmp + "b";
+#ifdef WIFI_DEBUG
+            SerialPort.print("Update Firmware : ");
+            SerialPort.println(tmp);
+#endif
+
+            if (JSONDocument.containsKey(tmp))
+            {
+                JsonObject JSONDocumentUpdate = JSONDocument[tmp];
+
+                //const char *pltype = JSONDocument["type"];
+                int plversion = JSONDocumentUpdate["version"];
+                UpdateVersion = plversion;
+
+                int plsubversion = JSONDocumentUpdate["subversion"];
+                UpdateSubVersion = plsubversion;
+
+                int plbetaversion = JSONDocumentUpdate["betaversion"];
+                UpdateBetaVersion = plbetaversion;
+
+                const char *plhost = JSONDocumentUpdate["host"];
+                _port = JSONDocumentUpdate["port"];
+
+#ifdef WIFI_DEBUG
+                SerialPort.print("Version : ");
+                SerialPort.println(plversion);
+
+                SerialPort.print("Sub Version : ");
+                SerialPort.println(plsubversion);
+
+                SerialPort.print("Beta Version : ");
+                SerialPort.println(plbetaversion);
+
+                SerialPort.print("Port : ");
+                SerialPort.println(_port);
+#endif
+
+                const char *plbin = JSONDocumentUpdate["bin"];
+
+                String jshost(plhost);
+                String jsbin(plbin);
+
+                _host = jshost;
+                _bin = jsbin;
+
+#ifdef WIFI_DEBUG
+                SerialPort.print("Host : ");
+                SerialPort.println(_host);
+
+                SerialPort.print("Bin : ");
+                SerialPort.println(_bin);
+
+                SerialPort.print("Firmware Version : ");
+                SerialPort.println(_firwmareVersion);
+
+                SerialPort.print("Firmware Sub Version : ");
+                SerialPort.println(_firwmareSubVersion);
+
+                SerialPort.print("Firmware Beta Version : ");
+                SerialPort.println(_firwmareBetaVersion);
+#endif
+
+                if (plversion > _firwmareVersion)
+                {
+                    http.end(); //Free the resources
+                    return MAJ_AVAILABLE;
+                }
+                else if ((plversion == _firwmareVersion) && (plsubversion > _firwmareSubVersion))
+                {
+                    http.end(); //Free the resources
+                    return MAJ_AVAILABLE;
+                }
+                else if ((plversion == _firwmareVersion) && (plsubversion == _firwmareSubVersion) && (plbetaversion > _firwmareBetaVersion))
+                {
+                    //ce cas ne match que pour les beta
+                    http.end(); //Free the resources
+                    return MAJ_AVAILABLE;
+                }
+
+                else
+                {
+#ifdef WIFI_DEBUG
+                    SerialPort.println("MAJ MAJ_NOTAVAILABLE");
+#endif
+                    http.end(); //Free the resources
+                    return MAJ_NOTAVAILABLE;
+                }
+            }
+            else
+            {
+#ifdef WIFI_DEBUG
+                if (betaVersion)
+                {
+                    SerialPort.println("Erreur info firmware non trouvé dans la beta");
+                }
+                else
+                {
+                    SerialPort.println("Erreur info firmware non trouvé dans la non beta");
+                }
+#endif
+                http.end(); //Free the resources
+                return MAJ_ERROR;
+            }
         }
 
         else
@@ -628,8 +612,8 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
 #ifdef WIFI_DEBUG
             SerialPort.println("Error on HTTP request");
 #endif
-					http.end(); //Free the resources
-          return MAJ_ERROR;
+            http.end(); //Free the resources
+            return MAJ_ERROR;
         }
 
         http.end(); //Free the resources
@@ -661,25 +645,26 @@ uint8_t esp32FOTA2::execHTTPScheck(bool betaVersion)
 #ifdef WIFI_DEBUG
     SerialPort.println("Getting HTTPS");
     SerialPort.println(useURL);
-    SerialPort.println("------");		
+    SerialPort.println("------");
 #endif
-		
+
     if ((WiFi.status() == WL_CONNECTED))
     { //Check the current connection status
 
-			WiFiClientSecure *client = new WiFiClientSecure;
-			if(!client) {
+        WiFiClientSecure *client = new WiFiClientSecure;
+        if (!client)
+        {
 #ifdef WIFI_DEBUG
-				SerialPort.println("Unable to create client");
+            SerialPort.println("Unable to create client");
 #endif
-				return false;
-			}
-				client -> setCACert(rootCACertificate);
+            return false;
+        }
+        client->setCACert(rootCACertificate);
 
         HTTPClient https;
 
-        https.begin(*client, useURL);        //Specify the URL
-        int httpCode = https.GET(); //Make the request
+        https.begin(*client, useURL); //Specify the URL
+        int httpCode = https.GET();   //Make the request
 
         if (httpCode == 200)
         { //Check is a file was returned
@@ -740,7 +725,6 @@ uint8_t esp32FOTA2::execHTTPScheck(bool betaVersion)
     return false;
 }
 
-
 //************************************
 String esp32FOTA2::getDeviceID()
 //************************************
@@ -766,75 +750,63 @@ bool esp32FOTA2::forceUpdate(String firwmareHost, int firwmarePort, String firwm
     return true;
 }
 
-
 //************************************
 String esp32FOTA2::getHTTPVersion()
 //************************************
 {
-	String output;
+    String output;
 
-	output = "{\n";
-	
-	output += "\"Firmware\":{\n";
-	output += "\"type\": " + String(VARIOSCREEN_SIZE) + ",\n";
-	output += "\"version\": " + String(_firwmareVersion) + ",\n";
-	output += "\"subversion\": " + String(_firwmareSubVersion) + ",\n";
-	output += "\"betaversion\": " + String(_firwmareBetaVersion) + "\n}";
+    output = "{\n";
 
-	uint8_t updatedNeeded = execHTTPcheck(false);
-		
-  if (updatedNeeded >= 0)
-  {
+    output += "\"Firmware\":{\n";
+    output += "\"type\": " + String(VARIOSCREEN_SIZE) + ",\n";
+    output += "\"version\": " + String(_firwmareVersion) + ",\n";
+    output += "\"subversion\": " + String(_firwmareSubVersion) + ",\n";
+    output += "\"betaversion\": " + String(_firwmareBetaVersion) + "\n}";
+
+    int8_t updatedNeeded = execHTTPcheck(false);
+
+    if (updatedNeeded >= 0)
+    {
 #ifdef WIFI_DEBUG
-		SerialPort.println("************** Version Stable : Mise à jour disponible *****************");
-		SerialPort.print("Version : "); 
-		SerialPort.print(UpdateVersion);
-		SerialPort.print(".");
-		SerialPort.println(UpdateSubVersion);
+        SerialPort.println("************** Version Stable : Mise à jour disponible *****************");
+        SerialPort.println(updatedNeeded);
+        SerialPort.print("Version : ");
+        SerialPort.print(UpdateVersion);
+        SerialPort.print(".");
+        SerialPort.println(UpdateSubVersion);
 #endif
 
-	  output += ",\n\""+_firwmareType+"\":{\n";
-		output += "\"type\": " + String(VARIOSCREEN_SIZE) + ",\n";
-		output += "\"version\": " + String(UpdateVersion) + ",\n";
-		output += "\"subversion\": " + String(UpdateSubVersion) + ",\n";
-		output += "\"betaversion\": 0\n}";
-  }
-  else
-  {
-   output = "";
-	 return output;
-  }
+        output += ",\n\"" + _firwmareType + "\":{\n";
+        output += "\"type\": " + String(VARIOSCREEN_SIZE) + ",\n";
+        output += "\"version\": " + String(UpdateVersion) + ",\n";
+        output += "\"subversion\": " + String(UpdateSubVersion) + ",\n";
+        output += "\"betaversion\": 0\n}";
+    }
 
-
-  updatedNeeded = execHTTPcheck(true);
-  if (updatedNeeded >= 0)
-  {
+    updatedNeeded = execHTTPcheck(true);
+    if (updatedNeeded >= 0)
+    {
 #ifdef WIFI_DEBUG
-		SerialPort.println("***************** Version Beta : Mise à jour disponible *********************");
-		SerialPort.print("Version : "); 
-		SerialPort.print(UpdateVersion);
-		SerialPort.print(".");
-		SerialPort.print(UpdateSubVersion);
-		SerialPort.print("b");
-		SerialPort.println(UpdateBetaVersion);
+        SerialPort.println("***************** Version Beta : Mise à jour disponible *********************");
+        SerialPort.print("Version : ");
+        SerialPort.print(UpdateVersion);
+        SerialPort.print(".");
+        SerialPort.print(UpdateSubVersion);
+        SerialPort.print("b");
+        SerialPort.println(UpdateBetaVersion);
 #endif
-	 
-		output += ",\n\""+_firwmareType+"b\":{\n";
-		output += "\"type\": " + String(VARIOSCREEN_SIZE) + ",\n";
-		output += "\"version\": " + String(UpdateVersion) + ",\n";
-		output += "\"subversion\": " + String(UpdateSubVersion) + ",\n";
-		output += "\"betaversion\": " + String(UpdateBetaVersion) + "\n}";
-  }
-  else
-  {
-		output = "";
-		return output;
-  }
 
-	
-	output += "\n}";
-	
-  return output;
+        output += ",\n\"" + _firwmareType + "b\":{\n";
+        output += "\"type\": " + String(VARIOSCREEN_SIZE) + ",\n";
+        output += "\"version\": " + String(UpdateVersion) + ",\n";
+        output += "\"subversion\": " + String(UpdateSubVersion) + ",\n";
+        output += "\"betaversion\": " + String(UpdateBetaVersion) + "\n}";
+    }
+
+    output += "\n}";
+
+    return output;
 }
 
 /*{
@@ -842,7 +814,7 @@ String esp32FOTA2::getHTTPVersion()
     "version": 0,
 		"subversion": 7,
 		"betaversion": 0,
-    "host": "http://gnuvario-e.yj.fr",
+    "host": "gnuvario-e.yj.fr",
     "port": 80,
     "bin": "/update/Gnuvario154.bin"
 	},
@@ -850,7 +822,7 @@ String esp32FOTA2::getHTTPVersion()
     "version": 0,
 		"subversion": 7,
 		"betaversion": 8,
-    "host": "http://gnuvario-e.yj.fr",
+    "host": "gnuvario-e.yj.fr",
     "port": 80,
     "bin": "/update/Gnuvario154b.bin"
 	},*/
@@ -859,6 +831,6 @@ String esp32FOTA2::getHTTPVersion()
 String esp32FOTA2::getHTTPSVersion()
 //************************************
 {
-	String output;
-	return output;
+    String output;
+    return output;
 }
