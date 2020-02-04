@@ -260,6 +260,7 @@ boolean VarioWifiServer::begin(void)
   // Init URL web server
 
   esp32FOTA.checkURL = "http://gnuvario-e.yj.fr/update/firmware.json";
+  //esp32FOTA.checkURL = "http://192.168.1.66/fota/firmware.json";
 
   return true;
 };

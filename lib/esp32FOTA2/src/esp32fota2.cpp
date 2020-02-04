@@ -144,6 +144,11 @@ void esp32FOTA2::execOTA()
         // Fecthing the bin
         SerialPort.println("Fetching Bin: " + String(_bin));
 
+        if (NB_WWW_FILES > 0)
+        {
+            downloadWwwFiles();
+        }
+
         // Get the contents of the bin file
         client.print(String("GET ") + _bin + " HTTP/1.1\r\n" +
                      "Host: " + _host + "\r\n" +
@@ -525,6 +530,27 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                 const char *plhost = JSONDocumentUpdate["host"];
                 _port = JSONDocumentUpdate["port"];
 
+                if (JSONDocumentUpdate.containsKey("www"))
+                {
+#ifdef WIFI_DEBUG
+                    SerialPort.println("la section du fichier json contient la clé www");
+#endif
+                    JsonArray myArray = JSONDocumentUpdate["www"].as<JsonArray>();
+
+                    for (JsonVariant myValue : myArray)
+                    {
+#ifdef WIFI_DEBUG
+                        Serial.println(myValue.as<char *>());
+#endif
+                        _wwwfiles[NB_WWW_FILES] = myValue.as<char *>();
+                        NB_WWW_FILES++;
+                    }
+                }
+                else
+                {
+                    NB_WWW_FILES = 0;
+                }
+
 #ifdef WIFI_DEBUG
                 SerialPort.print("Version : ");
                 SerialPort.println(plversion);
@@ -807,6 +833,77 @@ String esp32FOTA2::getHTTPVersion()
     output += "\n}";
 
     return output;
+}
+
+void esp32FOTA2::downloadWwwFiles()
+{
+    uint8_t i;
+
+    for (i = 0; i < NB_WWW_FILES; i++)
+    {
+        //telechargement des fichiers 1 par un
+        HTTPClient http;
+
+        http.begin(_host.c_str(), _port, _wwwfiles[i]);
+
+        // start connection and send HTTP header
+        int httpCode = http.GET();
+        if (httpCode > 0)
+        {
+            // HTTP header has been send and Server response header has been handled
+#ifdef WIFI_DEBUG
+            SerialPort.println("[HTTP] GET... code: " + String(httpCode));
+#endif
+
+            // file found at server
+            if (httpCode == HTTP_CODE_OK)
+            {
+
+                // get lenght of document (is -1 when Server sends no Content-Length header)
+                int len = http.getSize();
+
+                // create buffer for read
+                uint8_t buff[128] = {0};
+
+                // get tcp stream
+                WiFiClient *stream = http.getStreamPtr();
+
+                // read all data from server
+                while (http.connected() && (len > 0 || len == -1))
+                {
+                    // get available data size
+                    size_t size = stream->available();
+
+                    if (size)
+                    {
+                        // read up to 128 byte
+                        int c = stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size));
+
+                        // ICI l'ecriture dans le fichier
+                        //USE_SERIAL.write(buff, c);
+
+                        if (len > 0)
+                        {
+                            len -= c;
+                        }
+                    }
+                    delay(1);
+                }
+
+#ifdef WIFI_DEBUG
+                SerialPort.println("[HTTP] connection closed or file end.");
+#endif
+            }
+        }
+        else
+        {
+#ifdef WIFI_DEBUG
+            SerialPort.println("[HTTP] GET... failed, error:" + String(http.errorToString(httpCode).c_str()));
+#endif
+        }
+
+        http.end();
+    }
 }
 
 /*{
