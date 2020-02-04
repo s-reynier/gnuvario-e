@@ -82,7 +82,7 @@ extern VarioSettings GnuSettings;
 
 #ifdef SDFAT_LIB
 void listDirectory(SdFile dir, int numTabs);
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
 void listDirectory(File dir, int numTabs);
 #endif //SDFAT_LIB
 
@@ -117,7 +117,7 @@ char password_4[50];
 
 #ifdef SDFAT_LIB
 SdFile uploadFile;
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
 File uploadFile;
 #endif //SDFAT_LIB
 
@@ -187,7 +187,7 @@ boolean VarioWifiServer::begin(void)
 #ifdef SDFAT_LIB
   SdFile dataFile;
   if (dataFile.open("www/index.htm", O_RDONLY))
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dataFile = SDHAL_SD.open("www/index.htm");
   if (dataFile)
 #endif //SDFAT_LIB
@@ -205,7 +205,7 @@ boolean VarioWifiServer::begin(void)
   dataFile.open("/", O_RDONLY);
 
   dataFile.rewind();
-#else //SDFAT_FILE
+#else  //SDFAT_FILE
   dataFile = SDHAL_SD.open("/");
 
   dataFile.rewindDirectory();
@@ -240,24 +240,24 @@ boolean VarioWifiServer::begin(void)
   dataFile.close();
 
 #ifdef WIFI_DEBUG
-    SerialPort.print("GnuVario-E Firmware Version : ");
-		SerialPort.println(GnuSettings.getVersion());
+  SerialPort.print("GnuVario-E Firmware Version : ");
+  SerialPort.println(GnuSettings.getVersion());
 
-    SerialPort.print("GnuVario-E Type d'écran : ");
-		SerialPort.println(GnuSettings.getScreenModel());
+  SerialPort.print("GnuVario-E Type d'écran : ");
+  SerialPort.println(GnuSettings.getScreenModel());
 
-    SerialPort.print("Serveur WEB : ");
-		SerialPort.println(WEBSERVERTYPE);
+  SerialPort.print("Serveur WEB : ");
+  SerialPort.println(WEBSERVERTYPE);
 
 #ifdef SDFAT_LIB
-    SerialPort.print("Lib SDCard : SDFAT");
+  SerialPort.print("Lib SDCard : SDFAT");
 #else
-    SerialPort.print("Lib SDCard : SD");
-#endif	
-		
+  SerialPort.print("Lib SDCard : SD");
+#endif
+
 #endif //WIFI_DEBUG
 
-// Init URL web server
+  // Init URL web server
 
   esp32FOTA.checkURL = "http://gnuvario-e.yj.fr/update/firmware.json";
 
@@ -323,8 +323,8 @@ void VarioWifiServer::connect(void)
   screen.ScreenViewWifi(WiFi.SSID().substring(0, 12), WiFi.localIP().toString());
 #endif //ENABLE_DISPLAY_WEBSERVER
 
-	setClock();
-	
+  setClock();
+
   if (MDNS.begin(servername))
   {
     MDNS.addService("http", "tcp", 80);
@@ -371,21 +371,24 @@ void VarioWifiServer::start(void)
 
   //suppression d'un fichier dont le nom complet avec chemin se trouve en param
   server.on("/file", HTTP_DELETE, handleFileDelete);
-	
-	//recuperation des versions de firmware
-	server.on("/firmwareversion", HTTP_GET, handleFirmwareVersion);
-	
-	//Mise à jour via internet
-	server.on("/upgradeweb", HTTP_GET, handleUpgradeWeb);
+
+  //recuperation des versions de firmware
+  server.on("/firmwareversion", HTTP_GET, handleFirmwareVersion);
+
+  //Mise à jour via internet
+  server.on("/upgradeweb", HTTP_GET, handleUpgradeWeb);
 
   // upload d'un fichier, le chemin de destination se trouve dans le nom du fichier posté
-  server.on("/upload", HTTP_POST, []() {
- //   returnOK();
-   server.send(200);
-  }, handleFileUpload);
+  server.on(
+      "/upload", HTTP_POST, []() {
+        //   returnOK();
+        server.send(200);
+      },
+      handleFileUpload);
 
   // mise à jour OTA
-  server.on("/fupdate", HTTP_POST, []() { server.send(200); }, handleFileUpdate);
+  server.on(
+      "/fupdate", HTTP_POST, []() { server.send(200); }, handleFileUpdate);
 
   //récupération du contenu du fichier param
   server.on("/wifi", HTTP_GET, handleWifi);
@@ -406,8 +409,9 @@ void VarioWifiServer::start(void)
 }
 
 /***********************************/
-void VarioWifiServer::setClock() {
-/***********************************/
+void VarioWifiServer::setClock()
+{
+  /***********************************/
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
 #ifdef WIFI_DEBUG
@@ -415,7 +419,8 @@ void VarioWifiServer::setClock() {
 #endif
 
   time_t nowSecs = time(nullptr);
-  while (nowSecs < 8 * 3600 * 2) {
+  while (nowSecs < 8 * 3600 * 2)
+  {
     delay(500);
 #ifdef WIFI_DEBUG
     SerialPort.print(F("."));
@@ -435,7 +440,6 @@ void VarioWifiServer::setClock() {
   SerialPort.print(asctime(&timeinfo));
 #endif
 }
-
 
 /***********************************/
 void VarioWifiServer::handleClient(void)
@@ -476,7 +480,7 @@ void listDirectory(SdFile dir, int numTabs)
   {
 
     SdFile entry;
-		
+
     if (!entry.openNext(&dir, O_RDONLY))
     {
       // no more files
@@ -486,8 +490,8 @@ void listDirectory(SdFile dir, int numTabs)
     {
       SerialPort.print('\t');
     }
-		
-		entry.getName(fBuffer,30);
+
+    entry.getName(fBuffer, 30);
 
     SerialPort.print(fBuffer);
     if (entry.isDir())
@@ -511,7 +515,7 @@ void listDirectory(SdFile dir, int numTabs)
     entry.close();
   }
 }
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
 /***********************************/
 void listDirectory(File dir, int numTabs)
 {
@@ -633,11 +637,11 @@ bool loadFromSdCard(String path)
 
 #ifdef SDFAT_LIB
   SdFile dataFile;
-	boolean tmpretour;
-	tmpretour = dataFile.open(path.c_str(), O_RDONLY);
+  boolean tmpretour;
+  tmpretour = dataFile.open(path.c_str(), O_RDONLY);
   if ((tmpretour) && (dataFile.isDir()))
   {
-		dataFile.close();
+    dataFile.close();
     path += "/index.htm";
     dataType = "text/html";
     tmpretour = dataFile.open(path.c_str(), O_RDONLY);
@@ -648,7 +652,7 @@ bool loadFromSdCard(String path)
   File dataFile = SDHAL_SD.open(path.c_str());
   if (dataFile.isDirectory())
   {
-		dataFile.close();
+    dataFile.close();
     path += "/index.htm";
     dataType = "text/html";
     dataFile = SDHAL_SD.open(path.c_str());
@@ -669,9 +673,9 @@ bool loadFromSdCard(String path)
 
 #ifdef SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.fileSize())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.size())
-#endif //SDFAT_LIB	
+#endif //SDFAT_LIB
   {
 #ifdef WIFI_DEBUG
     SerialPort.println("Sent less data than expected!");
@@ -704,10 +708,10 @@ void handleListFlights()
 
   String path;
   path = "/vols";
-	
+
 #ifdef SDFAT_LIB
   SdFile dir;
-	dir.open((char *)path.c_str(), O_READ); //O_RDONLY);
+  dir.open((char *)path.c_str(), O_READ); //O_RDONLY);
 
   path = String();
   if (!dir.isDir())
@@ -716,7 +720,7 @@ void handleListFlights()
     return returnFail("NOT DIR");
   }
   dir.rewind();
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dir = SDHAL_SD.open((char *)path.c_str());
 
   path = String();
@@ -728,7 +732,6 @@ void handleListFlights()
   dir.rewindDirectory();
 #endif //SDFAT_LIB
 
-	
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", "");
@@ -740,16 +743,16 @@ void handleListFlights()
 #ifdef SDFAT_LIB
     SdFile entry;
     if (!entry.openNext(&dir, O_READ))
-#else //SDFAT_FILE
+#else  //SDFAT_FILE
     File entry = dir.openNextFile();
     if (!entry)
 #endif //SDFAT_LIB
     {
-			TRACE();
+      TRACE();
       break;
     }
 
-		TRACE();
+    TRACE();
     String output;
     if (cnt > 0)
     {
@@ -761,7 +764,7 @@ void handleListFlights()
     if (!entry.isDir())
     {
       int bytes = entry.fileSize();
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     if (!entry.isDirectory())
     {
       int bytes = entry.size();
@@ -784,15 +787,15 @@ void handleListFlights()
     output += "{\"type\":\"";
 #ifdef SDFAT_LIB
     output += (entry.isDir()) ? "dir" : "file";
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     output += (entry.isDirectory()) ? "dir" : "file";
 #endif //SDFAT_LIB
     output += "\",\"name\":\"";
 #ifdef SDFAT_LIB
-		char fBuffer[32];
-		entry.getName(fBuffer,30);
+    char fBuffer[32];
+    entry.getName(fBuffer, 30);
     output += fBuffer;
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     output += entry.name();
 #endif //SDFAT_LIB
     output += "\",\"size\":\"";
@@ -803,12 +806,12 @@ void handleListFlights()
     entry.close();
   }
   server.sendContent("]");
-  
+
   //correction bug chunk transfer webserver
   server.sendContent("");
   server.client().stop();
   dir.close();
-	TRACE();
+  TRACE();
 }
 
 // Récupération du contenu du fichier parameters.jso
@@ -835,11 +838,11 @@ void handleParams()
 #ifdef SDFAT_LIB
   SdFile dataFile;
   if (!dataFile.open((char *)path.c_str()), O_RDONLY)
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dataFile = SDHAL_SD.open((char *)path.c_str());
 
   if (!dataFile)
-#endif  //SDFAT_LIB
+#endif //SDFAT_LIB
   {
 #ifdef WIFI_DEBUG
     SerialPort.println("params.jso introuvable");
@@ -851,7 +854,7 @@ void handleParams()
   server.sendHeader("Access-Control-Allow-Origin", "*");
 #ifdef SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.fileSize())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.size())
 #endif //SDFAT_LIB
   {
@@ -886,7 +889,7 @@ void handleWifi()
 #ifdef SDFAT_LIB
   SdFile dataFile;
   if (!dataFile.open((char *)path.c_str(), O_RDONLY))
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dataFile = SDHAL_SD.open((char *)path.c_str());
 
   if (!dataFile)
@@ -901,8 +904,8 @@ void handleWifi()
 
 #ifdef SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.fileSize())
-#else //SDFAT_LIB
-   if (server.streamFile(dataFile, dataType) != dataFile.size())
+#else  //SDFAT_LIB
+  if (server.streamFile(dataFile, dataType) != dataFile.size())
 #endif //SDFAT_LIB
   {
     SerialPort.println("Sent less data than expected!");
@@ -940,14 +943,14 @@ void handlePrintDirectory()
 
 #ifdef SDFAT_LIB
   SdFile dir;
-	dir.open((char *)path.c_str(), O_RDONLY);
+  dir.open((char *)path.c_str(), O_RDONLY);
   dir.rewind();
-  
+
   if (!dir.isDir())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dir = SDHAL_SD.open((char *)path.c_str());
   dir.rewindDirectory();
-  
+
   if (!dir.isDirectory())
 #endif //SDFAT_LIB
   {
@@ -1008,12 +1011,12 @@ void printDirectoryRecurse(String path)
 //	SerialPort.println("printDirectoryRecurse");
 #endif
 #ifdef SDFAT_LIB
- 	char fBuffer[32];	
+  char fBuffer[32];
   SdFile dir;
-	
-	dir.open((char *)path.c_str(), O_RDONLY);
+
+  dir.open((char *)path.c_str(), O_RDONLY);
   dir.rewind();
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dir = SDHAL_SD.open((char *)path.c_str());
   dir.rewindDirectory();
 #endif //SDFAT_LIB
@@ -1024,11 +1027,11 @@ void printDirectoryRecurse(String path)
 
 #ifdef SDFAT_LIB
     SdFile entry;
-		boolean tmpRetour = entry.openNext(&dir, O_RDONLY);
-		entry.getName(fBuffer,30);
+    boolean tmpRetour = entry.openNext(&dir, O_RDONLY);
+    entry.getName(fBuffer, 30);
     String tmpName = fBuffer;
     if (!tmpRetour)
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     File entry = dir.openNextFile();
     String tmpName = entry.name();
     if (!entry)
@@ -1054,7 +1057,7 @@ void printDirectoryRecurse(String path)
     if (!entry.isDir())
     {
       int bytes = entry.fileSize();
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     if (!entry.isDirectory())
     {
       int bytes = entry.size();
@@ -1077,14 +1080,14 @@ void printDirectoryRecurse(String path)
     output += "{\"type\":\"";
 #ifdef SDFAT_LIB
     output += (entry.isDir()) ? "dir" : "file";
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     output += (entry.isDirectory()) ? "dir" : "file";
 #endif //SDFAT_LIB
     output += "\",\"name\":\"";
 #ifdef SDFAT_LIB
-		entry.getName(fBuffer,30);
+    entry.getName(fBuffer, 30);
     output += fBuffer;
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     output += entry.name();
 #endif //SDFAT_LIB
     output += "\",\"size\":\"";
@@ -1092,7 +1095,7 @@ void printDirectoryRecurse(String path)
     output += "\"";
 #ifdef SDFAT_LIB
     if (entry.isDir())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     if (entry.isDirectory())
 #endif //SDFAT_LIB
     {
@@ -1102,9 +1105,9 @@ void printDirectoryRecurse(String path)
 #endif
       server.sendContent(output);
 #ifdef SDFAT_LIB
-			entry.getName(fBuffer,30);
+      entry.getName(fBuffer, 30);
       printDirectoryRecurse(path + "/" + fBuffer);
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
       printDirectoryRecurse(path + "/" + entry.name());
 #endif //SDFAT_LIB
       output = "]";
@@ -1142,12 +1145,12 @@ void handleFileDownload()
   }
 
   String path = server.arg(0);
-	DUMP(path);
-	
+  DUMP(path);
+
 #ifdef SDFAT_LIB
   SdFile dataFile;
   if (!dataFile.open((char *)path.c_str(), O_RDONLY))
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File dataFile = SDHAL_SD.open(path.c_str());
 
   if (!dataFile)
@@ -1160,7 +1163,7 @@ void handleFileDownload()
 
 #ifdef SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.fileSize())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   if (server.streamFile(dataFile, dataType) != dataFile.size())
 #endif //SDFAT_LIB
   {
@@ -1169,7 +1172,6 @@ void handleFileDownload()
 
   dataFile.close();
 }
-
 
 boolean tmpReturn = false;
 
@@ -1190,21 +1192,22 @@ void handleFileUpload()
   HTTPUpload &upload = server.upload();
   if (upload.status == UPLOAD_FILE_START)
   {
-		DUMP(upload.filename);
+    DUMP(upload.filename);
     if (SDHAL_SD.exists((char *)upload.filename.c_str()))
     {
       SDHAL_SD.remove((char *)upload.filename.c_str());
-			TRACE();
+      TRACE();
     }
 #ifdef SDFAT_LIB
     tmpReturn = uploadFile.open(upload.filename.c_str(), O_WRONLY | O_CREAT);
-		if (!tmpReturn) {
+    if (!tmpReturn)
+    {
 #ifdef WIFI_DEBUG
-			SerialPort.print("Impossible de créer le fichier : ");
-			SerialPort.println(upload.filename);
+      SerialPort.print("Impossible de créer le fichier : ");
+      SerialPort.println(upload.filename);
 #endif
-		}
-#else //SDFAT_LIB
+    }
+#else  //SDFAT_LIB
     uploadFile = SDHAL.open(upload.filename.c_str(), FILE_WRITE);
 #endif //SDFAT_LIB
 #ifdef WIFI_DEBUG
@@ -1216,34 +1219,34 @@ void handleFileUpload()
   {
 #ifdef SDFAT_LIB
     if (tmpReturn)
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     if (uploadFile)
 #endif //SDFAT_LIB
     {
       uploadFile.write(upload.buf, upload.currentSize);
-			uploadFile.flush();
-			
+      uploadFile.flush();
+
 #ifdef WIFI_DEBUG
-			SerialPort.print("Upload: WRITE, Bytes: ");
-			SerialPort.println(upload.currentSize);
+      SerialPort.print("Upload: WRITE, Bytes: ");
+      SerialPort.println(upload.currentSize);
 #endif
     }
   }
   else if (upload.status == UPLOAD_FILE_END)
   {
-		TRACE();
+    TRACE();
 #ifdef SDFAT_LIB
     if (tmpReturn)
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     if (uploadFile)
 #endif //SDFAT_LIB
     {
-			uploadFile.flush();
+      uploadFile.flush();
       uploadFile.close();
-			
+
 #ifdef WIFI_DEBUG
-			SerialPort.print("Upload: END, Size: ");
-			SerialPort.println(upload.totalSize);
+      SerialPort.print("Upload: END, Size: ");
+      SerialPort.println(upload.totalSize);
 #endif
     }
   }
@@ -1252,9 +1255,10 @@ void handleFileUpload()
 }
 
 /***********************************/
-void handleFirmwareVersion() {
-/***********************************/
-/*
+void handleFirmwareVersion()
+{
+  /***********************************/
+  /*
 	//recuperation des versions de firmware
 	server.on("/firmwareversion", HTTP_GET, handleFirmwareVersion);
 */
@@ -1262,36 +1266,36 @@ void handleFirmwareVersion() {
 #ifdef WIFI_DEBUG
   SerialPort.println("handleFirmwareVersion");
 #endif
-	
+
   if (server.uri() != "/firmwareversion")
   {
     returnFail("BAD URL");
   }
- 
+
   String output = esp32FOTA.getHTTPVersion();
 #ifdef WIFI_DEBUG
   SerialPort.println(output);
 #endif
- 
+
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", "");
   WiFiClient client = server.client();
 
   server.sendContent(output);
-  
+
   //correction bug chunk transfer webserver
   server.sendContent("");
   server.client().stop();
-	TRACE();
+  TRACE();
 }
 
-
 /***********************************/
-void handleUpgradeWeb() {
-/***********************************/
+void handleUpgradeWeb()
+{
+  /***********************************/
 
-/*
+  /*
 	//Mise à jour via internet
 //	server.on("/upgradeweb", HTTP_POST, handleUpgradeWeb);
 */
@@ -1300,7 +1304,7 @@ void handleUpgradeWeb() {
   {
     returnFail("BAD URL");
   }
-	
+
   if (server.args() == 0)
   {
     return returnFail("BAD ARGS");
@@ -1308,7 +1312,7 @@ void handleUpgradeWeb() {
 
   bool betaversion = server.arg(0);
 
-  uint8_t updatedNeeded = esp32FOTA.execHTTPcheck(betaversion);
+  int8_t updatedNeeded = esp32FOTA.execHTTPcheck(betaversion);
   if (updatedNeeded == 1)
   {
 #ifdef WIFI_DEBUG
@@ -1316,7 +1320,10 @@ void handleUpgradeWeb() {
 #endif
     esp32FOTA.execOTA();
   }
-
+  else
+  {
+    return returnFail("could not update");
+  }
 }
 
 /*
@@ -1421,27 +1428,27 @@ void handleFileDelete()
 
   if (server.uri() != "/file")
   {
-		TRACE();
+    TRACE();
     return returnFail("BAD URL");
   }
-	
-	DUMP(server.args());
-	DUMP(server.arg(0));
-	
+
+  DUMP(server.args());
+  DUMP(server.arg(0));
+
   if (server.args() == 0)
   {
-		TRACE();
+    TRACE();
     return returnFail("BAD ARGS");
   }
-	
+
   String path = server.arg(0);
   if (!SDHAL_SD.exists((char *)path.c_str()))
   {
-		TRACE();
+    TRACE();
     return returnFail("FILE DOES NOT EXIST");
   }
-	TRACE();
-	DUMP(path);
+  TRACE();
+  DUMP(path);
   deleteRecursive(path);
   returnOK();
 }
@@ -1452,43 +1459,43 @@ void deleteRecursive(String path)
   /***********************************/
 #ifdef SDFAT_LIB
   SdFile fileSD;
-	fileSD.open((char *)path.c_str(), O_RDONLY );
+  fileSD.open((char *)path.c_str(), O_RDONLY);
   if (!fileSD.isDir())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   File fileSD = SDHAL_SD.open((char *)path.c_str());
   if (!fileSD.isDirectory())
 #endif //SDFAT_LIB
   {
     fileSD.close();
     SDHAL_SD.remove((char *)path.c_str());
-		TRACE();
+    TRACE();
     return;
   }
 
 #ifdef SDFAT_LIB
   fileSD.rewind();
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   fileSD.rewindDirectory();
 #endif //SDFAT_LIB
   while (true)
   {
-		
+
 #ifdef SDFAT_LIB
     SdFile entry;
     if (!entry.openNext(&fileSD, O_RDONLY))
-#else //SDFAT_LIB
-   File entry = fileSD.openNextFile();
+#else  //SDFAT_LIB
+    File entry = fileSD.openNextFile();
     if (!entry)
 #endif //SDFAT_LIB
     {
       break;
     }
-#ifdef SDFAT_LIB		
- 	  char fBuffer[32];	
-		entry.getName(fBuffer,30);
+#ifdef SDFAT_LIB
+    char fBuffer[32];
+    entry.getName(fBuffer, 30);
     String entryPath = path + "/" + fBuffer;
     if (entry.isDir())
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
     String entryPath = path + "/" + entry.name();
     if (entry.isDirectory())
 #endif //SDFAT_LIB
@@ -1546,7 +1553,7 @@ void handleNotFound()
 #ifdef HAVE_SDCARD
 #ifdef SDFAT_LIB
 SdFile UpdateFile;
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
 File UpdateFile;
 #endif //SDFAT_LIB
 #endif
@@ -1621,12 +1628,10 @@ void handleFileUpdate() {
 	returnOK();
 }*/
 
-
-
 /***********************************/
 void handleFileUpdate()
 { // update ESP32
-/***********************************/
+  /***********************************/
   boolean tmpReturn = false;
 #ifdef WIFI_DEBUG
   SerialPort.println("handleFileUpdate");
@@ -1634,39 +1639,48 @@ void handleFileUpdate()
   SerialPort.println("File update begin");
 #endif //WIFI_DEBUG
 
-	HTTPUpload& upload = server.upload();
-	if (upload.status == UPLOAD_FILE_START) {
-		Serial.printf("Update: %s\n", upload.filename.c_str());
-		
-		if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
-			Update.printError(SerialPort);
-		}
-	} else if (upload.status == UPLOAD_FILE_WRITE) {
-		/* flashing firmware to ESP*/
-		if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-			Update.printError(SerialPort);
-		}
-	} else if (upload.status == UPLOAD_FILE_END) {
-		if (Update.end(true)) { //true to set the size to the current progress
-			Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-			
-			SerialPort.println("RESTART ESP32");
-			SerialPort.flush();
+  HTTPUpload &upload = server.upload();
+  if (upload.status == UPLOAD_FILE_START)
+  {
+    Serial.printf("Update: %s\n", upload.filename.c_str());
 
-			returnOK();
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+    { //start with max available size
+      Update.printError(SerialPort);
+    }
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE)
+  {
+    /* flashing firmware to ESP*/
+    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize)
+    {
+      Update.printError(SerialPort);
+    }
+  }
+  else if (upload.status == UPLOAD_FILE_END)
+  {
+    if (Update.end(true))
+    { //true to set the size to the current progress
+      Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
 
-			ESP_LOGI("GnuVario-E", "RESTART ESP32");
+      SerialPort.println("RESTART ESP32");
+      SerialPort.flush();
+
+      returnOK();
+
+      ESP_LOGI("GnuVario-E", "RESTART ESP32");
 #ifdef ENABLE_DISPLAY_WEBSERVER
-			screen.ScreenViewReboot();
+      screen.ScreenViewReboot();
 #endif
-			ESP.restart();
-		} else {
-			Update.printError(SerialPort);
-			return returnFail("could not update");
-		}
-	}
+      ESP.restart();
+    }
+    else
+    {
+      Update.printError(SerialPort);
+      return returnFail("could not update");
+    }
+  }
 }
-
 
 /*
   boolean tmpReturn = false;
@@ -1801,10 +1815,10 @@ void handleSaveParams()
   uint8_t buf[64];
 #ifdef SDFAT_LIB
   SdFile dataFile;
-	dataFile.open(path.c_str(), O_RDONLY);
+  dataFile.open(path.c_str(), O_RDONLY);
   SdFile dataFile2;
-	dataFile2.open(pathBak.c_str(), O_RDWR | O_CREAT);
-#else //SDFAT_LIB
+  dataFile2.open(pathBak.c_str(), O_RDWR | O_CREAT);
+#else  //SDFAT_LIB
   File dataFile = SDHAL_SD.open(path.c_str(), FILE_READ);
   File dataFile2 = SDHAL_SD.open(pathBak.c_str(), FILE_WRITE);
 #endif //SDFAT_LIB
@@ -1819,7 +1833,7 @@ void handleSaveParams()
 
 #ifdef SDFAT_LIB
   if (!dataFile.open(path.c_str(), O_RDWR | O_CREAT))
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   dataFile = SDHAL_SD.open(path.c_str(), FILE_WRITE);
 
   if (!dataFile)
@@ -1863,10 +1877,10 @@ void handleSaveWifi()
   uint8_t buf[64];
 #ifdef SDFAT_LIB
   SdFile dataFile;
-	dataFile.open(path.c_str(), O_RDONLY);
+  dataFile.open(path.c_str(), O_RDONLY);
   SdFile dataFile2;
-	dataFile2.open(pathBak.c_str(), O_RDWR | O_CREAT);
-#else //SDFAT_LIB
+  dataFile2.open(pathBak.c_str(), O_RDWR | O_CREAT);
+#else  //SDFAT_LIB
   File dataFile = SDHAL_SD.open(path.c_str(), FILE_READ);
   File dataFile2 = SDHAL_SD.open(pathBak.c_str(), FILE_WRITE);
 #endif //SDFAT_LIB
@@ -1881,7 +1895,7 @@ void handleSaveWifi()
 
 #ifdef SDFAT_LIB
   if (!dataFile.open(path.c_str(), O_RDWR | O_CREAT))
-#else //SDFAT_LIB
+#else  //SDFAT_LIB
   dataFile = SDHAL_SD.open(path.c_str(), FILE_WRITE);
 
   if (!dataFile)
