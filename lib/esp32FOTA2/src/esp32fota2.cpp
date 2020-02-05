@@ -39,6 +39,10 @@
 #include "ArduinoJson.h"
 #include <WiFiClientSecure.h>
 
+#ifdef HAVE_SDCARD
+#include <sdcardHAL.h>
+#endif
+
 // This is the root Certificate Authority that signed
 // the server certifcate for server https://github.com
 /*const char* rootCACertificate = \
@@ -138,17 +142,21 @@ void esp32FOTA2::execOTA()
     SerialPort.println("Connecting to: " + String(_host));
     // Connect to Webserver
     //    if (client.connect(_host.c_str(), _port))
+
+#ifdef HAVE_SDCARD
+    if (NB_WWW_FILES > 0)
+    {
+        downloadWwwFiles();
+    }
+#endif
+
     if (client.connect(_host.c_str(), _port))
     {
         // Connection Succeed.
         // Fecthing the bin
         SerialPort.println("Fetching Bin: " + String(_bin));
 
-        if (NB_WWW_FILES > 0)
-        {
-            downloadWwwFiles();
-        }
-
+        return;
         // Get the contents of the bin file
         client.print(String("GET ") + _bin + " HTTP/1.1\r\n" +
                      "Host: " + _host + "\r\n" +
@@ -308,7 +316,7 @@ void esp32FOTA2::execOTA()
 bool esp32FOTA2::execHTTPexist()
 //************************************
 {
-
+    TRACE();
     String useURL;
 
     if (useDeviceID)
@@ -448,7 +456,7 @@ bool esp32FOTA2::execHTTPSexist()
 uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
 //************************************
 {
-
+    TRACE();
     String useURL;
 
     if (useDeviceID)
@@ -532,6 +540,7 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
 
                 if (JSONDocumentUpdate.containsKey("www"))
                 {
+
 #ifdef WIFI_DEBUG
                     SerialPort.println("la section du fichier json contient la clé www");
 #endif
@@ -780,6 +789,7 @@ bool esp32FOTA2::forceUpdate(String firwmareHost, int firwmarePort, String firwm
 String esp32FOTA2::getHTTPVersion()
 //************************************
 {
+    TRACE();
     String output;
 
     output = "{\n";
@@ -837,13 +847,33 @@ String esp32FOTA2::getHTTPVersion()
 
 void esp32FOTA2::downloadWwwFiles()
 {
+    TRACE();
+
+#ifdef WIFI_DEBUG
+    SerialPort.println("[HTTP] Debut méthode downloadWwwFiles");
+#endif
+    // File system object.
+    SdFat sd;
+
+    // Directory file.
+    SdFile root;
+
+    String newPath = "wwwnew";
+    if (!sd.mkdir(newPath.c_str()))
+    {
+#ifdef WIFI_DEBUG
+        SerialPort.println("[HTTP] Impossible de créer le répertoire wwwnew");
+#endif
+        return;
+    }
+
     uint8_t i;
 
     for (i = 0; i < NB_WWW_FILES; i++)
     {
         //telechargement des fichiers 1 par un
         HTTPClient http;
-
+        String myfilename = newPath + "/" + _wwwfiles[i].substring(_wwwfiles[i].lastIndexOf("/") + 1);
         http.begin(_host.c_str(), _port, _wwwfiles[i]);
 
         // start connection and send HTTP header
@@ -859,6 +889,23 @@ void esp32FOTA2::downloadWwwFiles()
             if (httpCode == HTTP_CODE_OK)
             {
 
+                SdFile myFile;
+                boolean tmpReturn = false;
+                tmpReturn = myFile.open(myfilename.c_str(), O_WRONLY | O_CREAT);
+
+                if (!tmpReturn)
+                {
+#ifdef WIFI_DEBUG
+                    SerialPort.print("Impossible de créer le fichier : ");
+                    SerialPort.println(myfilename);
+#endif
+                    return;
+                }
+
+#ifdef WIFI_DEBUG
+                SerialPort.print("[HTTP] Début écriture");
+                SerialPort.println(myfilename);
+#endif
                 // get lenght of document (is -1 when Server sends no Content-Length header)
                 int len = http.getSize();
 
@@ -881,6 +928,8 @@ void esp32FOTA2::downloadWwwFiles()
 
                         // ICI l'ecriture dans le fichier
                         //USE_SERIAL.write(buff, c);
+                        myFile.write(buff, c);
+                        myFile.flush();
 
                         if (len > 0)
                         {
@@ -889,6 +938,12 @@ void esp32FOTA2::downloadWwwFiles()
                     }
                     delay(1);
                 }
+
+                myFile.close();
+#ifdef WIFI_DEBUG
+                SerialPort.print("[HTTP] Fin écriture");
+                SerialPort.println(myfilename);
+#endif
 
 #ifdef WIFI_DEBUG
                 SerialPort.println("[HTTP] connection closed or file end.");

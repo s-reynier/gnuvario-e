@@ -633,6 +633,10 @@ bool loadFromSdCard(String path)
   {
     dataType = "image/svg+xml";
   }
+  else if (path.endsWith(".igc"))
+  {
+    dataType = "text/plain";
+  }
 
 #ifdef HAVE_SDCARD
 
@@ -1319,6 +1323,8 @@ void handleUpgradeWeb()
 #ifdef WIFI_DEBUG
     SerialPort.println("############Update firmware########");
 #endif
+
+    returnOK();
     esp32FOTA.execOTA();
   }
   else
