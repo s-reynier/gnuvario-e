@@ -41,7 +41,9 @@
 /*    1.2.11 23/01/20   Ajout setClock()																				 */
 /*    1.2.12 25/01/20   Correction Upload                                        */
 /*                      Ajout HandleFirmwareVersion / HandleUpgradeWeb           */
-/*    1.2.13 27/01/20   Correction serveur.on handlefirmwareversion               */
+/*    1.2.13 27/01/20   Correction serveur.on handlefirwareversion               */
+/*    1.2.14 04/02/20   modif esp32FOTA.checkURL																 */
+/*                      Ajout écran d'infoi lors de l'update Internet            */
 /*                                                                               */
 /*********************************************************************************/
 
@@ -121,7 +123,7 @@ SdFile uploadFile;
 File uploadFile;
 #endif //SDFAT_LIB
 
-// #include "CSS.h"
+//#include "CSS.h"
 
 //************************************************************
 // DISPLAY SCREEN
@@ -249,8 +251,25 @@ boolean VarioWifiServer::begin(void)
   SerialPort.print("Serveur WEB : ");
   SerialPort.println(WEBSERVERTYPE);
 
+  /*		
+#ifdef ESP8266
+    SerialPort.print("Serveur WEB : ESP8266WebServer");
+#else
+#ifdef ESP32WEBSERVEUR 
+    SerialPort.println("Serveur WEB : ESP32WebServer");
+#elif defined(ESPASYNCWEBSERVER)
+    SerialPort.println("Serveur WEB : AsyncWebServer");
+#elif defined(ETHERNETWEBSERVER)
+    SerialPort.println("Serveur WEB : EthernetServer");
+#else //ESP32WEBSERVEUR
+    SerialPort.println("Serveur WEB : VarioWebServer");
+#endif //ESP32WEBSERVEUR
+#endif		*/
+
 #ifdef SDFAT_LIB
   SerialPort.print("Lib SDCard : SDFAT");
+#elif defined(MYSD_LIB)
+  SerialPort.print("Lib SDCard : MYSD");
 #else
   SerialPort.print("Lib SDCard : SD");
 #endif
@@ -259,7 +278,7 @@ boolean VarioWifiServer::begin(void)
 
   // Init URL web server
 
-  esp32FOTA.checkURL = "http://gnuvario-e.yj.fr/update/firmware.json";
+  esp32FOTA.checkURL = GnuSettings.URL_UPDATE; //"http://gnuvario-e.yj.fr/update/firmware.json";
   //esp32FOTA.checkURL = "http://192.168.1.66/fota/firmware.json";
 
   return true;
@@ -1163,7 +1182,6 @@ void handleFileDownload()
   {
     return returnFail("NO FILE");
   }
-
   server.sendHeader("Access-Control-Allow-Origin", "*");
   String dataType = "application/octet-stream";
 
@@ -1335,9 +1353,9 @@ void handleUpgradeWeb()
 }
 
 /*
-/***********************************
+// ***********************************
 void handleFileUpload() {
-/***********************************
+// ***********************************
 
 #ifdef WIFI_DEBUG
   SerialPort.println("handleFileUpload");
@@ -1569,9 +1587,9 @@ File UpdateFile;
 // Mise à jour OTA
 
 // upload d'un fichier dont le chemin + nom se trouve en param dans le nommage du fichier
-/***********************************
+/* **********************************
 void handleFileUpdate() {
-/***********************************
+/* **********************************
 
 #ifdef WIFI_DEBUG
   SerialPort.println("handleFileUpdate");
@@ -1639,8 +1657,8 @@ void handleFileUpdate() {
 /***********************************/
 void handleFileUpdate()
 { // update ESP32
-  /***********************************/
-  boolean tmpReturn = false;
+/***********************************/
+//  boolean tmpReturn = false;
 #ifdef WIFI_DEBUG
   SerialPort.println("handleFileUpdate");
 

@@ -12,7 +12,8 @@
  *                                                                               *
  *  version    Date     Description                                              *
  *    1.0    18/01/20                                                            *
- *    1.0.1  19/01/20   Ajout execHTTPexist et execHTTPSexist					 *
+ *    1.0.1  19/01/20   Ajout execHTTPexist et execHTTPSexist					 					 *
+ *    1.0.2  06/02/20   Ajout downloadWwwFiles()                                 *         
  *                                                                               *
  *********************************************************************************/
 
@@ -38,6 +39,8 @@
 #include <Update.h>
 #include "ArduinoJson.h"
 #include <WiFiClientSecure.h>
+
+#include <varioscreenGxEPD.h>
 
 #ifdef HAVE_SDCARD
 #include <sdcardHAL.h>
@@ -135,6 +138,9 @@ void esp32FOTA2::execOTA()
 {
 
     TRACE();
+
+    screen.ScreenViewReboot("Upgrade");
+
     WiFiClient client;
     int contentLength = 0;
     bool isValidContentType = false;
@@ -156,7 +162,6 @@ void esp32FOTA2::execOTA()
         // Fecthing the bin
         SerialPort.println("Fetching Bin: " + String(_bin));
 
-        return;
         // Get the contents of the bin file
         client.print(String("GET ") + _bin + " HTTP/1.1\r\n" +
                      "Host: " + _host + "\r\n" +
@@ -276,6 +281,7 @@ void esp32FOTA2::execOTA()
 #ifdef WIFI_DEBUG
                     SerialPort.println("Update successfully completed. Rebooting.");
 #endif
+                    screen.ScreenViewReboot();
                     ESP.restart();
                 }
                 else
@@ -845,7 +851,9 @@ String esp32FOTA2::getHTTPVersion()
     return output;
 }
 
+//************************************
 void esp32FOTA2::downloadWwwFiles()
+//************************************
 {
     TRACE();
 
@@ -853,13 +861,11 @@ void esp32FOTA2::downloadWwwFiles()
     SerialPort.println("[HTTP] Debut méthode downloadWwwFiles");
 #endif
     // File system object.
-    SdFat sd;
-
     // Directory file.
     SdFile root;
 
     String newPath = "wwwnew";
-    if (!sd.mkdir(newPath.c_str()))
+    if (!SDHAL_SD.mkdir(newPath.c_str()))
     {
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] Impossible de créer le répertoire wwwnew");
