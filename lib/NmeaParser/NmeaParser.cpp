@@ -348,3 +348,21 @@ String NmeaParser::getLatitude(void) {
 	return tmp;	
 }
 
+String NmeaParser::DegreesToDegMinSec(float x)
+{
+  int deg=x;
+  float minutesRemainder = abs(x - deg) * 60;
+  int arcMinutes = minutesRemainder;
+  float arcSeconds = (minutesRemainder - arcMinutes) * 60;
+#ifdef NMEAPARSER_DEBUG
+  SerialPort.print("Coordonnée : ");
+  SerialPort.print(deg);
+	SerialPort.print("*");
+  SerialPort.print(arcMinutes);
+	SerialPort.print("'");
+  SerialPort.print(arcSeconds,4);
+	SerialPort.print('"');
+  SerialPort.println();
+#endif //NMEAPARSER_DEBUG
+
+}

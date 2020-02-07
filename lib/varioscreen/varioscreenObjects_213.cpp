@@ -2400,4 +2400,4 @@ template<typename GxEPD2_Type, const uint16_t page_height> void GxEPD2_BW_U<GxEP
 }
 */
 
-#endif VARIOSCREEN_SIZE
+#endif //VARIOSCREEN_SIZE

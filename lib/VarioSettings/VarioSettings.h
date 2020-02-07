@@ -54,6 +54,7 @@
 /*    1.2.1 12/12/19    Ajout set get version et get screenmodel                 */ 
 /*    1.3.2 17/01/20    Ajout DISPLAY_STAT_DURATION - passage en v1.1 					 */
 /*    1.3.3 19/01/20    Ajout DEEPSLEEP_DEBUG                                    */
+/*    1.3.4 04/02/20    Ajout URL_UPDATE passage en version 1.2 de params.json   */
 /*                                                                               */
 /*********************************************************************************/
 
@@ -70,7 +71,7 @@
 #endif
 
 
-#define PARAMS_VERSION "1.1"
+#define PARAMS_VERSION "1.2"
 
 /*----------------------------*/
 /*          DEFAULT           */
@@ -123,6 +124,8 @@
 #define DEFAULT_VARIOMETER_SSID_4													"your_SSID4"
 #define DEFAULT_VARIOMETER_PASSWORD_4											"your_PASSWORD_for SSID4"
 
+#define DEFAULT_URL_UPDATE																"http://gnuvario-e.yj.fr/update/firmware.json"
+
 #define DEFAULT_VERTACCEL_GYRO_CAL_BIAS_00								0x00
 #define DEFAULT_VERTACCEL_GYRO_CAL_BIAS_01								0x00
 #define DEFAULT_VERTACCEL_GYRO_CAL_BIAS_02								0x00
@@ -159,7 +162,7 @@
 #define DEFAULT_SLEEP_THRESHOLD_CPS												0.5
 #define DEFAULT_ALTERNATE_DATA_DURATION										2000
 
-#define DEFAUT_DISPLAY_STAT_DURATION                      6
+#define DEFAULT_DISPLAY_STAT_DURATION                     6
 
   
 /*----------------------------*/
@@ -398,7 +401,9 @@ class VarioSettings {
 		float    SLEEP_THRESHOLD_CPS												= DEFAULT_SLEEP_THRESHOLD_CPS;
 		uint16_t ALTERNATE_DATA_DURATION										= DEFAULT_ALTERNATE_DATA_DURATION;
 		
-		uint8_t  DISPLAY_STAT_DURATION											= DEFAUT_DISPLAY_STAT_DURATION;
+		uint8_t  DISPLAY_STAT_DURATION											= DEFAULT_DISPLAY_STAT_DURATION;
+		
+		String   URL_UPDATE																	= DEFAULT_URL_UPDATE;
 		
  protected:
 #ifdef HAVE_SDCARD

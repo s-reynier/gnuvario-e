@@ -22,7 +22,7 @@
 
 #include <Arduino.h>
 
-void kalmanvert::init(double startp, double starta, double sigmap, double sigmaa, unsigned long timestamp) {
+void Kalmanvert::init(double startp, double starta, double sigmap, double sigmaa, unsigned long timestamp) {
 
   /* init base values */
   p = startp;
@@ -42,7 +42,7 @@ void kalmanvert::init(double startp, double starta, double sigmap, double sigmaa
   p22 = 0;
 }
 
-void kalmanvert::update(double mp, double ma, unsigned long timestamp) {
+void Kalmanvert::update(double mp, double ma, unsigned long timestamp) {
 
   /**************/
   /* delta time */
@@ -95,32 +95,32 @@ void kalmanvert::update(double mp, double ma, unsigned long timestamp) {
  
 }
 
-double kalmanvert::getPosition() {
+double Kalmanvert::getPosition() {
 
   return p;
 }
 
-double kalmanvert::getCalibratedPosition() {
+double Kalmanvert::getCalibratedPosition() {
 
   return (p + calibrationDrift);
 }
 
-double kalmanvert::getVelocity() {
+double Kalmanvert::getVelocity() {
 
   return v;
 }
 
-double kalmanvert::getAcceleration() {
+double Kalmanvert::getAcceleration() {
 
   return a;
 }
 
-unsigned long kalmanvert::getTimestamp() {
+unsigned long Kalmanvert::getTimestamp() {
 
   return t;
 }
 
-void kalmanvert::calibratePosition(double newPosition) {
+void Kalmanvert::calibratePosition(double newPosition) {
 
   calibrationDrift = newPosition - p;
 }

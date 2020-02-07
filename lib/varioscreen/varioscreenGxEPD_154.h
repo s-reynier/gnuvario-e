@@ -34,6 +34,7 @@
  *                      Modif effacement de zone +1 à gauche et +3 pour vitesse  *
  *    1.0.6  17/01/20   Desactivation effacement ligne 1427                      *
  *    1.0.7  20/01/20   Modif ScreenViewReboot																	 *
+ *    1.0.8  28/01/20   Modification écran 1 - ajout info gps                    *
  *                                                                               *
  *********************************************************************************/
 
@@ -187,12 +188,17 @@ class VarioScreen {
 	
 //object page 1  	
 	
-	ScreenDigit*  tempDigit; 	
-	TUnit* tunit;
-		
+//	ScreenDigit*  tempDigit; 	
+//	TUnit* tunit;
+	ScreenText*   gpsLatDir;
+	ScreenText*   gpsLongDir;
+	ScreenText*   gpsBearingText;
+	ScreenDigit*  gpsLat; 
+	ScreenDigit*  gpsLong; 
+	ScreenDigit*  gpsBearing;
 	
 //  ScreenSchedulerObject* displayList;
-	ScreenSchedulerObject displayList[30];  //17];
+	ScreenSchedulerObject displayList[40];  //17];
 	ScreenScheduler* schedulerScreen; 
 	uint8_t MaxObjectList = 0;
 	

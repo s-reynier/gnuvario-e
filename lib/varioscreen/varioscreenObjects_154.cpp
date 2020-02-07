@@ -54,6 +54,10 @@
  *                      Ajout affichage ou pas des titres                        *
  *    1.1.4  14/10/19   Modification affichage titre champs screendigit          *
  *    1.1.5  15/10/19   Modification affichage des satellites                    *
+ *    1.1.6  03/11/19		Modification d'TUnit																		 *
+ *    1.1.7  28/01/20   Correction leftAlign                                     *
+ *                      Ajout ALIGNCENTER                                        *
+ *                      Ajout Objet ScreenText                                   *
  *                                                                               *
  *********************************************************************************/
  
@@ -74,7 +78,7 @@
 #include <varioscreenObjects_154.h>
 
 #if defined(ESP32)
-static const char* TAG = "VarioScreen";
+//static const char* TAG = "VarioScreen";
 #include "esp_log.h"
 #endif //ESP32
 
@@ -141,8 +145,13 @@ static const char* TAG = "VarioScreen";
 #define VARIOSCREEN_DOT_WIDTH 6
 #define VARIOSCREEN_DIGIT_WIDTH 11
 
+#ifndef ColorScreen
 #define ColorScreen    GxEPD_WHITE
+#endif
+
+#ifndef ColorText
 #define ColorText      GxEPD_BLACK
+#endif
 
 //***********************
 //     GxEPD2_BW_U  
@@ -333,8 +342,8 @@ void VarioScreenObject::reset(void) {
 
 
 //****************************************************************************************************************************
-ScreenDigit::ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uint16_t precision, boolean plusDisplay, boolean zero, boolean leftAlign, boolean showtitle, int8_t displayTypeID) 
-   : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), precision(precision), plusDisplay(plusDisplay), zero(zero), leftAlign(leftAlign), showtitle(showtitle), displayTypeID(displayTypeID) { 
+ScreenDigit::ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uint16_t precision, boolean plusDisplay, boolean zero, int8_t Align, boolean showtitle, int8_t displayTypeID) 
+   : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), precision(precision), plusDisplay(plusDisplay), zero(zero), Align(Align), showtitle(showtitle), displayTypeID(displayTypeID) { 
 //****************************************************************************************************************************
   lastDisplayWidth = 0; 
 
@@ -444,6 +453,33 @@ ScreenDigit::ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uin
 		case DISPLAY_OBJECT_RATIO :
 #if defined (MAXW_OBJECT_RATION)		
 		  MaxWidth   = MAXW_OBJECT_RATION;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
+
+		case DISPLAY_OBJECT_LAT :
+#if defined (MAXW_OBJECT_LAT)		
+		  MaxWidth   = MAXW_OBJECT_LAT;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
+
+		case DISPLAY_OBJECT_LONG :
+#if defined (MAXW_OBJECT_LONG)		
+		  MaxWidth   = MAXW_OBJECT_LONG;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
+
+		case DISPLAY_OBJECT_BEARING :
+#if defined (MAXW_OBJECT_LONG)		
+		  MaxWidth   = MAXW_OBJECT_BEARING;
 #else
 		  MaxWidth   = Zwidth;
 #endif	
@@ -628,13 +664,13 @@ void ScreenDigit::show() {
   display.setFont(&FreeSansBold12pt7b);
   display.setTextSize(2);
 
-  int16_t box_x = anchorX;
+//  int16_t box_x = anchorX;
   int16_t box_y = anchorY;
   uint16_t w, h, w1, h1;
   int16_t box_w, box_w1; 
   int16_t box_h, box_h1; 
 	int16_t titleX, titleY;
-	int tmpWidth;
+//	int tmpWidth;
 
 	dtostrf2(999999.999,width,precision,tmpChar,zero);
   dtostrf2(value,width,precision,digitCharacters,zero);
@@ -646,8 +682,8 @@ void ScreenDigit::show() {
   SerialPort.print("digit oldvalue : ");
   SerialPort.println(oldvalue);
   
-  if (leftAlign) SerialPort.println("leftAlign");
-  else 			 SerialPort.println("rightAlign");
+  if (Align == ALIGNLEFT) 	SerialPort.println("leftAlign");
+  else 										 	SerialPort.println("rightAlign");
 	  
   SerialPort.print(digitCharacters);
   SerialPort.print("-- X : ");
@@ -675,7 +711,7 @@ void ScreenDigit::show() {
 #endif //SCREEN_DEBUG
 
 	
-  if (leftAlign) {
+  if (Align == ALIGNLEFT) {
 	
 #ifdef SCREEN_DEBUG
 			SerialPort.println("left align");
@@ -990,6 +1026,277 @@ void ScreenDigit::show() {
 }
 */
 
+
+
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+//				ScreenText
+//****************************************************************************************************************************
+//****************************************************************************************************************************
+
+
+
+//****************************************************************************************************************************
+ScreenText::ScreenText(uint16_t anchorX, uint16_t anchorY, uint16_t width, bool large, int8_t Align, boolean showtitle, int8_t displayTypeID) 
+   : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), large(large), Align(Align), showtitle(showtitle), displayTypeID(displayTypeID) { 
+//****************************************************************************************************************************
+  lastDisplayWidth = 0; 
+
+  display.setFont(&FreeSansBold12pt7b);
+	if (large) display.setTextSize(2);
+
+//  int16_t box_x = anchorX;
+//  int16_t box_y = anchorY;
+//  uint16_t w, h;
+//  int16_t box_w, box_h; 
+
+#if defined(ESP32)
+	ESP_LOGI(TAG, "ScreenText constructeur");
+//  ESP_LOGE(TAG, "Failed to initialize the card (%d). Make sure SD card lines have pull-up resistors in place.", ret);
+#endif //ESP32
+
+
+#ifdef SCREEN_DEBUG	  
+  SerialPort.print("Constructeur ScreenText : ");
+  SerialPort.print("-- X : ");
+  SerialPort.print(box_x);
+  SerialPort.print("-- Y: ");
+  SerialPort.print(box_y);
+  SerialPort.print("-- width : ");
+  SerialPort.print(width);
+#endif //SCREEN_DEBUG
+  
+	
+//Calcul le nombre de caractère maximum affichable
+
+	int tmpwidth = 0 ;
+	
+	if (Align == ALIGNLEFT) {
+		tmpwidth = display.width() - anchorX;
+	}
+	else if (Align == ALIGNRIGHT) {
+  	tmpwidth = anchorX - display.width();
+	}
+	else {
+	}
+
+	if (tmpwidth < 0) tmpwidth = 0;
+	
+	float tmpcar;
+	int   carwidth;
+	if (large) carwidth = 14;
+	else       carwidth = 7;
+		
+	tmpcar = tmpwidth / carwidth;
+
+  if (width > int(tmpcar))  {
+		Zwidth = int(tmpcar) * carwidth;
+		width    = int(tmpcar);
+	}	else {
+		Zwidth = width * carwidth;
+	}
+	
+	if (large) Zheight  = 24+6;
+	else       Zheight  = 12+3;
+		
+    switch (displayTypeID) {
+		case DISPLAY_OBJECT_BEARING_TEXT :
+#if defined (MAXW_OBJECT_BEARING)		
+		  MaxWidth   = MAXW_OBJECT_BEARING_TEXT;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
+			
+		case DISPLAY_OBJECT_LAT_DIR :
+#if defined (MAXW_OBJECT_LAT_DIR)		
+		  MaxWidth   = MAXW_OBJECT_LAT_DIR;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
+			
+		case DISPLAY_OBJECT_LONG_DIR :
+#if defined (MAXW_OBJECT_LONG_DIR)		
+		  MaxWidth   = MAXW_OBJECT_LONG_DIR;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
+			
+		default :
+		  MaxWidth   = Zwidth;
+			MaxHeight  = Zheight;
+			break;
+		}
+}
+
+//****************************************************************************************************************************
+void ScreenText::setValue(String Value) {
+//****************************************************************************************************************************
+
+#ifdef SCREEN_DEBUG
+	SerialPort.println("ScreenText : setValue");	
+	SerialPort.print("Value = ");	
+	SerialPort.println(Value);	
+#endif //SCREEN_DEBUG
+
+  if (Value != oldvalue) {
+    /* build digit and check changes */
+    oldvalue=value;
+    value=Value;
+//    reset();
+	}
+  reset();
+}
+ 
+
+//****************************************************************************************************************************
+void ScreenText::show() {
+//****************************************************************************************************************************
+
+  /***************/
+  /* build digit */
+  /***************/
+
+#ifdef SCREEN_DEBUG
+	SerialPort.println("Show : ScreenText");	
+#endif //SCREEN_DEBUG
+	
+  //normalise value
+//  char digitCharacters[MAX_CHAR_IN_LINE];
+//	char tmpChar[MAX_CHAR_IN_LINE];
+   
+  display.setFont(&FreeSansBold12pt7b);
+  display.setTextSize(2);
+
+//  int16_t box_x = anchorX;
+//  int16_t box_y = anchorY;
+//  uint16_t w, h, w1, h1;
+//  int16_t box_w, box_w1; 
+//  int16_t box_h, box_h1; 
+	int16_t titleX, titleY;
+//	int tmpWidth;
+
+/*	dtostrf2(999999.999,width,precision,tmpChar,zero);
+  dtostrf2(value,width,precision,digitCharacters,zero);
+
+#ifdef SCREEN_DEBUG
+  SerialPort.print("digit value : ");
+  SerialPort.println(value);
+
+  SerialPort.print("digit oldvalue : ");
+  SerialPort.println(oldvalue);
+  
+  if (Align == ALIGNLEFT) 	SerialPort.println("leftAlign");
+  else 										 	SerialPort.println("rightAlign");
+	  
+  SerialPort.print(digitCharacters);
+  SerialPort.print("-- X : ");
+  SerialPort.print(box_x);
+  SerialPort.print("-- Y: ");
+  SerialPort.print(box_y);
+  SerialPort.print("-- width : ");
+  SerialPort.print(width);
+  SerialPort.print("-- precision :  ");
+  SerialPort.println(precision);
+	SerialPort.print("Zwidth : ");
+	SerialPort.println(Zwidth);
+	SerialPort.print("Zheight : ");
+	SerialPort.println(Zheight);
+#endif //SCREEN_DEBUG
+  
+  display.getTextBounds(tmpChar, 0, box_y, &box_w, &box_h, &w, &h);
+  display.getTextBounds(digitCharacters, 0, box_y, &box_w1, &box_h1, &w1, &h1);
+    
+#ifdef SCREEN_DEBUG
+  SerialPort.print("W : ");
+  SerialPort.println(w);
+  SerialPort.print("H : ");
+  SerialPort.println(h);
+#endif //SCREEN_DEBUG
+
+	
+  if (Align == ALIGNLEFT) {
+	
+#ifdef SCREEN_DEBUG
+			SerialPort.println("left align");
+#endif //SCREEN_DEBUG
+	
+		if ((anchorX+w+2) > display.width()) w = display.width()-anchorX+2;
+
+		display.fillRect(anchorX, anchorY-Zheight-3, w+5, Zheight+4, GxEPD_WHITE);
+
+//		display.drawRect(anchorX, anchorY-Zheight-3, w+5, Zheight+4, GxEPD_BLACK);
+	  
+    display.setCursor(anchorX, anchorY-1);
+		titleX = anchorX + 4;
+		titleY = anchorY - MaxHeight - 5; 
+    display.print(digitCharacters);
+				
+	} else {
+
+#ifdef SCREEN_DEBUG
+			SerialPort.println("right align");
+#endif //SCREEN_DEBUG
+			
+		if ((anchorX-w+2) < 0) w = anchorX - 2;
+
+#ifdef SCREEN_DEBUG
+		SerialPort.print("anchorX : ");
+		SerialPort.println(anchorX);
+		SerialPort.print("W : ");
+		SerialPort.println(w);
+#endif //SCREEN_DEBUG
+	
+//		display.fillRect(anchorX-w-2, anchorY-Zheight-3, w+6, Zheight+4, GxEPD_WHITE);
+	
+		display.fillRect(anchorX-MaxWidth-1, anchorY-MaxHeight-3, MaxWidth+5, MaxHeight+6, GxEPD_WHITE);
+
+//		display.drawRect(anchorX-MaxWidth-1, anchorY-MaxHeight-3, MaxWidth+3, MaxHeight+6, GxEPD_BLACK);
+
+    display.setCursor(anchorX-w1-2, anchorY-1);
+		titleX = anchorX - MaxWidth;
+		titleY = anchorY - MaxHeight - 5; 		
+    display.print(digitCharacters);
+	}*/
+ 
+  if (Align == ALIGNLEFT) {
+		display.fillRect(anchorX-1, anchorY-MaxHeight-6, MaxWidth+4, MaxHeight+10, GxEPD_WHITE);
+		//display.drawRect(anchorX-1, anchorY-MaxHeight-6, MaxWidth+4, MaxHeight+10, GxEPD_BLACK);
+		display.setCursor(anchorX, anchorY);
+		titleX = anchorX + 4;
+		titleY = anchorY - MaxHeight - 5; 
+    display.print(value.substring(0,width));
+	}
+	else if (Align == ALIGNRIGHT) {
+	}
+	else {
+	}
+		
+ /*  Affiche titre */
+ 
+  if (showtitle) {
+		
+    switch (displayTypeID) {
+		case DISPLAY_OBJECT_LAT :
+//			display.drawInvertedBitmap(titleX+2, titleY-14, lattext, 41, 14, GxEPD_BLACK);
+			break;
+		case DISPLAY_OBJECT_LONG :
+//			display.drawInvertedBitmap(titleX, titleY-14, longtext, 29, 11, GxEPD_BLACK);
+			break;
+		default :
+			break;
+		}
+	}
+
+}
+
+
+
 //****************************************************************************************************************************
 //****************************************************************************************************************************
 //				MUnit
@@ -1224,12 +1531,12 @@ void TUnit::show() {
   SerialPort.println("Show : TUnit");
 #endif //SCREEN_DEBUG
 
-/*  display.setFont(&FreeSansBold9pt7b);
+  display.setFont(&FreeSansBold9pt7b);
   display.setTextSize(2);
   display.setCursor(posX, posY);
-  display.print('C');*/
-  display.drawInvertedBitmap(posX, posY-20, temp, 21, 17, GxEPD_BLACK);
-  display.drawInvertedBitmap(posX-120, posY-40, thermo, 48, 48, GxEPD_BLACK);	
+  display.print('C');
+//  display.drawInvertedBitmap(posX, posY-20, temp, 21, 17, GxEPD_BLACK);
+//  display.drawInvertedBitmap(posX-80, posY-40, thermo, 48, 48, GxEPD_BLACK);	
 }
 
 //****************************************************************************************************************************
@@ -2286,7 +2593,7 @@ void WIND::show() {
 
 //****************************************************************************************************************************
 void WIND::toDisplay() {
-//****************************************************************************************************************************
+// ****************************************************************************************************************************
     reset();
 }
 
@@ -2296,7 +2603,7 @@ const unsigned char separationlineicon[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-//****************************************************************************************************************************
+// ****************************************************************************************************************************
 void SeparationLine::show() {
 	#ifdef SCREEN_DEBUG
   SerialPort.println("Show : KmHUnit");
@@ -2304,9 +2611,9 @@ void SeparationLine::show() {
 display.fillRect(posX, posY, 64, 1, GxEPD_WHITE);
 display.drawInvertedBitmap(posX, posY, separationlineicon, 64, 1, GxEPD_BLACK);
 };
-//****************************************************************************************************************************
+// ****************************************************************************************************************************
 void SeparationLine::toDisplay() {
-//****************************************************************************************************************************
+// ****************************************************************************************************************************
    reset();
 }
 */
@@ -2445,4 +2752,4 @@ template<typename GxEPD2_Type, const uint16_t page_height> void GxEPD2_BW_U<GxEP
 }
 */
 
-#endif VARIOSCREEN_SIZE
+#endif //VARIOSCREEN_SIZE

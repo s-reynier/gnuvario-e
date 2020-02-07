@@ -124,6 +124,7 @@ class NmeaParser {
   bool isParsingRMC(void);
   bool isParsingGGA(void);
 	String Bearing_to_Ordinal(float bearing);
+	String DegreesToDegMinSec(float x);
 
  private :
   uint16_t state;

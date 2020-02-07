@@ -69,7 +69,7 @@ uint8_t GPSSentence::begin(double baroAlti) {
   return 'B';
 }
 
-void GPSSentence::writePosition(kalmanvert kalmanvert) {
+void GPSSentence::writePosition(Kalmanvert kalmanvert) {
 #ifdef HAVE_SDCARD
 	
 #ifdef SDCARD_DEBUG
@@ -280,7 +280,7 @@ void GPSSentence::CreateIgcFile(uint8_t* dateNum, boolean noRecord) {
         SerialPort.println("");
         SerialPort.print("Write date to IgcFile : ");
 #endif //SDCARD_DEBUG          
-        /* write date : DDMMYY *
+        // * write date : DDMMYY *
         uint8_t* dateCharP = &dateChar[4];
         for(int i=0; i<3; i++) {
           fileIgc.write(char(dateCharP[0]));

@@ -272,12 +272,19 @@ SimpleBLE ble;
 *                                    Ajout de la configuration du delai de la page stat de démarrage  *
 *                                    Ajout librairie Esp32Fota                                        *
 *                                    Ajout décodage lat / long GPS                                    *
+*                                    Ajout écran d'info lors de l'upgrade via la sdcard               *
+* v0.7  beta 8  31/01/20             Correction mise à jour via internet                              *
+*                                    Passage à la librairie varioWebserver                            *
+*                                    Ajout de la barre de status sur l'écran 2                        *
+*                                    Ajout Affichage de l'altitude, cap, longitude et latitude sur    *
+*                                    l'écran 2                                                        *
+*                                    Amélioration de la page de vol (serveur Web)                     *
+*                                    Ajout écran info lors de l'update via internet                   *
+*                                    Nettoyage des librairie et compatibilité avec vscode             *
+*                                    Ajout Update via site Internet                                   *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
-*                                                                                                     *
-* V0.5                                                                                                *    
-* voir réactivité des données GPS                                                                     *
 *                                                                                                     *
 * v0.6                                                                                                *   
 * MODIF - Refaire gestion Eeprom avec preference                                                      *
@@ -287,14 +294,20 @@ SimpleBLE ble;
 *                                                                                                     *
 * v0.7                                                                                                *
 * BUG   - Affichage barres GPS - problème de raffraichissement                                        *
-* AJOUT - Update via internet                                                                         *
+* BUG   - upload wifi - ne se termine pas  - bug espressif le buffer n'est pas vidé à la fin          *
+* BUG   - update manuelle - doit être lancée 2 fois                                                   *
+* AJOUT - Récupération du cap depuis le capteur baromètrique                                          *
+* AJOUT - Mise à jour site web embarqué via Internet                                                  *
+* BUG   - Seuil de monté et de descente                                                               *  
+* MODIF - refaire écran 2                                                                             *
+* BUG   - Altitude fix GPS                                                                            * 
 *                                                                                                     *
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
 * Gérer le son via le DAC                                                                             *
 * revoir volume du son ToneESP32                                                                      *
 * Refaire gestion du son (parametrage via xctracer)                                                   *
-* Ecran position afficher les coordonées GPS, la boussole, et l'altitude                              *                                                                       
+* Boussole graphique                                                                                  *                                                                       
 * Création dynamique des objets screen                                                                *
 * Sens et vitesse du vent                                                                             *
 * Carnet de vol (10 derniers vols)                                                                    *
@@ -349,21 +362,26 @@ SimpleBLE ble;
  * - 3 fichiers de paramètrage params.jso, wifi.cfg, variocal.cfg       *  
  * - Gestion automatique de la mise à jour du fichier params.jso en cas *
  *   d'ajout ou de suppréssion de champs                                *
- *   Mise en veille en cas d'inactivité, paramètrable - 0 infini        *
+ * - Mise en veille en cas d'inactivité, paramètrable - 0 infini        *
  *                                                                      *
  * Version 0.7                                                          *                                                                     
- *   Ajout de fichiers de log                                           *
+ * - Ajout de fichiers de log                                           *
+ * - Ajout configuration du delai d'affichage de l'écran de stat au     *
+ *   démmarage                                                          *
+ * - Ajout Update via internet                                          *
+ * - Ajout affichage du cap, longitude, latitude                        *
+ *                                                                      *
  ************************************************************************
  
-*************************************************************************
+/************************************************************************
 *                          Recommandation                               *    
  *                                                                      *
  * Dans DebugConfig.h commanter #define ENABLE_DEBUG pour desactiver    *                                                                      
  *                    les message de debug et éviter certains           *
  *                    ralentissements                                   *
- ************************************************************************
+ ************************************************************************/
 
-*************************************************************************
+/************************************************************************
 *                        Compilation                                    *
 *                                                                       *
 * Le code du Gnuvario-E est prévu pour fonctionner sur une board TTGO-T5*
@@ -379,9 +397,9 @@ SimpleBLE ble;
 * Type de carte    : ESP32 dev Module                                   *
 * CPU frequency    : 240Mhz                                             *
 * Partition scheme : Minimal SPIFFS (1.9Mb APP with OTA / 190kb spiffs) *
-*************************************************************************
+*************************************************************************/
 
-*************************************************************************
+/************************************************************************
 *               Fichiers de configuration                               *
 *                                                                       *
 * params.jso               parametres utilisateur                       *
@@ -395,9 +413,9 @@ SimpleBLE ble;
 * DebugConfig.h            parametre de debuggage                       *
 * VarioSettings.h          parametres par defaut (utilisé si il n'y a   *
 *                          pas de SDcard ou de fichier params.jso       *
-*************************************************************************
+*************************************************************************/
 
-************************************************************************
+/***********************************************************************
 *               arborescence de la SDCARD                              *
 *                                                                      *
 *               /                                                      *
@@ -416,16 +434,16 @@ SimpleBLE ble;
 *                       INDEXB.JS                                      *
 *                       INDEXB~1.MAP                                   *
 *                                                                      *
-************************************************************************
+************************************************************************/
 
-***************************************************************************************************************
+/**************************************************************************************************************
  *              Liens utiles                                                                                  *
  *                                                                                                            *
  * https://learn.sparkfun.com/tutorials/9dof-razor-imu-m0-hookup-guide/all#libraries-and-example-firmware     *        
  *                                                                                                            *
- **************************************************************************************************************
+ **************************************************************************************************************/
 
- **************************************************************************************************************
+ /*************************************************************************************************************
   *                                                                                                           *
   *                                            UTILISATION DES TOUCHES                                        *                                                                                       
   *   Ecran         Touche      Fonction                                                                      *
@@ -523,7 +541,7 @@ Vertaccel vertaccel;
 #define ACCELERATION_MEASURE_STANDARD_DEVIATION 0.6
 #endif //HAVE_ACCELEROMETER 
 
-kalmanvert kalmanvert;
+Kalmanvert kalmanvert;
 
 /**********************/
 /* SDCARD objects     */
@@ -588,9 +606,23 @@ VarioStat flystat;
 #ifdef HAVE_WIFI 
 String webpage = "";
 
-
-WiFiMulti wifiMulti;
-VarioWebServer server(80);
+#ifdef ESP8266
+  ESP8266WiFiMulti wifiMulti; 
+  ESP8266WebServer server(80);
+#else
+  WiFiMulti wifiMulti;
+#ifdef ESP32WEBSERVEUR 
+  VarioESP32WebServer server(80);
+#elif defined(ESPASYNCWEBSERVER)
+  AsyncWebServer server(80); 
+#elif defined(ETHERNETWEBSERVER)
+  EthernetServer server(80); 
+#elif defined(ESPRESSIFWEBSERVEUR)
+  WebServer server(80);    
+#else //ESP32WEBSERVEUR
+  VarioWebServer server(80);
+#endif //ESP32WEBSERVEUR
+#endif
 
 esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION , BETA_CODE);   //esp32-fota-http", 0,6,0);
 
@@ -598,11 +630,9 @@ esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION
 
 
 
-/*
-************************************************
+/*************************************************
 Internal TEMPERATURE Sensor
-************************************************
-*/
+/*************************************************
 
 /* 
  *  https://circuits4you.com
@@ -699,9 +729,9 @@ void setup() {
 
 ///  while (!SerialPort) { ;}
   char tmpbuffer[100];
-  sprintf(tmpbuffer,"GNUVARIO compiled on %s", __DATE__); // at %s", __DATE__, __TIME__);
+  sprintf(tmpbuffer,"GNUVARIO compiled on %s\0", __DATE__); // at %s", __DATE__, __TIME__);
   SerialPort.println(tmpbuffer);
-  sprintf(tmpbuffer,"VERSION %i.%i - %s", VERSION,SUB_VERSION,DEVNAME); 
+  sprintf(tmpbuffer,"VERSION %i.%i - %s\0", VERSION,SUB_VERSION,DEVNAME); 
   SerialPort.println(tmpbuffer);
   if (BETA_CODE > 0) {
     SerialPort.print("Beta ");
@@ -761,8 +791,7 @@ void setup() {
     GnuSettings.setVersion(VERSION, SUB_VERSION, BETA_CODE);
 
     SerialPort.println("Chargement des parametres depuis le fichier params.jso");
-    char fichier[] = "params.jso";
-    GnuSettings.loadConfigurationVario(fichier);
+    GnuSettings.loadConfigurationVario("params.jso");
     
 #ifdef SDCARD_DEBUG
    //Debuuging Printing
@@ -918,14 +947,6 @@ void setup() {
 
   INFOLOG(tmpStr);
   TRACELOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG);
-
-/********************/
-/** Update Firmware */
-/********************/
- 
-#ifdef HAVE_SDCARD
-  updateFromSDCARD();
-#endif //HAVE_SDCARD
   
   /***************/
   /* init screen */
@@ -944,6 +965,15 @@ void setup() {
   screen.createScreenObjects();
   screen.begin();
 #endif
+
+/********************/
+/** Update Firmware */
+/********************/
+ 
+#ifdef HAVE_SDCARD
+  updateFromSDCARD();
+#endif //HAVE_SDCARD
+
 
   /***************/
   /* init button */
@@ -1433,8 +1463,8 @@ void loop() {
 #endif //HAVE_ACCELEROMETER
   
     if (displayLowUpdateState) {
-      screen.tempDigit->setValue(tmpTemp);
-      screen.tunit->toDisplay();
+//      screen.tempDigit->setValue(tmpTemp);
+//      screen.tunit->toDisplay();
     }
 
 //**********************************************************
@@ -2095,15 +2125,19 @@ void loop() {
     
     if (nmeaParser.haveBearing()) {
 
-      double bearing = nmeaParser.getBearing();
+      double bearing    = nmeaParser.getBearing();
+      String bearingStr = nmeaParser.Bearing_to_Ordinal(bearing);
 #ifdef PROG_DEBUG
       SerialPort.print("Compas : ");
       SerialPort.print(bearing);
       SerialPort.print(" - ");
-      SerialPort.print(nmeaParser.Bearing_to_Ordinal(bearing));
+      SerialPort.print(bearingStr);
 #endif //PROG_DEBUG     
       DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, bearing);
-      DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, nmeaParser.Bearing_to_Ordinal(bearing));
+      DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, bearingStr);
+
+     screen.gpsBearing->setValue(bearing); 
+     screen.gpsBearingText->setValue(bearingStr); 
     }
 
     if (nmeaParser.haveLongitude()) {
@@ -2114,6 +2148,9 @@ void loop() {
       SerialPort.print(longitude);
 #endif //PROG_DEBUG     
       DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, longitude);
+
+      screen.gpsLongDir->setValue(String(nmeaParser.getLongDir()));
+      screen.gpsLong->setValue(nmeaParser.getLong());
     }
 
     if (nmeaParser.haveLatitude()) {
@@ -2124,6 +2161,8 @@ void loop() {
       SerialPort.print(latitude);
 #endif //PROG_DEBUG     
       DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, latitude);
+      screen.gpsLatDir->setValue(String(nmeaParser.getLatDir()));
+      screen.gpsLat->setValue(nmeaParser.getLat());
     }
    
   }

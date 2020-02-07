@@ -1,4 +1,4 @@
-/* varioscreenGxEPD_29 -- 
+/* varioscreenGxEPD_290 -- 
  *
  * Copyright 2019 Jean-philippe GOI / Pierre FRANCIA
  * 
@@ -22,7 +22,7 @@
  *********************************************************************************
  *********************************************************************************
  *                                                                               *
- *                           VarioScreenGxEPD_29                                 *
+ *                           VarioScreenGxEPD_290                                *
  *                               Ecran 2.90''                                    *
  *                                                                               *
  *  version    Date     Description                                              *
@@ -35,8 +35,9 @@
  *		1.0.5	 11/01/20		Modif ScreenViewPage																		 *
  *                      VARIOSCREEN_SIZE == 290                                  *
  *    1.0.6  17/01/20   Desactivation effacement ligne 1534											 *
- *    1.0.7  18/01/20   Modif  ScreenViewMessage                                                                        *
-*                                                                               *
+ *    1.0.7  18/01/20   Modif  ScreenViewMessage                                 *
+ *    1.0.8  28/01/20   Modification écran 1 - ajout info gps                    *
+ *    1.0.9  03/02/20   changement de nom passage de 29 à 290                    *
 *********************************************************************************/
  
  /*
@@ -52,9 +53,9 @@
 
 #if (VARIOSCREEN_SIZE == 290)
 
-#include <varioscreenObjects_29.h>
+#include <varioscreenObjects_290.h>
 
-#include <varioscreenGxEPD_29.h>
+#include <varioscreenGxEPD_290.h>
 #include <Arduino.h>
 
 #if defined(ESP32)
@@ -70,12 +71,14 @@ static const char* TAG = "VarioScreen";
 #include <VarioButton.h>
 
 #include <imglib/gridicons_sync.h>
-#include <varioscreenIcone_29.h>
+#include <varioscreenIcone_290.h>
 
 #include <VarioSettings.h>
 #include <toneHAL.h>
 
 #include <Utility.h>
+
+#include <SysCall.h>
 
 #ifdef __AVR__
   #include <avr/pgmspace.h>
@@ -139,6 +142,7 @@ volatile uint8_t stateMulti = 0;
 #define VARIOSCREEN_ALTI_ANCHOR_Y 40
 #define VARIOSCREEN_ALTI_UNIT_ANCHOR_X    95
 #define VARIOSCREEN_VARIO_ANCHOR_X 65
+
 #define VARIOSCREEN_VARIO_ANCHOR_Y 80
 #define VARIOSCREEN_VARIO_UNIT_ANCHOR_X 75
 #define VARIOSCREEN_VARIO_UNIT_ANCHOR_Y   55
@@ -179,6 +183,14 @@ volatile uint8_t stateMulti = 0;
 #define VARIOSCREEN_TEMP_ANCHOR_X 110
 #define VARIOSCREEN_TEMP_ANCHOR_Y 70
 #define VARIOSCREEN_TEMP_UNIT_ANCHOR_X 30
+#define VARIOSCREEN_LONG_ANCHOR_X 150
+#define VARIOSCREEN_LONGDIR_ANCHOR_X 165
+#define VARIOSCREEN_LONG_ANCHOR_Y 135
+#define VARIOSCREEN_LAT_ANCHOR_X 150
+#define VARIOSCREEN_LATDIR_ANCHOR_X 165
+#define VARIOSCREEN_LAT_ANCHOR_Y 135
+#define VARIOSCREEN_BEARING_ANCHOR_X 0
+#define VARIOSCREEN_BEARING_ANCHOR_Y 190
 
 /*****************************************/
 /* screen objets Page 10 - Calibrate GPS */
@@ -278,6 +290,7 @@ void VarioScreen::createScreenObjectsPage0(void) {
 	altiDigit = new ScreenDigit(VARIOSCREEN_ALTI_ANCHOR_X, VARIOSCREEN_ALTI_ANCHOR_Y, 4, 0, false, false, ALIGNRIGHT, true, DISPLAY_OBJECT_ALTI);
 	munit = new MUnit(VARIOSCREEN_ALTI_UNIT_ANCHOR_X, VARIOSCREEN_ALTI_ANCHOR_Y);
 	varioDigit = new ScreenDigit(VARIOSCREEN_VARIO_ANCHOR_X, VARIOSCREEN_VARIO_ANCHOR_Y, 4, 1, true, false,  ALIGNRIGHT, true, DISPLAY_OBJECT_VARIO);
+
 	msunit = new MSUnit(VARIOSCREEN_VARIO_UNIT_ANCHOR_X, VARIOSCREEN_VARIO_UNIT_ANCHOR_Y);
 	kmhunit = new KMHUnit(VARIOSCREEN_SPEED_UNIT_ANCHOR_X, VARIOSCREEN_SPEED_UNIT_ANCHOR_Y);
 	speedDigit = new ScreenDigit(VARIOSCREEN_SPEED_ANCHOR_X, VARIOSCREEN_SPEED_ANCHOR_Y, 2, 0, false, false, ALIGNRIGHT, true, DISPLAY_OBJECT_SPEED);
@@ -330,8 +343,14 @@ void VarioScreen::createScreenObjectsPage10(void) {
 //****************************************************************************************************************************
 void VarioScreen::createScreenObjectsPage1(void) {
 //****************************************************************************************************************************	
+  gpsLatDir 					= new ScreenText(VARIOSCREEN_LATDIR_ANCHOR_X, VARIOSCREEN_LAT_ANCHOR_Y, 1, FONTLARGE, ALIGNLEFT, false, DISPLAY_OBJECT_LAT_DIR);
+	gpsLongDir					= new ScreenText(VARIOSCREEN_LONGDIR_ANCHOR_X, VARIOSCREEN_LONG_ANCHOR_Y, 1, FONTLARGE, ALIGNLEFT, false, DISPLAY_OBJECT_LONG_DIR);
+	gpsBearing					= new ScreenText(VARIOSCREEN_BEARING_ANCHOR_X, VARIOSCREEN_BEARING_ANCHOR_Y, 3, FONTLARGE, ALIGNLEFT, false, DISPLAY_OBJECT_BEARING);
+	gpsLat    					= new ScreenDigit(VARIOSCREEN_LAT_ANCHOR_X, VARIOSCREEN_LAT_ANCHOR_Y, 6, 3, false, false, ALIGNRIGHT, false, DISPLAY_OBJECT_LAT);
+	gpsLong   					= new ScreenDigit(VARIOSCREEN_LONG_ANCHOR_X, VARIOSCREEN_LONG_ANCHOR_Y, 6, 3, false, false, ALIGNRIGHT, false, DISPLAY_OBJECT_LONG);
+
 	tempDigit 					= new ScreenDigit(VARIOSCREEN_TEMP_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y, 2, 0, false, false, ALIGNLEFT, false, DISPLAY_OBJECT_TEMPERATURE);
-	tunit 							= new TUnit(VARIOSCREEN_TEMP_UNIT_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y);
+	tunit 						= new TUnit(VARIOSCREEN_TEMP_UNIT_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y);
 }
 	
 //****************************************************************************************************************************
@@ -397,8 +416,24 @@ void VarioScreen::createScreenObjectsDisplayPage10(void) {
 //****************************************************************************************************************************
 void VarioScreen::createScreenObjectsDisplayPage1(void) {
 //****************************************************************************************************************************
-		CreateObjectDisplay(DISPLAY_OBJECT_TEMPERATURE			, tempDigit		      , 1, 0, true); 
-		CreateObjectDisplay(DISPLAY_OBJECT_TUNIT					  , tunit			     		, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_ALTI							, altiDigit					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_MUNIT						, munit							, 1, 0, true); 
+    CreateObjectDisplay(DISPLAY_OBJECT_LAT							, gpsLat					  , 1, 1, true);    
+    CreateObjectDisplay(DISPLAY_OBJECT_LONG							, gpsLong						, 1, 2, true);
+    CreateObjectDisplay(DISPLAY_OBJECT_LAT_DIR					, gpsLatDir				  , 1, 1, true);    
+    CreateObjectDisplay(DISPLAY_OBJECT_LONG_DIR 				, gpsLongDir				, 1, 2, true);
+    CreateObjectDisplay(DISPLAY_OBJECT_BEARING  				, gpsBearing				, 1, 0, true);       
+		CreateObjectDisplay(DISPLAY_OBJECT_TEMPERATURE			, tempDigit					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_TUNIT						, tunit							, 1, 0, true); 
+
+		CreateObjectDisplay(DISPLAY_OBJECT_INFOLEVEL				, infoLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_VOLLEVEL					, volLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_RECORDIND				, recordIndicator		, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_BATLEVEL					, batLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_SATLEVEL					, satLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_FIXGPSINFO				, fixgpsinfo				, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_BTINFO						, btinfo						, 1, 0, true); 
+
 }	
 
 //****************************************************************************************************************************
@@ -470,6 +505,11 @@ void genericTask( void * parameter ){
   stateDisplay = STATE_OK;
   vTaskDelete(taskDisplay);
 }
+
+
+
+
+
 
 //****************************************************************************************************************************
 void VarioScreen::updateScreen (void)
@@ -709,6 +749,14 @@ void VarioScreen::ScreenViewPage(int8_t page, boolean clear, boolean refresh)
 
 		fixgpsinfo->update(true);
 		btinfo->update(true);
+
+		gpsLat->update(true);
+		gpsLong->update(true);
+		gpsBearing->update(true);
+		
+		gpsLatDir->update(true);
+		gpsLongDir->update(true);
+
 	}
 	else {		
 		altiDigit->setValue(9999);
@@ -733,6 +781,12 @@ void VarioScreen::ScreenViewPage(int8_t page, boolean clear, boolean refresh)
 
 		fixgpsinfo->unsetFixGps();
 		btinfo->unsetBT();
+		
+		gpsLat->setValue(0.0);
+		gpsLatDir->setValue("N");
+		gpsLong->setValue(0.0);
+		gpsLongDir->setValue("E");
+		gpsBearing->setValue("XXX");
 	}
 	
 	munit->toDisplay();

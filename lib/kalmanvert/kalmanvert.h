@@ -28,7 +28,7 @@
 /* p = position, v = velocity, a = acceleration          */
 /*********************************************************/
 
-class kalmanvert {
+class Kalmanvert {
 
  public:
   /**********************************************************/

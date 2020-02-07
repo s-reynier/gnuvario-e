@@ -56,6 +56,7 @@
 /*    1.3.1 11/01/20		Modif VARIOSCREEN_SIZE == 290														 */
 /*    1.3.2 17/01/20    Ajout DISPLAY_STAT_DURATION - passage en v1.1 					 */
 /*    1.3.3 19/01/20    Ajout DEEPSLEEP_DEBUG                                    */
+/*    1.3.4 04/02/20    Ajout URL_UPDATE passage en version 1.2 de params.json   */
 /*                                                                               */
 /*********************************************************************************/
 
@@ -994,7 +995,7 @@ void VarioSettings::loadConfigurationVario(char *filename) {
   }
 
 //	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 790;
-	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 1040;
+	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 1090;
   DynamicJsonDocument doc(capacity);
 
   SerialPort.println("deserialisation");
@@ -1163,13 +1164,26 @@ void VarioSettings::loadConfigurationVario(char *filename) {
 		   tmpValue = Systeme["DISPLAY_STAT_DURATION"];
 		SerialPort.print("Json Recup - ");
 	} else {
-		tmpValue = DEFAUT_DISPLAY_STAT_DURATION;
+		tmpValue = DEFAULT_DISPLAY_STAT_DURATION;
 		MajFileParams = true;
 		SerialPort.print("Defaut Recup - ");
 	}
 	DISPLAY_STAT_DURATION = tmpValue;
   SerialPort.print("DISPLAY_STAT_DURATION : ");
   SerialPort.println(DISPLAY_STAT_DURATION);
+
+  if (Systeme.containsKey("URL_UPDATE")) {	
+		String Systeme_URL_UPDATE = Systeme["URL_UPDATE"];
+		tmpValueString = Systeme_URL_UPDATE;
+		SerialPort.print("Json Recup - ");
+	} else {
+		tmpValueString = DEFAULT_URL_UPDATE;
+		MajFileParams = true;
+		SerialPort.print("Defaut Recup - ");
+	}
+	URL_UPDATE = tmpValueString;
+  SerialPort.print("URL_UPDATE : ");
+  SerialPort.println(URL_UPDATE);
 
 	//*****    GENERAL *****
 
@@ -1567,7 +1581,7 @@ void VarioSettings::saveConfigurationVario(char *filename) {
   // Don't forget to change the capacity to match your requirements.
   // Use arduinojson.org/assistant to compute the capacity.
 //	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 790;
-	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 1040;
+	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 1090;
 	DynamicJsonDocument doc(capacity);
 
   SerialPort.println("****** GnuvarioE *******");
@@ -1612,6 +1626,8 @@ void VarioSettings::saveConfigurationVario(char *filename) {
 	Systeme["MULTIDISPLAY_DURATION"] = VARIOMETER_MULTIDISPLAY_DURATION;
 
 	Systeme["DISPLAY_STAT_DURATION"] = DISPLAY_STAT_DURATION;
+	
+	Systeme["URL_UPDATE"] = URL_UPDATE;
 		
 	//*****    GENERAL *****
 

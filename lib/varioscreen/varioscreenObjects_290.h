@@ -1,4 +1,4 @@
-/* varioscreenGxEPD_29 -- 
+/* varioscreenGxEPD_290 -- 
  *
  * Copyright 2019 Jean-philippe GOI / Pierre
  * 
@@ -56,8 +56,13 @@
  *    1.1.9  11/01/20   Modif VARIOSCREEN_SIZE == 290                            *
  *********************************************************************************/
 
-#ifndef VARIOSCREENOBJECTS_29_H
-#define VARIOSCREENOBJECTS_29_H
+
+
+
+
+
+#ifndef VARIOSCREENOBJECTS_290_H
+#define VARIOSCREENOBJECTS_290_H
 
 #include <Arduino.h>
 #include <HardwareConfig.h>
@@ -125,6 +130,11 @@
 #define DISPLAY_OBJECT_LINE									28
 #define DISPLAY_OBJECT_CIRCLE								29
 #define DISPLAY_OBJECT_WIND                 30
+#define DISPLAY_OBJECT_LAT                  31
+#define DISPLAY_OBJECT_LONG                 32  
+#define DISPLAY_OBJECT_BEARING							33
+#define DISPLAY_OBJECT_LAT_DIR              34
+#define DISPLAY_OBJECT_LONG_DIR             35  
 
 #define MAXW_OBJECT_VARIO 								 	85
 #define MAXW_OBJECT_TIME									 	50
@@ -134,6 +144,11 @@
 #define MAXW_OBJECT_RATIO       						20
 #define MAXW_OBJECT_TREND      							20
 #define MAXW_OBJECT_TEMPERATURE							20
+#define MAXW_OBJECT_LAT 									 	160
+#define MAXW_OBJECT_LONG									 	160
+#define MAXW_OBJECT_LAT_DIR                 32
+#define MAXW_OBJECT_LONG_DIR                32
+#define MAXW_OBJECT_BEARING                 100
 
 #include <VarioSettings.h>
 extern VarioSettings GnuSettings;
@@ -182,8 +197,12 @@ class VarioScreenObject {
 #define ALIGNSPACE 1
 #define ALIGNZERO  2
 
-#define ALIGNLEFT  true
-#define ALIGNRIGHT false
+#define ALIGNRIGHT  	0
+#define ALIGNLEFT   	1
+#define ALIGNCENTER		2
+
+#define FONTLARGE			true
+#define FONTNORMAL    false
 
 class ScreenDigit: public VarioScreenObject {
 // anchorX			Position en X
@@ -193,14 +212,14 @@ class ScreenDigit: public VarioScreenObject {
 // precision  	nombre de chiffre après la virgule
 // plusDisplay 	affichage du + et du -
 // zero 				affichage des zero en début de nombre
-// leftAlign 		Alignement à gauche
+// Align     		Alignement 
 // showtitle 		Affichage du titre
 // TypeDigit		Type d'affichege (DISPLAY_OBJECT_VARIO, DISPLAY_OBJECT_TIME, ....)
 // TitleX       Position du titre eb X
 // TitleY       Position du titre en Y
 
  public :
-   ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uint16_t precision, boolean plusDisplay = false, boolean zero = false, boolean leftAlign = false, boolean showtitle = true, 	int8_t displayTypeID = 0);
+   ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uint16_t precision, boolean plusDisplay = false, boolean zero = false, int8_t Align = ALIGNLEFT, boolean showtitle = true, 	int8_t displayTypeID = 0);
  //  : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), precision(precision), plusDisplay(plusDisplay), zero(zero), leftAlign(leftAlign), showtitle(showtitle)
  // { lastDisplayWidth = 0; }
   void show(void);
@@ -212,7 +231,39 @@ class ScreenDigit: public VarioScreenObject {
   double value;
   double oldvalue=-1;
   const uint16_t anchorX, anchorY, precision, width;
-  boolean plusDisplay, zero, leftAlign, showtitle;
+  boolean plusDisplay, zero, showtitle;
+	int8_t Align;
+  uint8_t lastDisplayWidth;
+	int16_t oldw=0, oldh=0, oldx=0, oldy=0;
+	uint16_t Zwidth, Zheight;
+	uint16_t MaxWidth, MaxHeight;
+	int8_t displayTypeID;
+};
+
+class ScreenText: public VarioScreenObject {
+// anchorX			Position en X
+// anchorY			Position en Y
+// width				Nombre de caractère
+// large        normal / large
+// Align     		Alignement 
+// showtitle 		Affichage du titre
+// TypeDigit		Type d'affichege (DISPLAY_OBJECT_VARIO, DISPLAY_OBJECT_TIME, ....)
+// TitleX       Position du titre en X
+// TitleY       Position du titre en Y
+
+ public :
+   ScreenText(uint16_t anchorX, uint16_t anchorY, uint16_t width, bool large = FONTLARGE, int8_t Align = ALIGNLEFT, boolean showtitle = true, 	int8_t displayTypeID = 0);
+ //  : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), precision(precision), plusDisplay(plusDisplay), zero(zero), leftAlign(leftAlign), showtitle(showtitle)
+ // { lastDisplayWidth = 0; }
+  void show(void);
+  void setValue(String value);
+   
+ private:
+  String value;
+  String oldvalue="";
+  const uint16_t anchorX, anchorY, width;
+  boolean showtitle, large;
+	int8_t Align;
   uint8_t lastDisplayWidth;
 	int16_t oldw=0, oldh=0, oldx=0, oldy=0;
 	uint16_t Zwidth, Zheight;

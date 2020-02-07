@@ -1,4 +1,4 @@
-/* varioscreenGxEPD_29 -- 
+/* varioscreenGxEPD_290 -- 
  *
  * Copyright 2019 Jean-philippe GOI / Pierre FRANCIA
  * 
@@ -21,8 +21,8 @@
 /* 
  *********************************************************************************
  *                                                                               *
- *                           VarioScreenGxEPD_29                                 *
- *                               Ecran 2,9''                                     *
+ *                           VarioScreenGxEPD_290                                 *
+ *                               Ecran 2,90''                                     *
  *                                                                               *
  *  version    Date     Description                                              *
  *    1.0    24/09/19                                                            *
@@ -35,18 +35,19 @@
  *                      Modif VARIOSCREEN_SIZE == 290                            *
  *    1.0.6  17/01/20   Desactivation effacement ligne 1427                      *
  *    1.0.7  20/01/20   Modif ScreenViewReboot																	 *
+ *    1.0.8  28/01/20   Modification écran 1 - ajout info gps                    *
  *                                                                               *
  *********************************************************************************/
 
-#ifndef VARIOSCREENGXEPD_29_H
-#define VARIOSCREENGXEPD_29_H
+#ifndef VARIOSCREENGXEPD_290_H
+#define VARIOSCREENGXEPD_290_H
 
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
 
 #if (VARIOSCREEN_SIZE == 290)
 
-#include <varioscreenObjects_29.h>
+#include <varioscreenObjects_290.h>
 
 /************************/
 /* The screen scheduler */
@@ -192,9 +193,14 @@ class VarioScreen {
 	
 	ScreenDigit*  tempDigit; 	
 	TUnit* tunit;
+	ScreenText*   gpsLatDir;
+	ScreenText*   gpsLongDir;
+	ScreenText*   gpsBearing;
+	ScreenDigit*  gpsLat; 
+	ScreenDigit*  gpsLong; 
 	
 //  ScreenSchedulerObject* displayList;
-	ScreenSchedulerObject displayList[30];  //17];
+	ScreenSchedulerObject displayList[40];  //17];
 	ScreenScheduler* schedulerScreen; 
 	uint8_t MaxObjectList = 0;
 	
@@ -239,6 +245,7 @@ class VarioScreen {
 extern VarioScreen screen;
 extern volatile uint8_t stateDisplay;
 extern GxEPD2_BW<GxEPD2_290U, GxEPD2_290U::HEIGHT> display;
+
 
 #endif
 #endif

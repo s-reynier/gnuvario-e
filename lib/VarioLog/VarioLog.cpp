@@ -56,11 +56,14 @@
 
 #ifdef SDCARD_DEBUG
 #define ARDUINOTRACE_ENABLE 1
-#else
+#elif not defined(ARDUINOTRACE_ENABLE)
 #define ARDUINOTRACE_ENABLE 0
 #endif
 
+#ifndef ARDUINOTRACE_SERIAL
 #define ARDUINOTRACE_SERIAL SerialPort
+#endif
+
 #include <ArduinoTrace.h>
 
 #include <sdcardHAL.h>
@@ -727,4 +730,5 @@ void VarioLog::openSd(void)
 
 */
 
-VarioLog varioLog("logs/vario.log", 10000, 5);
+char logDirectory[20] = "logs/vario.log";
+VarioLog varioLog(logDirectory, 10000, 5);

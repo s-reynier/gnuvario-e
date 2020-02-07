@@ -35,6 +35,7 @@
  *                      Modif effacement de zone +1 à gauche et +3 pour vitesse  *
  *    1.0.6  17/01/20   Desactivation effacement ligne 1427                      *
  *    1.0.7  20/01/20   Modif ScreenViewReboot																	 *
+ *    1.0.8  28/01/20   Modification écran 1 - ajout info gps                    *
  *                                                                               *
  *********************************************************************************/
  
@@ -57,7 +58,7 @@
 #include <Arduino.h>
 
 #if defined(ESP32)
-static const char* TAG = "VarioScreen";
+//static const char* TAG = "VarioScreen";
 #include "esp_log.h"
 #endif //ESP32
 
@@ -176,9 +177,19 @@ volatile uint8_t stateMulti = 0;
 /*****************************************/
 /* screen objets Page 1                  */
 /*****************************************/
-#define VARIOSCREEN_TEMP_ANCHOR_X 90
-#define VARIOSCREEN_TEMP_ANCHOR_Y 190
-#define VARIOSCREEN_TEMP_UNIT_ANCHOR_X 160
+//#define VARIOSCREEN_TEMP_ANCHOR_X 115
+//#define VARIOSCREEN_TEMP_ANCHOR_Y 190
+//#define VARIOSCREEN_TEMP_UNIT_ANCHOR_X 170
+#define VARIOSCREEN_LONG_ANCHOR_X 150
+#define VARIOSCREEN_LONGDIR_ANCHOR_X 165
+#define VARIOSCREEN_LONG_ANCHOR_Y 90
+#define VARIOSCREEN_LAT_ANCHOR_X 150
+#define VARIOSCREEN_LATDIR_ANCHOR_X 165
+#define VARIOSCREEN_LAT_ANCHOR_Y 135
+#define VARIOSCREEN_BEARING_TEXT_ANCHOR_X 0
+#define VARIOSCREEN_BEARING_TEXT_ANCHOR_Y 190
+#define VARIOSCREEN_BEARING_ANCHOR_X 198 //115
+#define VARIOSCREEN_BEARING_ANCHOR_Y 190
 
 /*****************************************/
 /* screen objets Page 10 - Calibrate GPS */
@@ -331,8 +342,15 @@ void VarioScreen::createScreenObjectsPage10(void) {
 //****************************************************************************************************************************
 void VarioScreen::createScreenObjectsPage1(void) {
 //****************************************************************************************************************************	
-	tempDigit 					= new ScreenDigit(VARIOSCREEN_TEMP_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y, 2, 0, false, false, ALIGNLEFT, false, DISPLAY_OBJECT_TEMPERATURE);
-	tunit 							= new TUnit(VARIOSCREEN_TEMP_UNIT_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y);
+  gpsLatDir 					= new ScreenText(VARIOSCREEN_LATDIR_ANCHOR_X, VARIOSCREEN_LAT_ANCHOR_Y, 1, FONTLARGE, ALIGNLEFT, false, DISPLAY_OBJECT_LAT_DIR);
+	gpsLongDir					= new ScreenText(VARIOSCREEN_LONGDIR_ANCHOR_X, VARIOSCREEN_LONG_ANCHOR_Y, 1, FONTLARGE, ALIGNLEFT, false, DISPLAY_OBJECT_LONG_DIR);
+	gpsBearingText			= new ScreenText(VARIOSCREEN_BEARING_TEXT_ANCHOR_X, VARIOSCREEN_BEARING_TEXT_ANCHOR_Y, 3, FONTLARGE, ALIGNLEFT, false, DISPLAY_OBJECT_BEARING_TEXT);
+	gpsBearing 					= new ScreenDigit(VARIOSCREEN_BEARING_ANCHOR_X, VARIOSCREEN_BEARING_ANCHOR_Y, 3, 0, false, false, ALIGNRIGHT, false, DISPLAY_OBJECT_BEARING);
+	gpsLat    					= new ScreenDigit(VARIOSCREEN_LAT_ANCHOR_X, VARIOSCREEN_LAT_ANCHOR_Y, 6, 3, false, false, ALIGNRIGHT, false, DISPLAY_OBJECT_LAT);
+	gpsLong   					= new ScreenDigit(VARIOSCREEN_LONG_ANCHOR_X, VARIOSCREEN_LONG_ANCHOR_Y, 6, 3, false, false, ALIGNRIGHT, false, DISPLAY_OBJECT_LONG);
+
+//	tempDigit 					= new ScreenDigit(VARIOSCREEN_TEMP_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y, 2, 0, false, false, ALIGNLEFT, false, DISPLAY_OBJECT_TEMPERATURE);
+//	tunit 							= new TUnit(VARIOSCREEN_TEMP_UNIT_ANCHOR_X, VARIOSCREEN_TEMP_ANCHOR_Y);
 }
 	
 //****************************************************************************************************************************
@@ -398,8 +416,25 @@ void VarioScreen::createScreenObjectsDisplayPage10(void) {
 //****************************************************************************************************************************
 void VarioScreen::createScreenObjectsDisplayPage1(void) {
 //****************************************************************************************************************************
-		CreateObjectDisplay(DISPLAY_OBJECT_TEMPERATURE			, tempDigit		, 1, 0, true); 
-		CreateObjectDisplay(DISPLAY_OBJECT_TUNIT						, tunit				, 1, 0, true); 
+//		CreateObjectDisplay(DISPLAY_OBJECT_ALTI							, altiDigit					, 1, 0, true); 
+//		CreateObjectDisplay(DISPLAY_OBJECT_MUNIT						, munit							, 1, 0, true); 
+    CreateObjectDisplay(DISPLAY_OBJECT_LAT							, gpsLat					  , 1, 0, true);    
+    CreateObjectDisplay(DISPLAY_OBJECT_LONG							, gpsLong						, 1, 0, true);
+    CreateObjectDisplay(DISPLAY_OBJECT_LAT_DIR					, gpsLatDir				  , 1, 0, true);    
+    CreateObjectDisplay(DISPLAY_OBJECT_LONG_DIR 				, gpsLongDir				, 1, 0, true);
+    CreateObjectDisplay(DISPLAY_OBJECT_BEARING_TEXT			, gpsBearingText		, 1, 0, true);       
+    CreateObjectDisplay(DISPLAY_OBJECT_BEARING    			, gpsBearing    		, 1, 0, true);       
+//		CreateObjectDisplay(DISPLAY_OBJECT_TEMPERATURE			, tempDigit					, 1, 0, true); 
+//		CreateObjectDisplay(DISPLAY_OBJECT_TUNIT						, tunit							, 1, 0, true); 
+
+		CreateObjectDisplay(DISPLAY_OBJECT_INFOLEVEL				, infoLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_VOLLEVEL					, volLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_RECORDIND				, recordIndicator		, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_BATLEVEL					, batLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_SATLEVEL					, satLevel					, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_FIXGPSINFO				, fixgpsinfo				, 1, 0, true); 
+		CreateObjectDisplay(DISPLAY_OBJECT_BTINFO						, btinfo						, 1, 0, true); 
+
 }	
 
 //****************************************************************************************************************************
@@ -715,6 +750,15 @@ void VarioScreen::ScreenViewPage(int8_t page, boolean clear, boolean refresh)
 
 		fixgpsinfo->update(true);
 		btinfo->update(true);
+		
+		gpsLat->update(true);
+		gpsLong->update(true);
+		gpsBearing->update(true);
+		gpsBearingText->update(true);
+		
+		gpsLatDir->update(true);
+		gpsLongDir->update(true);
+
 	}
 	else {		
 		altiDigit->setValue(9999);
@@ -739,6 +783,13 @@ void VarioScreen::ScreenViewPage(int8_t page, boolean clear, boolean refresh)
 
 		fixgpsinfo->unsetFixGps();
 		btinfo->unsetBT();
+		
+		gpsLat->setValue(0.0);
+		gpsLatDir->setValue("N");
+		gpsLong->setValue(0.0);
+		gpsLongDir->setValue("E");
+		gpsBearingText->setValue("XXX");
+		gpsBearing->setValue(0);
 	}
 		
 	munit->toDisplay();
@@ -757,14 +808,14 @@ void VarioScreen::ScreenViewPage(int8_t page, boolean clear, boolean refresh)
 
 bool VarioScreen::clearStep(void) {
 
-  /* check if clear is needed *
+  // * check if clear is needed *
   if( clearingStep == LCDHEIGHT ) {
     return false;
   }
 
-  /* clear one line *
+  // * clear one line *
 
-  /* next *
+  // * next *
   clearingStep++;
   return true;
 }*/
@@ -897,7 +948,7 @@ void VarioScreen::ScreenViewStatPage(int PageStat)
 void VarioScreen::ScreenViewWifi(String SSID, String IP)
 //****************************************************************************************************************************
 {
-  char tmpbuffer[100];
+//  char tmpbuffer[100];
 	
 	if ((SSID == "") && (IP == "")) {
 		display.setFullWindow();
@@ -955,7 +1006,7 @@ void VarioScreen::ScreenViewWifi(String SSID, String IP)
 void VarioScreen::ScreenViewReboot(String message)
 //****************************************************************************************************************************
 {
-  char tmpbuffer[100];
+//  char tmpbuffer[100];
 	
   display.setFullWindow();
   display.firstPage();
@@ -991,7 +1042,7 @@ void VarioScreen::ScreenViewReboot(String message)
 void VarioScreen::ScreenViewMessage(String message, int delai)
 //****************************************************************************************************************************
 {
-  char tmpbuffer[100];
+//  char tmpbuffer[100];
 	
   display.setFullWindow();
   display.firstPage();
@@ -1032,7 +1083,7 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 		display.getTextBounds(message, 0, 0, &tbx, &tby, &tbw, &tbh); // it works for origin 0, 0, fortunately (negative tby!)
   // center bounding box by transposition of origin:
 		uint16_t x = ((display.width() - tbw) / 2) - tbx;
-		uint16_t y = ((display.height() - tbh) / 2) - tby;
+//		uint16_t y = ((display.height() - tbh) / 2) - tby;
     display.setCursor(x, VARIOSCREEN_TENSION_ANCHOR_Y); // set the postition to start printing text
 		display.print(message);
   }
@@ -1048,7 +1099,7 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 	display.getTextBounds(message, 0, 0, &tbx, &tby, &tbw, &tbh); // it works for origin 0, 0, fortunately (negative tby!)
 // center bounding box by transposition of origin:
 	uint16_t x = ((display.width() - tbw) / 2) - tbx;
-	uint16_t y = ((display.height() - tbh) / 2) - tby;
+//	uint16_t y = ((display.height() - tbh) / 2) - tby;
 	
 	while (compteur < delai) {
 		ButtonScheduleur.update();
