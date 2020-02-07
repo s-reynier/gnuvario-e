@@ -452,19 +452,19 @@ static uint8_t magSensAdj[3];
 /*
 void readMagSensAdj(void) {
 
-  /* get access *
+  // * get access *
   disableDMP();
 
-  /************
-  /* read adj *
-  /************
+  // ************
+  // * read adj *
+  // ************
   uint8_t tmp[3];
 
-  /* bypass *
+  // * bypass *
   tmp[0] = BIT_BYPASS_EN;
   intTW.writeBytes(INV_HW_ADDR, INV_REG_INT_PIN_CFG, 1, tmp); 
 
-  /* get fuse access *
+  // * get fuse access *
   tmp[0] = AKM_POWER_DOWN;
   intTW.writeBytes(LIGHT_INVENSENSE_COMPASS_ADDR, AKM_REG_CNTL, 1, tmp);
   delay(1);
@@ -473,14 +473,14 @@ void readMagSensAdj(void) {
   intTW.writeBytes(LIGHT_INVENSENSE_COMPASS_ADDR, AKM_REG_CNTL, 1, tmp);
   delay(1);
   
-  /* read values *
+  // * read values *
   intTW.readBytes(LIGHT_INVENSENSE_COMPASS_ADDR, AKM_REG_ASAX, 3, magSensAdj);
   
-  /* stop bypass *
+  // * stop bypass *
   tmp[0] = 0;
   intTW.writeBytes(INV_HW_ADDR, INV_REG_INT_PIN_CFG, 1, tmp);   
 
-  /* enable DMP *
+  // * enable DMP *
   enableDMP();
 }*/
 #endif
