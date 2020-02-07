@@ -1164,6 +1164,7 @@ void handleFileDownload()
     return returnFail("NO FILE");
   }
 
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   String dataType = "application/octet-stream";
 
 #ifdef SDFAT_LIB
