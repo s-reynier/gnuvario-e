@@ -544,6 +544,8 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                 const char *plhost = JSONDocumentUpdate["host"];
                 _port = JSONDocumentUpdate["port"];
 
+                NB_WWW_FILES = 0;
+
                 if (JSONDocumentUpdate.containsKey("www"))
                 {
 
@@ -561,10 +563,7 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                         NB_WWW_FILES++;
                     }
                 }
-                else
-                {
-                    NB_WWW_FILES = 0;
-                }
+               
 
 #ifdef WIFI_DEBUG
                 SerialPort.print("Version : ");
