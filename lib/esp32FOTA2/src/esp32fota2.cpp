@@ -614,7 +614,7 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                     http.end(); //Free the resources
                     return MAJ_AVAILABLE;
                 }
-                else if ((plversion == _firwmareVersion) && (plsubversion == _firwmareSubVersion) && (plbetaversion > _firwmareBetaVersion))
+                else if (betaVersion && (plversion == _firwmareVersion) && (plsubversion == _firwmareSubVersion) && (plbetaversion > _firwmareBetaVersion))
                 {
                     //ce cas ne match que pour les beta
                     http.end(); //Free the resources
