@@ -28,6 +28,8 @@
  *    1.0                                                                        *
  *    1.0.1  04/01/20   Ajout décodage Compas                                    *
  *    1.0.2  27/01/20   Ajout décodage Long / Lat                                *
+ *    1.0.3  09/02/20   Ajout getLongDegree, getLatDegree et DegreesToDegMinSec  *
+ *    1.0.4  10/02/20   Correction getlongDegree et DegreesToDegMinSec           *
  *                                                                               *
  *********************************************************************************/
 
@@ -330,6 +332,17 @@ String NmeaParser::getLongitude(void) {
 	return tmp;
 }
 
+String NmeaParser::getLongDegree(void) {
+  parserState_unset(HAVE_LONG);
+	double f_val = ((double)longitude)/NMEA_RMC_LONG_PRECISION;
+//	char outstr[15];
+//	dtostrf(f_val,7, 3, outstr);
+//	String tmp = String(outstr) + " " + String(longDir);
+  String tmp = DegreesToDegMinSec(f_val);
+	tmp +=  " " + String(longDir);
+	return tmp;
+}
+
 double NmeaParser::getLat(void) {
   parserState_unset(HAVE_LAT);
   return ((double)latitude)/NMEA_RMC_LAT_PRECISION;
@@ -345,6 +358,17 @@ String NmeaParser::getLatitude(void) {
 	char outstr[15];
 	dtostrf(f_val,7, 3, outstr);
 	String tmp = String(outstr) + " " + String(latDir);
+	return tmp;	
+}
+
+String NmeaParser::getLatDegree(void) {
+  parserState_unset(HAVE_LAT);
+	double f_val = ((double)latitude)/NMEA_RMC_LAT_PRECISION;
+//	char outstr[15];
+//	dtostrf(f_val,7, 3, outstr);
+//	String tmp = String(outstr) + " " + String(latDir);
+  String tmp = DegreesToDegMinSec(f_val);
+	tmp += " " + String(latDir);
 	return tmp;	
 }
 
@@ -365,4 +389,20 @@ String NmeaParser::DegreesToDegMinSec(float x)
   SerialPort.println();
 #endif //NMEAPARSER_DEBUG
 
+/*  float tmpfloat = round(deg*1000);
+	int tmpint   = tmpfloat / 1000;
+	String tmpStr = String(tmpint) + "*";*/
+	String tmpStr = String(deg) + "*";
+	
+/*  tmpfloat = round(arcMinutes*100);
+	tmpint   = tmpfloat / 100;
+	tmpStr += String(tmpint) + "'";*/
+	tmpStr += String(arcMinutes) + "'";
+	
+/*  tmpfloat = round(arcSeconds*100);
+	tmpint   = tmpfloat / 100;
+	tmpStr += String(tmpint) + "''";*/
+	int tmpint = arcSeconds;
+	tmpStr += String(tmpint) + "''";	
+	return tmpStr;
 }

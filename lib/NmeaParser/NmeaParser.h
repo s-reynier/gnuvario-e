@@ -28,6 +28,8 @@
  *    1.0                                                                        *
  *    1.0.1  04/01/20   Ajout décodage Compas                                    *
  *    1.0.2  27/01/20   Ajout décodage Long / Lat                                *
+ *    1.0.3  09/02/20   Ajout getLongDegree, getLatDegree et DegreesToDegMinSec  *
+ *    1.0.4  10/02/20   Correction getlongDegree et DegreesToDegMinSec           *
  *                                                                               *
  *********************************************************************************/
 
@@ -116,21 +118,23 @@ class NmeaParser {
 	double getBearing(void);
 	double getLong(void);
 	char   getLongDir();
+	String getLongDegree(void);
 	String getLongitude(void);
 	double getLat(void);
 	char   getLatDir(void);
+	String getLatDegree(void);
 	String getLatitude(void);
   bool isParsing(void);
   bool isParsingRMC(void);
   bool isParsingGGA(void);
 	String Bearing_to_Ordinal(float bearing);
-	String DegreesToDegMinSec(float x);
 
  private :
   uint16_t state;
   uint8_t commaCount;
   uint32_t value;
 	char valuechar;
+	String DegreesToDegMinSec(float x);
 
 };
 

@@ -14,6 +14,8 @@
  *    1.0    18/01/20                                                            *
  *    1.0.1  19/01/20   Ajout execHTTPexist et execHTTPSexist					 					 *
  *    1.0.2  06/02/20   Ajout downloadWwwFiles()                                 *         
+ *    1.0.3             Ajout downloadWwwFiles                                   *
+ *    1.0.4  10/02/20   Ajout UpdateWwwDirectory                                 *
  *                                                                               *
  *********************************************************************************/
 
@@ -544,8 +546,6 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                 const char *plhost = JSONDocumentUpdate["host"];
                 _port = JSONDocumentUpdate["port"];
 
-                NB_WWW_FILES = 0;
-
                 if (JSONDocumentUpdate.containsKey("www"))
                 {
 
@@ -563,7 +563,10 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                         NB_WWW_FILES++;
                     }
                 }
-               
+                else
+                {
+                    NB_WWW_FILES = 0;
+                }
 
 #ifdef WIFI_DEBUG
                 SerialPort.print("Version : ");
@@ -614,7 +617,7 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                     http.end(); //Free the resources
                     return MAJ_AVAILABLE;
                 }
-                else if (betaVersion && (plversion == _firwmareVersion) && (plsubversion == _firwmareSubVersion) && (plbetaversion > _firwmareBetaVersion))
+                else if ((plversion == _firwmareVersion) && (plsubversion == _firwmareSubVersion) && (plbetaversion > _firwmareBetaVersion))
                 {
                     //ce cas ne match que pour les beta
                     http.end(); //Free the resources
@@ -964,6 +967,31 @@ void esp32FOTA2::downloadWwwFiles()
 
         http.end();
     }
+}
+
+//************************************
+bool esp32FOTA2::UpdateWwwDirectory()
+//************************************
+{
+	
+	TRACE();
+
+#ifdef WIFI_DEBUG
+  SerialPort.println("[HTTP] Debut méthode updateWwwDirectory");
+#endif
+    // File system object.
+    // Directory file.
+    SdFile root;
+
+    String newPath = "wwwnew";
+    if (!SDHAL_SD.exists(newPath.c_str()))
+    {
+#ifdef WIFI_DEBUG
+      SerialPort.println("[HTTP] le dossier wwwnew existe");
+#endif
+			return true; // Mise à jour site web OK
+	  }
+  return false;   //Pas de mise à jour
 }
 
 /*{
