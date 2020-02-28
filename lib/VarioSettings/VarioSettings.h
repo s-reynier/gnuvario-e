@@ -124,7 +124,7 @@
 #define DEFAULT_VARIOMETER_SSID_4													"your_SSID4"
 #define DEFAULT_VARIOMETER_PASSWORD_4											"your_PASSWORD_for SSID4"
 
-#define DEFAULT_URL_UPDATE																"http://gnuvario-e.yj.fr/update/firmware.json"
+#define DEFAULT_URL_UPDATE																"http://gnuvario-e.yj.fr/webupdate/checkversion"
 
 #define DEFAULT_VERTACCEL_GYRO_CAL_BIAS_00								0x00
 #define DEFAULT_VERTACCEL_GYRO_CAL_BIAS_01								0x00
