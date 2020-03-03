@@ -45,6 +45,7 @@
 /*    1.2.14 04/02/20   modif esp32FOTA.checkURL																 */
 /*                      Ajout écran d'infoi lors de l'update Internet            */
 /*    1.2.15 13/02/20   Nettoyage code mort, refactoring                         */
+/*    1.2.13 16/02/20   refactoring variowifiserver                              */
 /*                                                                               */
 /*********************************************************************************/
 

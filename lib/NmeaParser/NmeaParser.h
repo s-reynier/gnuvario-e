@@ -30,6 +30,9 @@
  *    1.0.2  27/01/20   Ajout décodage Long / Lat                                *
  *    1.0.3  09/02/20   Ajout getLongDegree, getLatDegree et DegreesToDegMinSec  *
  *    1.0.4  10/02/20   Correction getlongDegree et DegreesToDegMinSec           *
+ *    1.0.6  25/02/20   Correction calcul long /lat                              *
+ *    1.0.7  28/02/20   Correction DegreesToDegMinSec                            *
+ *    1.0.8  01/03/20   Modification affichage lat/long                          *
  *                                                                               *
  *********************************************************************************/
 
@@ -49,13 +52,13 @@
 #define NMEA_RMC_SPEED_PRECISION 100.0
 #endif
 
-#ifndef NMEA_RMC_LAT_PRECISION
-#define NMEA_RMC_LAT_PRECISION 1000.0
-#endif
+/*#ifndef NMEA_RMC_LAT_PRECISION
+#define NMEA_RMC_LAT_PRECISION 1000000.0
+#endif*/
 
-#ifndef NMEA_RMC_LONG_PRECISION
-#define NMEA_RMC_LONG_PRECISION 10000.0
-#endif
+/*#ifndef NMEA_RMC_LONG_PRECISION
+#define NMEA_RMC_LONG_PRECISION 1000000.0
+#endif*/
 
 #ifndef NMEA_RMC_TRACK_PRECISION
 #define NMEA_RMC_TRACK_PRECISION 100.0
@@ -98,10 +101,10 @@ class NmeaParser {
 	double   track;
 	double	 magnetic;
 	bool     magneticSens;
-	uint16_t latitude;
+	uint32_t latitude;
 	char		 latDir;
 	char     longDir;
-	uint16_t longitude;
+	uint32_t longitude;
 
   void beginRMC(void);
   void beginGGA(void);
@@ -135,6 +138,11 @@ class NmeaParser {
   uint32_t value;
 	char valuechar;
 	String DegreesToDegMinSec(double x);
+	int comptdec = 0;
+	String tmpstr = "";
+	
+	double NMEA_RMC_LAT_PRECISION  = 1000000.0;
+	double NMEA_RMC_LONG_PRECISION = 1000000.0;
 
 };
 

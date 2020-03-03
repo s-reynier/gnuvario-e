@@ -48,8 +48,8 @@
 /******************************/
 
 #define VARIOSCREEN_SIZE 	154			//Ecran 1.54''
-//#define VARIOSCREEN_SIZE	290			//Ecran 2.9''
-//#define VARIOSCREEN_SIZE 	213			//Ecran 2.13''
+//#define VARIOSCREEN_SIZE	290 	//Ecran 2.90'' Paysage
+//#define VARIOSCREEN_SIZE 	291 	//Ecran 2.90'' Portrait
 
 #if (VARIOSCREEN_SIZE == 154)
 #define DISPLAY_LOW_UPDATE 50
@@ -57,7 +57,7 @@
 #elif (VARIOSCREEN_SIZE == 290)
 #define DISPLAY_LOW_UPDATE 40
 #define DISPLAY_UPDATE     10
-#elif (VARIOSCREEN_SIZE == 213)
+#elif (VARIOSCREEN_SIZE == 291)
 #define DISPLAY_LOW_UPDATE 40
 #define DISPLAY_UPDATE     10
 #endif
@@ -177,7 +177,7 @@
 #define VERTACCEL_ACCEL_CAL_BIAS_MULTIPLIER 7
 #define VERTACCEL_MAG_CAL_BIAS_MULTIPLIER 5
 
-#define VERTACCEL_STATIC_CALIBRATION
+//#define VERTACCEL_STATIC_CALIBRATION
 
 /*#define VERTACCEL_GYRO_CAL_BIAS {0x00, 0x00, 0x29, 0xdf, 0xff, 0xff, 0x9f, 0x4a, 0xff, 0xff, 0xb5, 0xe9}
 #define VERTACCEL_ACCEL_CAL_BIAS {-3416, 9992, -31522}
@@ -264,7 +264,7 @@
 #define NMEA_GGA_TIME_PRECISION 1000
 #define NMEA_GGA_ALTI_PRECISION 10.0
 
-#elif defined(NEO_6M)
+#else if defined(NEO_6M)
 
 //NEO-6M
 #define NMEA_RMC_TAG "GPRMC"

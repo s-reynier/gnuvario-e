@@ -31,6 +31,9 @@
  *    1.0.3  09/02/20   Ajout getLongDegree, getLatDegree et DegreesToDegMinSec  *
  *    1.0.4  10/02/20   Correction getlongDegree et DegreesToDegMinSec           *
  *    1.0.5  12/02/20   Ajout tracedebug                                         *
+ *    1.0.6  25/02/20   Correction calcul long /lat                              *
+ *    1.0.7  28/02/20   Correction DegreesToDegMinSec                            *
+ *    1.0.8  01/03/20   Modification affichage lat/long                          *
  *                                                                               *
  *********************************************************************************/
 
@@ -80,6 +83,7 @@ void NmeaParser::beginGGA(void) {
   parserState_unset(DIGIT_PARSED);
 }
 
+ 
 void NmeaParser::feed(uint8_t c) {
 
   /* maybe we need to stop parsing */
@@ -98,9 +102,14 @@ void NmeaParser::feed(uint8_t c) {
       value *= 10;
       value += c - '0';
       parserState_set(DIGIT_PARSED);
+			comptdec++;
+      char tmpchar = c;
+			tmpstr = tmpstr + tmpchar;
     } else if ( c != '.') {
 			valuechar = c;
-		}
+		} else {
+			comptdec = 0;
+	  }
   }
 
   /* comma case */
@@ -144,17 +153,44 @@ void NmeaParser::feed(uint8_t c) {
 				
 				else if( commaCount == NMEA_PARSER_RMC_LONG_POS ) {
 					longitude = value;
+//          longitude = tmpstr.toInt();
+					NMEA_RMC_LONG_PRECISION = 1;
+					for (int i=0; i < comptdec; i++) NMEA_RMC_LONG_PRECISION *= 10;				
+					NMEA_RMC_LONG_PRECISION *= 100;
+
 #ifdef NMEAPARSER_DEBUG
+          SerialPort.println("");
+					SerialPort.print("comptdec : ");
+					SerialPort.println(comptdec);					
 					SerialPort.print("longitude : ");
-					SerialPort.println(((double)longitude) /NMEA_RMC_LONG_PRECISION);
+					SerialPort.print(longitude);
+					SerialPort.print(" / ");
+					double tmpdouble = longitude /NMEA_RMC_LONG_PRECISION;
+					SerialPort.println(tmpdouble);
+					DUMP(NMEA_RMC_LONG_PRECISION);
+					SerialPort.println(tmpstr);
+					SerialPort.println(value);
 #endif //NMEAPARSER_DEBUG
 				}
 
 				else if( commaCount == NMEA_PARSER_RMC_LAT_POS ) {
 					latitude = value;
+					NMEA_RMC_LAT_PRECISION = 1;
+					for (int i=0; i < comptdec; i++) NMEA_RMC_LAT_PRECISION *= 10;				
+					NMEA_RMC_LAT_PRECISION *= 100;
+					
 #ifdef NMEAPARSER_DEBUG
+          SerialPort.println("");
+					SerialPort.print("comptdec : ");
+					SerialPort.println(comptdec);					
 					SerialPort.print("latitude : ");
-					SerialPort.println(((double)latitude) /NMEA_RMC_LAT_PRECISION);
+					SerialPort.print(latitude);
+					SerialPort.print(" / ");
+					double tmpdouble = latitude /NMEA_RMC_LAT_PRECISION;					
+					SerialPort.println(tmpdouble);
+					DUMP(NMEA_RMC_LONG_PRECISION);
+					SerialPort.println(tmpstr);
+					SerialPort.println(value);
 #endif //NMEAPARSER_DEBUG
 				}
      }
@@ -198,6 +234,8 @@ void NmeaParser::feed(uint8_t c) {
 
     /* reset value */
     value = 0;
+		comptdec = 0;
+		tmpstr = "";
     parserState_unset(DIGIT_PARSED);
   }
 }	
@@ -399,8 +437,9 @@ String NmeaParser::DegreesToDegMinSec(double x)
   SerialPort.println();
 #endif //NMEAPARSER_DEBUG*/
 
-DUMP(x);
+	DUMP(x);
 	char outchar[15];
+		
 	dtostrf(x,7, 3, outchar);
 	DUMP(outchar);
 	String outstr = String(outchar);
@@ -408,38 +447,50 @@ DUMP(x);
 	int pos = outstr.indexOf('.');
 //	String tmpString = outstr.substring(0,pos-1);
 	DUMP(pos);
+	
+	String chaineSansEspace = "";
+	unsigned int lastStringLength = outstr.length();
+	
+	for(int i=0; i < lastStringLength; i++) {
+    if(outstr[i] == '.') break;
+    if(outstr[i] != ' ') chaineSansEspace += outstr[i];
+	}
+	
+	DUMP(chaineSansEspace);
+	String tmpResult = chaineSansEspace + "*";
+	
 	String tmpString = "0" + outstr.substring(pos);
 	DUMP(tmpString);
+
 	double tmpdouble = tmpString.toDouble();
-	int deg = x - tmpdouble;
+/*	int deg = x - tmpdouble;
 	DUMP(deg);
+	String tmpStr = String(deg) + "*";
+	*/
 
 /*  float tmpfloat = round(deg*1000);
 	int tmpint   = tmpfloat / 1000;
 	String tmpStr = String(tmpint) + "*";*/
-	String tmpStr = String(deg) + "*";
 	
 /*  tmpfloat = round(arcMinutes*100);
 	tmpint   = tmpfloat / 100;
 	tmpStr += String(tmpint) + "'";*/
-  float minutesRemainder = tmpdouble * 60;
+  float minutesRemainder = tmpdouble * 100;
   int arcMinutes = minutesRemainder;
-  float arcSeconds = (minutesRemainder - arcMinutes) * 60;
+  float arcSeconds = (minutesRemainder - arcMinutes) * 100;
 
-	tmpStr += String(arcMinutes) + "'";
+	tmpResult += String(arcMinutes) + ".";
 	
 /*  tmpfloat = round(arcSeconds*100);
 	tmpint   = tmpfloat / 100;
 	tmpStr += String(tmpint) + "''";*/
-  int tmpint = arcSeconds;
-	tmpStr += String(tmpint) + "''";	
-	tmpStr += String(tmpint); // + "''";	
-
+	int tmpint = arcSeconds;
+	tmpResult += String(tmpint); // + "''";	
+	
 #ifdef NMEAPARSER_DEBUG
   SerialPort.print("Coordonnée : ");
-  SerialPort.println(tmpStr);
+  SerialPort.println(tmpResult);
 #endif
-
-	return tmpStr;
-	return tmpStr;
+	
+	return tmpResult;
 }

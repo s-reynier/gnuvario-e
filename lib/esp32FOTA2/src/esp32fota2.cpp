@@ -831,7 +831,6 @@ String esp32FOTA2::getHTTPVersion()
     }
 
     updatedNeeded = execHTTPcheck(true);
-
     if (updatedNeeded > 0)
     {
 #ifdef WIFI_DEBUG

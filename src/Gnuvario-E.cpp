@@ -284,14 +284,30 @@ SimpleBLE ble;
 *                                    Correction bug, seul de monté/descente sur la SDcard non pris en *
 *                                    compte                                                           *
 *               10/02/20             Correction ecran 2                                               *
-*               12/02/20             Correction affichage lat / long sur écran 2
+*               12/02/20             Correction affichage lat / long sur écran 2                      *
+*                                    Correction time out Gxepd à l'affichage de l'écran de stat       *
+*               15/02/20             Correction BUG seuils de monte / descente non pris en compte     *
+*                                    ajout beeper.init                                                *
+*                                    Correction Bug rotation du fichier de log                        *
+*                                    Mise à jour via internet - site Web + firmware                   *
+*               19/02/20             Ajout gestion écran 2.90'' en mode portrait                      *
+*               21/02/20             Correction Bug affichage batterie                                *
+*                                    Correction rotation fichier log                                  *
+*               25/02/20             Correction precision Lat/long                                    *                     
+*                                    Ajout ScreenBackground                                           *
+*                                    Correction Bug   - Affichage long - lat                          *                     
+*                                    reccupération long / lat sur 6 ou 7 digits après la virgule      *
+*               28/02/20             Correction calcul lat/long                                       *
+*               29/02/20             Modification Mise à jour auto internet                           *
+*                                    Nouveau site web embarqué                                        *
+*                                    Mise à jour calibration                                          *
+*               01/03/20             Correction affichage lat/long                                    *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
 *                                                                                                     *
 * v0.6                                                                                                *   
 * MODIF - Refaire gestion Eeprom avec preference                                                      *
-* AJOUT - Calibration MPU                                                                             *                                 
 * BUG   - temperature                                                                                 *
 * BUG   - DISPLAY_OBJECT_LINE object ligne ne fonctionne pas                                          *
 *                                                                                                     *
@@ -299,10 +315,16 @@ SimpleBLE ble;
 * BUG   - Affichage barres GPS - problème de raffraichissement                                        *
 * BUG   - upload wifi - ne se termine pas  - bug espressif le buffer n'est pas vidé à la fin          *
 * BUG   - update manuelle - doit être lancée 2 fois                                                   *
-* AJOUT - Récupération du cap depuis le capteur baromètrique                                          *
-* AJOUT - Mise à jour site web embarqué via Internet - rename et suppression au démmarage             *
-* BUG   - Time out gxepd affichage ecran statç^m0
+* BUG   - stat affichage temps de vol                                                                 *
+* MODIF - Modification librairie varioscreen - MAJ GxEpd2                                             *
+* VERIF - Seuil déclenchement début du vol                                                            *
+* VERIF - Sensibilité du vario                                                                        *
 *                                                                                                     *
+* v0.8                                                                                                *       
+* MODIF - Réecrire loop                                                                               *
+* AJOUT - Récupération du cap depuis le capteur baromètrique                                          *
+* MODIF - réécriture maj affichage                                                                    *
+*                                                                                                     * 
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
 * Gérer le son via le DAC                                                                             *
@@ -315,8 +337,8 @@ SimpleBLE ble;
 *     10 zones d'eeprom - reduit le nombre d'écriture et économise la mémoire flash                   *
 * verifier fonctionnement BT                                                                          *
 * Recupération vol via USB                                                                            *                                                                                        
-* Ecran 2.9'' en vertical                                                                             *
 * Espaces aeriens                                                                                     *
+* AGL                                                                                                 *
 *******************************************************************************************************/
 
 /************************************************************************
@@ -371,6 +393,7 @@ SimpleBLE ble;
  *   démmarage                                                          *
  * - Ajout Update via internet                                          *
  * - Ajout affichage du cap, longitude, latitude                        *
+ * - Calibration des accèlerometres                                     *
  *                                                                      *
  ************************************************************************/
  
@@ -660,6 +683,8 @@ long MaxVoltage   = 0;
 
 long compteurInt = 0;
 
+int compteurBoucle = 0;
+
 void IRAM_ATTR isr() {
   compteurInt++;  
 }
@@ -776,7 +801,7 @@ void setup() {
 #ifdef SDCARD_DEBUG
     SerialPort.println("initialization done.");
     SerialPort.flush();
-#endif //PROG_DEBUG
+#endif //SDCARD_DEBUG
 
 #if defined(ESP32)
     ESP_LOGI("SDCARD", "initialization done.");
@@ -1481,7 +1506,11 @@ void loop() {
                        0.0,
                        millis() );
 #endif //HAVE_ACCELEROMETER
-  
+
+ #ifdef PROG_DEBUG
+    SerialPort.println("Kalman Update");
+#endif //PROG_DEBUG
+ 
     if (displayLowUpdateState) {
 //      screen.tempDigit->setValue(tmpTemp);
 //      screen.tunit->toDisplay();
@@ -1552,10 +1581,10 @@ void loop() {
 //  DISPLAY ALTI
 //**********************************************************
 
-#ifdef PROG_DEBUG
+#ifdef DATA_DEBUG
  //   SerialPort.print("altitude : ");
  //   SerialPort.println(currentalti);
-#endif //PROG_DEBUG
+#endif //DATA_DEBUG
 
     if (displayLowUpdateState) screen.altiDigit->setValue(currentalti);
 
@@ -1578,10 +1607,10 @@ void loop() {
     if( history.haveNewClimbRate() ) {
       double TmpTrend;
       TmpTrend = history.getClimbRate(GnuSettings.SETTINGS_CLIMB_PERIOD_COUNT);
-#ifdef PROG_DEBUG
+#ifdef DATA_DEBUG
       SerialPort.print("Trend value : ");
       SerialPort.println(TmpTrend);
-#endif //PROG_DEBUG
+#endif //DATA_DEBUG
       
       if (displayLowUpdateState) {
         if (GnuSettings.RATIO_CLIMB_RATE > 1) {
@@ -1589,9 +1618,9 @@ void loop() {
           else                    screen.trendDigit->setValue(9.9);
         }
 
-#ifdef PROG_DEBUG
+#ifdef DATA_DEBUG
         SerialPort.println("display trendLevel");
-#endif //PROG_DEBUG
+#endif //DATA_DEBUG
 
         if (TmpTrend == 0)     screen.trendLevel->stateTREND(0);
         else if (TmpTrend > 0) screen.trendLevel->stateTREND(1);
@@ -1737,6 +1766,11 @@ void loop() {
         /* parse sentence */        
         nmeaParser.feed( c );
 
+#ifdef NMEAPARSER_DEBUG
+        char tmpchar = c;
+        SerialPort.print(tmpchar);
+#endif //NMEAPARSER_DEBUG
+
 #ifdef HAVE_SDCARD          
         /* if GGA, convert to IGC and write to sdcard */
         if( sdcardState == SDCARD_STATE_READY && nmeaParser.isParsingGGA() ) {
@@ -1748,7 +1782,11 @@ void loop() {
         }
 #endif //HAVE_SDCARD
       }
-      
+
+#ifdef NMEAPARSER_DEBUG
+          SerialPort.println("");
+#endif //NMEAPARSER_DEBUG
+
       serialNmea.release();
 #ifdef HAVE_SDCARD          
       fileIgc.flush();
@@ -2079,14 +2117,28 @@ void loop() {
 //  if (maxVoltage < tmpVoltage) {maxVoltage = tmpVoltage;}
 
       /* update battery level */
+
+      
 #if defined(VOLTAGE_DIVISOR_DEBUG)
     int val = adc1_get_raw(ADC1_CHANNEL_7);
 
     SerialPort.print("Tension : ");
     SerialPort.println(val);
+    if (compteurBoucle == 5) DUMPLOG(LOG_TYPE_DEBUG, VOLTAGE_DEBUG_LOG,val);
 #endif //VOLTAGE_DIVISOR_DEBUG
 
-  int TmpVoltage = analogRead(VOLTAGE_DIVISOR_PIN);  
+  long TmpVoltage = 0;
+  for(int i=0; i<10; i++) TmpVoltage += analogRead(VOLTAGE_DIVISOR_PIN);  
+  TmpVoltage = TmpVoltage / 10;
+
+  if (compteurBoucle == 4) {
+    DUMPLOG(LOG_TYPE_DEBUG, VOLTAGE_DEBUG_LOG,TmpVoltage);
+    compteurBoucle = 0;
+  }
+  else {
+    compteurBoucle++;
+  }
+  
   if (TmpVoltage > MaxVoltage) MaxVoltage = TmpVoltage;
   
     if (MaxVoltage < 1750) {
@@ -2115,7 +2167,7 @@ void loop() {
 
     screen.recordIndicator->stateRECORD();
 #ifdef PROG_DEBUG
-    SerialPort.println("Record Indicator : staterecord ");
+//    SerialPort.println("Record Indicator : staterecord ");
     SerialPort.print("VarioState : ");
     SerialPort.println(variometerState);
 #endif //PROG_DEBUG
@@ -2147,14 +2199,14 @@ void loop() {
 
       double bearing    = nmeaParser.getBearing();
       String bearingStr = nmeaParser.Bearing_to_Ordinal(bearing);
-#ifdef PROG_DEBUG
+#ifdef DATA_DEBUG
       SerialPort.print("Compas : ");
       SerialPort.print(bearing);
       SerialPort.print(" - ");
-      SerialPort.print(bearingStr);
-#endif //PROG_DEBUG     
-      DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, bearing);
-      DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, bearingStr);
+      SerialPort.println(bearingStr);
+#endif //DATA_DEBUG     
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearing);
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearingStr);
 
      screen.gpsBearing->setValue(bearing); 
      screen.gpsBearingText->setValue(bearingStr); 
@@ -2163,11 +2215,11 @@ void loop() {
     if (nmeaParser.haveLongitude()) {
 
       String longitude = nmeaParser.getLongitude();
-#ifdef PROG_DEBUG
+#ifdef DATA_DEBUG
       SerialPort.print("Longitude : ");
       SerialPort.println(longitude);
-#endif //PROG_DEBUG     
-      DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, longitude);
+#endif //DATA_DEBUG     
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, longitude);
 
 //      screen.gpsLongDir->setValue(String(nmeaParser.getLongDir()));
 //      screen.gpsLong->setValue(nmeaParser.getLong());
@@ -2177,11 +2229,11 @@ void loop() {
     if (nmeaParser.haveLatitude()) {
 
       String latitude = nmeaParser.getLatitude();
-#ifdef PROG_DEBUG
+#ifdef DATA_DEBUG
       SerialPort.print("Latitude : ");
       SerialPort.println(latitude);
-#endif //PROG_DEBUG     
-      DUMPLOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG, latitude);
+#endif //DATA_DEBUG     
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, latitude);
 //      screen.gpsLatDir->setValue(String(nmeaParser.getLatDir()));
 //      screen.gpsLat->setValue(nmeaParser.getLat());
       screen.gpsLat->setValue(nmeaParser.getLatDegree());
@@ -2197,6 +2249,10 @@ void loop() {
 //**********************************************************
 //  UPDATE DISPLAY
 //**********************************************************
+
+#ifdef PROG_DEBUG
+    SerialPort.println("Update Screen");
+#endif //PROG_DEBUG
 
   screen.schedulerScreen->displayStep();
   screen.updateScreen(); 

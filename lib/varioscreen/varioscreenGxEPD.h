@@ -49,12 +49,16 @@
 #include <varioscreenObjects_154.h>
 #include <varioscreenGxEPD_154.h>
 
-// Ecran 2.90''
+// Ecran 2.90'' paysage
 #include <varioscreenGxEPD_290.h>
 #include <varioscreenObjects_290.h>
 
+// Ecran 2.90'' portrait
+#include <varioscreenGxEPD_291.h>
+#include <varioscreenObjects_291.h>
+
 // Ecran 2.13''
-#include <varioscreenGxEPD_213.h>
-#include <varioscreenObjects_213.h>
+//#include <varioscreenGxEPD_213.h>
+//#include <varioscreenObjects_213.h>
 
 #endif

@@ -28,6 +28,7 @@
 /*                         Ajout gestion du fichier log.cfg                      */
 /*    1.1.1    06/01/20		 Ajout logvariable																		 */
 /*    1.1.2    19/01/20    Ajout DEEPSLEEP_DEBUG                                 */
+/*    1.1.3    16/02/20    Correction rotation des fichiers log                  */
 /*                                                                               */
 /*********************************************************************************/
 /*                                                                               */
@@ -76,6 +77,8 @@
 #define WIFI_DEBUG_LOG				12
 #define SOUND_DEBUG_LOG				13
 #define DEEPSLEEP_DEBUG_LOG   14
+#define VOLTAGE_DEBUG_LOG     15
+#define DATA_DEBUG_LOG				16
 
 #define LOG_TYPE_DEBUG				0
 #define LOG_TYPE_INFO					1
@@ -122,7 +125,7 @@ class VarioLog {
 #endif //SDFAT_LIB
    int logRotate(void);
 
-   VarioLog(char *filename, size_t maxSize, int backupCount);
+   VarioLog(char *directoty, char *filename, size_t maxSize, int backupCount);
    void send(const char *msg);
 	 void send(String msg);
 	 void writeSd(const char *msg);
@@ -130,7 +133,8 @@ class VarioLog {
 	 void openSd(void);
 	 
 protected:
-	 char *log_name;
+	 char *log_file;
+	 char *log_dir;
 	 size_t log_size;
 	 int log_backup;
 

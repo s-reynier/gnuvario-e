@@ -54,13 +54,11 @@
  *                      Modification DISPLAY_OBJECT_ALTI                         *
  *    1.1.8  16/11/19   Ajout classe GxEPD2_BW_U                                 *
  *    1.1.9  11/01/20   Modif VARIOSCREEN_SIZE == 290                            *
+ *    1.1.10 07/02/20   Ajout 290 et 291                                         *
+ *                      Ajouter FONTNORMAL / FONTLARGE Digit                     *
+ *    1.0.11 19/02/20   Ajout variolog                                           *
+ *    1.0.12 21/02/20   Correction Bug d'affichage batterie                      *
  *********************************************************************************/
-
-
-
-
-
-
 
 #ifndef VARIOSCREENOBJECTS_290_H
 #define VARIOSCREENOBJECTS_290_H
@@ -95,8 +93,8 @@
 #define VARIOSCREEN_BAT_PIXEL_COUNT 10
 #define VARIOSCREEN_BAT_MULTIPLIER 6
 
-#define ColorScreen    GxEPD_BLACK
-#define ColorText      GxEPD_WHITE
+#define ColorScreen    GxEPD_WHITE
+#define ColorText      GxEPD_BLACK
 
 #define STATE_OK									0x00
 #define STATE_BUSY                0x01
@@ -226,7 +224,7 @@ class ScreenDigit: public VarioScreenObject {
 // TitleY       Position du titre en Y
 
  public :
-   ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uint16_t precision, boolean plusDisplay = false, boolean zero = false, int8_t Align = ALIGNLEFT, boolean showtitle = true, 	int8_t displayTypeID = 0);
+   ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uint16_t precision, boolean plusDisplay = false, boolean zero = false, int8_t Align = ALIGNLEFT, boolean showtitle = true, 	int8_t displayTypeID = 0, bool large = FONTLARGE);
  //  : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), precision(precision), plusDisplay(plusDisplay), zero(zero), leftAlign(leftAlign), showtitle(showtitle)
  // { lastDisplayWidth = 0; }
   void show(void);
@@ -246,6 +244,7 @@ class ScreenDigit: public VarioScreenObject {
 	uint16_t Zwidth, Zheight;
 	uint16_t MaxWidth, MaxHeight;
 	int8_t displayTypeID;
+  boolean large;
 };
 
 class ScreenText: public VarioScreenObject {
