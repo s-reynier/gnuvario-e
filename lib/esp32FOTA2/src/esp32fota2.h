@@ -35,9 +35,7 @@ public:
   bool forceUpdate(String firwmareHost, int firwmarePort, String firwmarePath);
   void execOTA();
   bool execHTTPexist();
-  bool execHTTPSexist();
   uint8_t execHTTPcheck(bool betaVersion = false);
-  uint8_t execHTTPScheck(bool betaVersion = false);
   bool useDeviceID;
   String checkURL;
   int  UpdateVersion;
@@ -61,8 +59,6 @@ private:
   int _port;
   void downloadWwwFiles();
 };
-
-extern const char* rootCACertificate;
 
 extern esp32FOTA2 esp32FOTA;
 #endif
