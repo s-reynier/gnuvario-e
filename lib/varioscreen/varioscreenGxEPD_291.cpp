@@ -46,7 +46,6 @@
  *    1.0.13 25/02/20   Ajout ScreenBackground                                   *
  *    1.0.14 05/03/20   Ajout affichage alti agl                                 *
 *********************************************************************************/
- 
  /*
  *********************************************************************************
  *                    conversion image to cpp code                               *
@@ -86,6 +85,8 @@
 #include <Utility.h>
 
 #include <SysCall.h>
+
+#include <AglManager.h>
 
 #ifdef __AVR__
   #include <avr/pgmspace.h>
@@ -382,8 +383,15 @@ void VarioScreen::createScreenObjectsDisplayPage0(void) {
 //****************************************************************************************************************************
 //	CreateObjectDisplay(DISPLAY_OBJECT_TENSION, tensionDigit, 0, 0, true); 
 //	CreateObjectDisplay(DISPLAY_OBJECT_TEMPRATURE, tempratureDigit, 0, 2, true); 
-		CreateObjectDisplay(DISPLAY_OBJECT_ALTI							, altiDigit					    , 0, 0, true); 
-		CreateObjectDisplay(DISPLAY_OBJECT_HEIGHT						, heightDigit				, 0, 2, true);
+/*detection dossier AGL et AGL enable*/
+
+		if (GnuSettings.VARIOMETER_ENABLE_AGL && aglManager.IsOk()) {
+			CreateObjectDisplay(DISPLAY_OBJECT_ALTI							, altiDigit					    , 0, 0, true); 
+			CreateObjectDisplay(DISPLAY_OBJECT_HEIGHT						, heightDigit				, 0, 2, true);
+		} else {
+			CreateObjectDisplay(DISPLAY_OBJECT_ALTI							, altiDigit					    , 0, 0, true); 
+		}
+
 		CreateObjectDisplay(DISPLAY_OBJECT_MUNIT						, munit						 	, 0, 0, true); 
 		CreateObjectDisplay(DISPLAY_OBJECT_VARIO						, varioDigit				    , 0, 0, true); 
 		CreateObjectDisplay(DISPLAY_OBJECT_MSUNIT						, msunit						, 0, 0, true); 
@@ -425,7 +433,6 @@ void VarioScreen::createScreenObjectsDisplayPage0(void) {
 
 
 
-	
 //****************************************************************************************************************************
 void VarioScreen::createScreenObjectsDisplayPage10(void) {
 //****************************************************************************************************************************

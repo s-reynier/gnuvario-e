@@ -37,9 +37,9 @@
  *    1.0.8  28/01/20   Modification écran 1 - ajout info gps                    *
  *    1.0.9  09/02/20   Modif écran 1 - font normal / coordonné GPS en degrés    *
  *    1.0.10 17/02/20   Ajout large (font) varioscreenDigit                      *
-  *    1.0.11 25/02/20   Ajout ScreenBackground                                   *
+ *    1.0.11 25/02/20   Ajout ScreenBackground                                   *
  *    1.0.12 04/03/20   Ajout affichage alti agl                                 *
-*                                                                               *
+ *                                                                               *
  *********************************************************************************/
 
 
@@ -48,12 +48,22 @@
 #ifndef VARIOSCREENGXEPD_154_H
 #define VARIOSCREENGXEPD_154_H
 
+#include <Arduino.h>
+#include <VarioSettings.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
 
 #if (VARIOSCREEN_SIZE == 154)
 
 #include <varioscreenObjects_154.h>
+
+/* task parameters */
+#define SCREEN_STACK_SIZE 2000
+#define SCREEN_CORE 1
+#define SCREEN_PRIORITY 10
 
 /************************/
 /* The screen scheduler */
@@ -76,7 +86,7 @@ class ScreenScheduler {
  ScreenScheduler(ScreenSchedulerObject* displayList, uint8_t objectCount, int8_t startPage, int8_t endPage);
 //   : displayList(displayList), objectCount(objectCount), pos(0), currentPage(startPage), endPage(endPage); // {};
   
-  void displayStep(void);
+  boolean displayStep(void);
   int8_t getPage(void);
   int8_t getMaxPage(void);
   void setPage(int8_t page, boolean forceUpdate = false);
@@ -247,15 +257,22 @@ class VarioScreen {
 		
  /* void beginClear(void); //multi step clear
   bool clearStep(void); //return true while clearing*/
-  
+ 
+	 static SemaphoreHandle_t screenMutex;
+ 
  private:
    unsigned long timerShow = 0;
+   static uint8_t volatile status;
+   static TaskHandle_t screenTaskHandler;
+   static void screenTask(void* param);
+
 //  uint8_t clearingStep;
 };
 
 extern VarioScreen screen;
 extern volatile uint8_t stateDisplay;
-extern GxEPD2_BW<GxEPD2_154U, GxEPD2_154U::HEIGHT> display;
+//extern GxEPD2_BW<GxEPD2_154U, GxEPD2_154U::HEIGHT> display;
+extern GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT> display;
 
 #endif
 #endif

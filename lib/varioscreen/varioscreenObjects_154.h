@@ -62,6 +62,8 @@
  *    1.0.9  17/02/20   Ajout large (font) varioscreenDigit                      *
  *    1.0.10 19/02/20   Ajout variolog                                           *
  *    1.0.11 21/02/20   Correction Bug d'affichage batterie                      *
+ *    1.0.12 05/03/20   Ajout affichage AGL                                      *
+ *    1.0.13 06/03/20   Ajout gestion icone DISPLAY_OBJECT_TREND                 *
  *                                                                               *
  *********************************************************************************/
 
@@ -77,7 +79,7 @@
 #include <digit.h>
 #include <variostat.h>
 
-#include <GxEPD2_BWU.h>
+#include <GxEPD2_BW.h>
 #include <GxEPD2_3C.h>
 
 // FreeFonts from Adafruit_GFX

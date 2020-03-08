@@ -309,6 +309,9 @@ SimpleBLE ble;
 *               04/03/20             Ajout AGL                                                        *
 *               05/03/20             Correction ecran qui clignote                                    *
 *                                    AJOUT - Champs enable AGL                                        *
+*               07/03/20             Correction gestion AGL                                           *
+*                                    Correction screenGxEpd2 - xSemaphore                             *
+*               08/03/20             Mise à jour GxEpd2                                               *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -322,14 +325,12 @@ SimpleBLE ble;
 * BUG   - Affichage barres GPS - problème de raffraichissement                                        *
 * BUG   - upload wifi - ne se termine pas  - bug espressif le buffer n'est pas vidé à la fin          *
 * BUG   - update manuelle - doit être lancée 2 fois                                                   *
+* BUG   - download à verifier                                                                         *
 * BUG   - stat affichage temps de vol                                                                 *
-* MODIF - Modification librairie varioscreen - MAJ GxEpd2                                             *
 * VERIF - Seuil déclenchement début du vol                                                            *
 * VERIF - Sensibilité du vario                                                                        *
-* BUG   - Problème d'effacement alti                                                                  *
 * AJOUT - Champs enable AGL dans site Web                                                             *
 * AJOUT - déclenchement manuel de l'enregistrement                                                    *
-* BUG   - AGL                                                                                         *                                                                                                    *
 *                                                                                                     *        
 * v0.8                                                                                                *       
 * MODIF - Réecrire loop                                                                               *
@@ -2297,8 +2298,9 @@ void loop() {
     //SerialPort.println("Update Screen");
 #endif //PROG_DEBUG
 
-  screen.schedulerScreen->displayStep();
-  screen.updateScreen(); 
+  if (screen.schedulerScreen->displayStep()) {
+    screen.updateScreen(); 
+  }
 #endif //HAVE_SCREEN
 
 //**********************************************************
