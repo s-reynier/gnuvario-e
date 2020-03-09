@@ -64,6 +64,7 @@
  *    1.0.11 21/02/20   Correction Bug d'affichage batterie                      *
  *    1.0.12 05/03/20   Ajout affichage AGL                                      *
  *    1.0.13 06/03/20   Ajout gestion icone DISPLAY_OBJECT_TREND                 *
+ *    1.0.14 09/03/20   Modification de l'effacement digit left                  *
  *                                                                               *
  *********************************************************************************/
 
@@ -151,8 +152,8 @@
 #define MAXW_OBJECT_SPEED								 		48
 #define MAXW_OBJECT_ALTI									 	110
 #define MAXW_OBJECT_DURATION							 	20
-#define MAXW_OBJECT_RATIO       						20
-#define MAXW_OBJECT_TREND      							20
+#define MAXW_OBJECT_RATIO       						100
+#define MAXW_OBJECT_TREND      							100
 #define MAXW_OBJECT_TEMPERATURE							20
 //#define MAXW_OBJECT_LAT 									 	160
 //#define MAXW_OBJECT_LONG									 	160

@@ -65,6 +65,9 @@
 
 
 
+
+
+
 /*
  *********************************************************************************
  *                    conversion image to cpp code                               *
@@ -105,7 +108,7 @@
 
 #include <VarioButton.h>
 
-#include <GxEPD2_BWU.h>
+#include <GxEPD2_BW.h>
 #include <GxEPD2_3C.h>
 
 #include "GxEPD2_boards.h"
@@ -477,6 +480,15 @@ ScreenDigit::ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uin
 #endif	
 			MaxHeight  = Zheight;
 			break;
+
+		case DISPLAY_OBJECT_TREND :
+#if defined (MAXW_OBJECT_TREND)		
+		  MaxWidth   = MAXW_OBJECT_TREND;
+#else
+		  MaxWidth   = Zwidth;
+#endif	
+			MaxHeight  = Zheight;
+			break;
 			
 		case DISPLAY_OBJECT_RATIO :
 #if defined (MAXW_OBJECT_RATION)		
@@ -746,12 +758,14 @@ void ScreenDigit::show() {
 			SerialPort.println("left align");
 #endif //SCREEN_DEBUG
 	
-		if ((anchorX+w+2) > display.width()) w = display.width()-anchorX+2; //if ((anchorX+w+2) > display.width()) w = display.width()-anchorX+2
+//		if ((anchorX+w+2) > display.width()) w = display.width()-anchorX+2; //if ((anchorX+w+2) > display.width()) w = display.width()-anchorX+2
 
-		display.fillRect(anchorX, anchorY-Zheight-3, w+4, Zheight+3, GxEPD_WHITE);; //display.fillRect(anchorX, anchorY-Zheight-3, w+6, Zheight+4, GxEPD_BLACK);
+//		display.fillRect(anchorX, anchorY-Zheight-3, w+4, Zheight+3, GxEPD_WHITE);; //display.fillRect(anchorX, anchorY-Zheight-3, w+6, Zheight+4, GxEPD_BLACK);
 	
 //		display.drawRect(anchorX, anchorY-Zheight-3, w+5, Zheight+4, GxEPD_BLACK);
   
+		display.fillRect(anchorX-1, anchorY-MaxHeight-3, MaxWidth+5, MaxHeight+6, GxEPD_WHITE);
+
     display.setCursor(anchorX, anchorY-1); //display.setCursor(anchorX, anchorY-1);
 		titleX = anchorX + 4;
 		titleY = anchorY - MaxHeight - 5; 
@@ -809,13 +823,15 @@ void ScreenDigit::show() {
 			display.drawInvertedBitmap(titleX+22, titleY-8, variotext, 24, 9, GxEPD_BLACK);
 			break;
 		case DISPLAY_OBJECT_RATIO :
-   			display.fillRect(titleX-15, titleY-8, 40, 9, GxEPD_WHITE);
+		
+   			display.fillRect(titleX-15, titleY-8, 15, 9, GxEPD_WHITE);
 			display.drawInvertedBitmap(titleX-15, titleY-8, grtext, 15, 9, GxEPD_BLACK); //finesse/glade ratio
 			break;
+			
 		case DISPLAY_OBJECT_TREND :
-//			display.drawInvertedBitmap(132, 85, grtext, 21, 11, GxEPD_BLACK); //finesse/glade ratio
-   			display.fillRect(titleX-15, titleY-8, 40, 9, GxEPD_WHITE);
-			display.drawInvertedBitmap(titleX-15, titleY-8, trtext, 15, 9, GxEPD_BLACK); //finesse/glade ratio
+//			
+   			display.fillRect(titleX-15, titleY-8, 15, 9, GxEPD_WHITE);
+			display.drawInvertedBitmap(titleX-15, titleY-8, trtext, 13, 9, GxEPD_BLACK); //rate of fall
 			break;
 			
     case DISPLAY_OBJECT_HEIGHT :
@@ -836,6 +852,11 @@ void ScreenDigit::show() {
 	}
 
 }
+
+
+
+
+
 
 /*
 // ****************************************************************************************************************************
