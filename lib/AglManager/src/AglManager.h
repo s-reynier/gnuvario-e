@@ -44,6 +44,7 @@ public:
     double getHeight() { return currentHeight; }
 		boolean IsOk(void); 
 		void init(void);
+    int getGroundLevel();
 
 private:
     void computeHeight();

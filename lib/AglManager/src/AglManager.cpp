@@ -28,7 +28,7 @@
  *                                                                               *
  *********************************************************************************
  */
- 
+
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
 
@@ -50,24 +50,26 @@
 //****************************************************************************************************************************
 AglManager::AglManager()
 //****************************************************************************************************************************
-{   
-	String tmpStr = AGL_Directory;
-	tmpStr += "/";
-	hgtReader = new HGTReader(tmpStr);
+{
+    String tmpStr = AGL_Directory;
+    tmpStr += "/";
+    hgtReader = new HGTReader(tmpStr);
 }
 
 //****************************************************************************************************************************
-void AglManager::init(void) 
+void AglManager::init(void)
 //****************************************************************************************************************************
 {
-	char tmpFileName[15] = AGL_Directory;
- 
-	if (SDHAL_SD.exists(tmpFileName)) Directory_AGL_Exists = true;
-  else														  Directory_AGL_Exists = false;
+    char tmpFileName[15] = AGL_Directory;
+
+    if (SDHAL_SD.exists(tmpFileName))
+        Directory_AGL_Exists = true;
+    else
+        Directory_AGL_Exists = false;
 
 #ifdef AGL_DEBUG
-	SerialPort.print("INIT AGL : Directory exists : ");
-	SerialPort.println(Directory_AGL_Exists);
+    SerialPort.print("INIT AGL : Directory exists : ");
+    SerialPort.println(Directory_AGL_Exists);
 #endif //AGL_DEBUG
 }
 
@@ -109,55 +111,72 @@ void AglManager::computeHeight()
 //****************************************************************************************************************************
 {
 #ifdef AGL_DEBUG
-	SerialPort.print("ComputeHeight ");
-	SerialPort.print("Alti : ");
-	SerialPort.print(currentAlti);
-	SerialPort.print(", Lat : ");
-	SerialPort.print(currentLat);
-	SerialPort.print(", Long :");
-	SerialPort.println(currentLong);
+    SerialPort.print("ComputeHeight ");
+    SerialPort.print("Alti : ");
+    SerialPort.print(currentAlti);
+    SerialPort.print(", Lat : ");
+    SerialPort.print(currentLat);
+    SerialPort.print(", Long :");
+    SerialPort.println(currentLong);
 #endif //AGL_DEBUG
 
-  if (IsOk()) {
-    if(currentAlti != -1 && currentLat != -1 && currentLong != -1
-                        && currentLat != 0 && currentLong != 0)    
+    if (IsOk())
     {
-        int groundLevel = hgtReader->getGroundLevel(degMinToDeg(currentLat), degMinToDeg(currentLong));
-        if(groundLevel != NO_FILE_FOR_POS)
+        if (currentAlti != -1 && currentLat != -1 && currentLong != -1 && currentLat != 0 && currentLong != 0)
         {
-            currentHeight = currentAlti - groundLevel;
+            int groundLevel = hgtReader->getGroundLevel(degMinToDeg(currentLat), degMinToDeg(currentLong));
+            if (groundLevel != NO_FILE_FOR_POS)
+            {
+                currentHeight = currentAlti - groundLevel;
+            }
+            else
+            {
+                currentHeight = currentAlti;
+            }
         }
         else
         {
             currentHeight = currentAlti;
-        }        
+        }
     }
     else
     {
         currentHeight = currentAlti;
     }
-	}
-	else 
-	{	
-        currentHeight = currentAlti;
-  }
 #ifdef AGL_DEBUG
-	SerialPort.print("AGL Height ");
-	SerialPort.println(currentHeight);
+    SerialPort.print("AGL Height ");
+    SerialPort.println(currentHeight);
 #endif //AGL_DEBUG
 }
 
 //****************************************************************************************************************************
-boolean AglManager::IsOk(void) 
+int AglManager::getGroundLevel()
 //****************************************************************************************************************************
-{ 
+{
+    int groundLevel = -1;
+
+    if (IsOk())
+    {
+        if (currentAlti != -1 && currentLat != -1 && currentLong != -1 && currentLat != 0 && currentLong != 0)
+        {
+            groundLevel = hgtReader->getGroundLevel(degMinToDeg(currentLat), degMinToDeg(currentLong));
+        }
+    }
+
+    return groundLevel;
+}
+
+//****************************************************************************************************************************
+boolean AglManager::IsOk(void)
+//****************************************************************************************************************************
+{
 
 #ifdef AGL_DEBUG
-	SerialPort.print("AGL Directory exists : ");
-	SerialPort.println(Directory_AGL_Exists);
+    SerialPort.print("AGL Directory exists : ");
+    SerialPort.println(Directory_AGL_Exists);
 #endif //AGL_DEBUG
 
-  return Directory_AGL_Exists; 
+    return Directory_AGL_Exists;
 }
 
 /**
@@ -169,9 +188,9 @@ boolean AglManager::IsOk(void)
 float AglManager::degMinToDeg(float value)
 //****************************************************************************************************************************
 {
-  float r = value;
-  int intValue = value;
-  float min = value - intValue;
-  float decimal = min/0.6;  
-  return intValue + decimal;
+    float r = value;
+    int intValue = value;
+    float min = value - intValue;
+    float decimal = min / 0.6;
+    return intValue + decimal;
 }
