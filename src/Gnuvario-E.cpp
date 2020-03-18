@@ -315,6 +315,9 @@ SimpleBLE ble;
 *               09/03/20             Correction bug ViewSound                                         *
 *                                    correction bug effacement GR / TR                                *
 *                                    correction Bug affichage titre GR/TR                             *
+*                                    Calibration manuel du baromètre via l'AGL                        *
+*                                    Déclenchement manuel de l'enregistrement du vol                  *
+*               14/03/20             Calibration de compensation du GPS via l'AGL                     *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -325,16 +328,14 @@ SimpleBLE ble;
 * BUG   - DISPLAY_OBJECT_LINE object ligne ne fonctionne pas                                          *
 *                                                                                                     *
 * v0.7                                                                                                *
-* BUG   - Affichage barres GPS - problème de raffraichissement                                        *
 * BUG   - upload wifi - ne se termine pas  - bug espressif le buffer n'est pas vidé à la fin          *
 * BUG   - update manuelle - doit être lancée 2 fois                                                   *
 * BUG   - download à verifier                                                                         *
 * BUG   - stat affichage temps de vol                                                                 *
 * VERIF - Seuil déclenchement début du vol                                                            *
 * VERIF - Sensibilité du vario                                                                        *
-* AJOUT - déclenchement manuel de l'enregistrement                                                    *
 * BUG   - blocage du MPU                                                                              *
-* MODIF - Calibrage avec mesure AGL                                                                   *
+* AJOUT - effacement ecran 1 fois / min                                                               *
 *                                                                                                     *        
 * v0.8                                                                                                *       
 * MODIF - Réecrire loop                                                                               *
@@ -410,6 +411,9 @@ SimpleBLE ble;
  * - Ajout affichage du cap, longitude, latitude                        *
  * - Calibration des accèlerometres                                     *
  * - AGL                                                                *
+ * - Calibration manuel du baro via l'AGL                               *
+ * - Declenchement de vol manuellement                                  *
+ * - Compensation du GPS via l'AGL                                      *
  *                                                                      *
  ************************************************************************/
  
@@ -495,6 +499,8 @@ SimpleBLE ble;
   *   Vario         Centre 3s   Mode veille                                                                   *
   *   Vario         Gauche      écran précédent                                                               *
   *   Vario         Droite      écran suivant                                                                 *
+  *   Vario         Gauche 2s   Calibrarion manuel du baro via l'AGL                                          *
+  *   Vario         Gauche 0    Déclenchement de l'enregistrement du vol si en attente                        *
   *                                                                                                           *
   *   Wifi          Gauche      Sort du mode Wifi                                                             *
   *                                                                                                           *
@@ -1390,6 +1396,7 @@ void setup() {
 
 double temprature=0;
 double currentHeight = 0;
+int    compteurErrorMPU = 0;
 
 #if defined(HAVE_SDCARD) && defined(HAVE_GPS)
 void createSDCardTrackFile(void);
@@ -1445,6 +1452,7 @@ void loop() {
 #ifdef TWOWIRESCHEDULER
   if( twScheduler.havePressure() && twScheduler.haveAccel() ) {
 
+    compteurErrorMPU = 0;
     double tmpAlti, tmpTemp, tmpAccel;
     twScheduler.getTempAlti(tmpTemp, tmpAlti);
     tmpAccel = twScheduler.getAccel(NULL);
@@ -1669,8 +1677,35 @@ void loop() {
 #endif //HAVE_SCREEN
      
   } else {
-/*    SerialPort.println("ERREUR ERREUR BARO / ACCELEROMETRE");   
 
+    /**************************************************************/
+    /*   ERREUR BAROMETRE / MPU                                   */
+    /**************************************************************/
+    
+    SerialPort.println("ERREUR ERREUR BARO / ACCELEROMETRE");   
+
+    compteurErrorMPU++;
+    if (compteurErrorMPU > 20) {
+      compteurErrorMPU = 20;
+
+ //**********************************************************
+//  DISABLE BEEPER
+//**********************************************************
+
+#ifdef HAVE_SPEAKER
+      beeper.setVelocity( 0 );
+#endif //HAVE_SPEAKER
+
+      if (displayLowUpdateState) {
+        screen.altiDigit->setValue(0);
+        #ifdef AGL_MANAGER_H
+        aglManager.setAlti(0);
+        #endif
+      }
+      
+      if (displayLowUpdateState) screen.varioDigit->setValue(0);    
+    }
+/*
 #ifdef TWOWIRESCHEDULER
     if( twScheduler.havePressure() ) {
     
@@ -1879,6 +1914,7 @@ void loop() {
 
           compteurGpsFix++;
           double tmpGpsAlti = nmeaParser.getAlti();
+          aglManager.setAltiGps(tmpGpsAlti);
 
  //         DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,tmpGpsAlti);
 

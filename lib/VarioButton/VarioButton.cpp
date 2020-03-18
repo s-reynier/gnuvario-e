@@ -34,19 +34,21 @@
  *    1.0.5  22/08/19   Ajout gestion changement de page                         	*
  *    1.0.6  26/08/19   Ajout gestion page config sound                          	*
  *                      Augmentation debounce time                               	*
- *                      Ajout _state button											*
- *    1.0.7  31/08/19		Correction bug reglage son								*
+ *                      Ajout _state button																				*
+ *    1.0.7  31/08/19		Correction bug reglage son																*
  *    1.0.8  25/09/19   Ajout appuie 3 sec bouton central                        	* 
  *    1.0.9  29/09/19	  Ajout gestion page de calibration                        	*
  *    1.0.9  29/09/19	  Ajout gestion page de calibration                        	*
  *    1.0.10 03/10/19   Ajout HAVE_SDCARD                                        	*
- *    1.0.11 28/10/19		Ajout bip de control lors de la configuration du volume *
+ *    1.0.11 28/10/19		Ajout bip de control lors de la configuration du volume 	*
  *    1.0.12 01/11/19   Modification de la configuration du volume               	*
  *    1.0.13 03/11/19   Déplacement de la validation de la mise en veille sur le 	*
  *                      bouton gauche                                            	*
  *    1.0.14 29/11/19   Ajout arduinotrace                                       	*
  *                      Modif sdfat                                              	*
  *    1.0.15 09/03/20   Modification ScreenViewSound                             	*
+ *    1.0.16 10/03/20   Ajout Bouton A 2sec calibration via AGL         					*
+ *                      Ajout déclenchement debut du vol (appuie sur bouton A     *
  *                                                                               	*
  ************************************************************************************/
 
@@ -87,6 +89,11 @@
 #endif //HAVE_SDCARD && HAVE_GPS
 
 uint8_t RegVolume;
+
+#define VARIOMETER_STATE_INITIAL 0
+#define VARIOMETER_STATE_DATE_RECORDED 1
+#define VARIOMETER_STATE_CALIBRATED 2
+#define VARIOMETER_STATE_FLIGHT_STARTED 3
 
 void VARIOButton::begin()
 {
@@ -152,6 +159,13 @@ void VARIOButtonScheduleur::update()
 		if (groundLevel != -1)
 		{
 			kalmanvert.calibratePosition(groundLevel);
+			
+			int aglLevel = aglManager.getAgl();
+			GnuSettings.COMPENSATION_GPSALTI = aglLevel;
+			
+			char tmpchar[20] = "params.jso";
+			GnuSettings.saveConfigurationVario(tmpchar);
+
 			beeper.generateTone(523, 250);
 			beeper.generateTone(659, 250);
 			beeper.generateTone(784, 250);
@@ -280,7 +294,16 @@ void VARIOButtonScheduleur::treatmentBtnA(bool Debounce)
 	}
 	else if (StatePage == STATE_PAGE_VARIO)
 	{
-		screen.schedulerScreen->previousPage();
+		
+		if (variometerState == VARIOMETER_STATE_CALIBRATED) 
+		{     
+			if (GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START) {
+        GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START = false;
+			  createSDCardTrackFile();
+			}
+		} else {
+			screen.schedulerScreen->previousPage();
+		}
 	}
 	else if (StatePage == STATE_PAGE_WEBSERV)
 	{
