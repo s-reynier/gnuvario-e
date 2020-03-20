@@ -111,7 +111,7 @@ char password_3[50];
 char ssid_4[50];
 char password_4[50];
 
-SdFile uploadFile;
+File uploadFile;
 
 //************************************************************
 // DISPLAY SCREEN
@@ -168,7 +168,7 @@ boolean VarioWifiServer::begin(void)
   SerialPort.println(password_4);
 #endif //WIFI_DEBUG
 
-  SdFile dataFile;
+  File dataFile;
 
   //test présence fichier index
   if (dataFile.open("www/index.htm", O_RDONLY))
@@ -417,7 +417,7 @@ void returnFail(String msg)
 }
 
 /***********************************/
-void listDirectory(SdFile dir, int numTabs)
+void listDirectory(File dir, int numTabs)
 {
   /***********************************/
 
@@ -426,7 +426,7 @@ void listDirectory(SdFile dir, int numTabs)
 
   while (true)
   {
-    SdFile entry;
+    File entry;
 
     if (!entry.openNext(&dir, O_RDONLY))
     {
@@ -535,20 +535,21 @@ bool loadFromSdCard(String path)
 
 #ifdef HAVE_SDCARD
 
-  SdFile dataFile;
-  boolean tmpretour;
-  tmpretour = dataFile.open(path.c_str(), O_RDONLY);
-  if ((tmpretour) && (dataFile.isDir()))
+  File dataFile;
+
+  if (!dataFile.open(path.c_str(), O_RDONLY))
+  {
+    return false;
+  };
+  if (dataFile.isDir())
   {
     dataFile.close();
     path += "/index.htm";
     dataType = "text/html";
-    tmpretour = dataFile.open(path.c_str(), O_RDONLY);
-  }
-
-  if (!tmpretour)
-  {
-    return false;
+    if (!dataFile.open(path.c_str(), O_RDONLY))
+    {
+      return false;
+    };
   }
 
   if (server.hasArg("download"))
@@ -590,7 +591,7 @@ void handleListFlights()
   String path;
   path = "/vols";
 
-  SdFile dir;
+  File dir;
   dir.open((char *)path.c_str(), O_READ); //O_RDONLY);
 
   path = String();
@@ -609,7 +610,7 @@ void handleListFlights()
   server.sendContent("[");
   for (int cnt = 0; true; ++cnt)
   {
-    SdFile entry;
+    File entry;
     if (!entry.openNext(&dir, O_READ))
     {
       TRACE();
@@ -677,7 +678,7 @@ void handleParams()
   String dataType = "application/json";
   String path = "/params.jso";
 
-  SdFile dataFile;
+  File dataFile;
 
   if (!dataFile.open((char *)path.c_str()), O_RDONLY)
   {
@@ -722,7 +723,7 @@ void handleWifi()
   SerialPort.println(path.c_str());
 #endif
 
-  SdFile dataFile;
+  File dataFile;
   if (!dataFile.open((char *)path.c_str(), O_RDONLY))
 
   {
@@ -768,7 +769,7 @@ void handlePrintDirectory()
   SerialPort.println((char *)path.c_str());
 #endif
 
-  SdFile dir;
+  File dir;
   dir.open((char *)path.c_str(), O_RDONLY);
   dir.rewind();
 
@@ -802,7 +803,7 @@ void handlePrintDirectory()
 
   output += ",\"contents\" :[";
 #ifdef WIFI_DEBUG
-  SerialPort.println(output);
+  //SerialPort.println(output);
 #endif
   server.sendContent(output);
   printDirectoryRecurse(path);
@@ -829,7 +830,7 @@ void printDirectoryRecurse(String path)
 {
 
   char fBuffer[32];
-  SdFile dir;
+  File dir;
   dir.open((char *)path.c_str(), O_RDONLY);
   dir.rewind();
 
@@ -837,15 +838,14 @@ void printDirectoryRecurse(String path)
 
   for (int cnt = 0; true; ++cnt)
   {
-    SdFile entry;
-    boolean tmpRetour = entry.openNext(&dir, O_RDONLY);
-    entry.getName(fBuffer, 30);
-    String tmpName = fBuffer;
-    if (!tmpRetour)
+    File entry;
+    if (!entry.openNext(&dir, O_RDONLY))
     {
-      TRACE();
+      // TRACE();
       break;
     }
+    entry.getName(fBuffer, 30);
+    String tmpName = fBuffer;
 
     if (tmpName.equalsIgnoreCase("SYSTEM~1") || tmpName.startsWith(".")) //equalsIgnoreCase(".TRASH~1"))
     {
@@ -887,7 +887,7 @@ void printDirectoryRecurse(String path)
     {
       output += ",\"contents\" :[";
 #ifdef WIFI_DEBUG
-      SerialPort.println(output);
+      // SerialPort.println(output);
 #endif
       server.sendContent(output);
       entry.getName(fBuffer, 30);
@@ -898,7 +898,7 @@ void printDirectoryRecurse(String path)
     output += "}";
 
 #ifdef WIFI_DEBUG
-    SerialPort.println(output);
+    //SerialPort.println(output);
 #endif
 
     server.sendContent(output);
@@ -930,7 +930,7 @@ void handleFileDownload()
   String path = server.arg(0);
   DUMP(path);
 
-  SdFile dataFile;
+  File dataFile;
   if (!dataFile.open((char *)path.c_str(), O_RDONLY))
   {
     return returnFail("NO FILE");
@@ -954,9 +954,9 @@ void handleFileDownload()
 void handleFileUpload()
 {
   /***********************************/
-#ifdef WIFI_DEBUG
-  SerialPort.println("handleFileUpload");
-#endif
+  // #ifdef WIFI_DEBUG
+  //   SerialPort.println("handleFileUpload");
+  // #endif
 
   if (server.uri() != "/upload")
   {
@@ -969,8 +969,6 @@ void handleFileUpload()
     returnOK();
   }
 
-  boolean tmpReturn = false;
-
   HTTPUpload &upload = server.upload();
   if (upload.status == UPLOAD_FILE_START)
   {
@@ -978,10 +976,11 @@ void handleFileUpload()
     if (SDHAL_SD.exists((char *)upload.filename.c_str()))
     {
       SDHAL_SD.remove((char *)upload.filename.c_str());
-      TRACE();
+      //TRACE();
     }
-    tmpReturn = uploadFile.open(upload.filename.c_str(), O_WRONLY | O_CREAT);
-    if (!tmpReturn)
+
+    uploadFile = SDHAL_SD.open(upload.filename.c_str(), FILE_WRITE);
+    if (!uploadFile)
     {
 #ifdef WIFI_DEBUG
       SerialPort.print("Impossible de créer le fichier : ");
@@ -997,10 +996,10 @@ void handleFileUpload()
   else if (upload.status == UPLOAD_FILE_WRITE)
   {
 
-    if (tmpReturn)
+    if (uploadFile)
     {
       uploadFile.write(upload.buf, upload.currentSize);
-      uploadFile.flush();
+      // uploadFile.flush();
 
 #ifdef WIFI_DEBUG
       SerialPort.print("Upload: WRITE, Bytes: ");
@@ -1012,9 +1011,9 @@ void handleFileUpload()
   {
     TRACE();
 
-    if (tmpReturn)
+    if (uploadFile)
     {
-      uploadFile.flush();
+      // uploadFile.flush();
       uploadFile.close();
 
 #ifdef WIFI_DEBUG
@@ -1031,7 +1030,7 @@ void handleFileUpload()
     SerialPort.println(upload.currentSize);
 #endif
     //on va supprimer le fichier partiel
-    uploadFile.flush();
+    // uploadFile.flush();
     uploadFile.close();
     SDHAL_SD.remove((char *)upload.filename.c_str());
 
@@ -1155,7 +1154,7 @@ void deleteRecursive(String path)
 {
   /***********************************/
 
-  SdFile fileSD;
+  File fileSD;
   fileSD.open((char *)path.c_str(), O_RDONLY);
   if (!fileSD.isDir())
   {
@@ -1169,7 +1168,7 @@ void deleteRecursive(String path)
 
   while (true)
   {
-    SdFile entry;
+    File entry;
     if (!entry.openNext(&fileSD, O_RDONLY))
 
     {
@@ -1232,14 +1231,13 @@ void handleNotFound()
 }
 
 #ifdef HAVE_SDCARD
-SdFile UpdateFile;
+File UpdateFile;
 #endif
 
 /***********************************/
 void handleFileUpdate()
 { // update ESP32
 /***********************************/
-//  boolean tmpReturn = false;
 #ifdef WIFI_DEBUG
   SerialPort.println("handleFileUpdate");
 
@@ -1317,9 +1315,9 @@ void handleSaveParams()
   size_t n;
   uint8_t buf[64];
 
-  SdFile dataFile;
+  File dataFile;
   dataFile.open(path.c_str(), O_RDONLY);
-  SdFile dataFile2;
+  File dataFile2;
   dataFile2.open(pathBak.c_str(), O_RDWR | O_CREAT);
 
   while ((n = dataFile.read(buf, sizeof(buf))) > 0)
@@ -1370,9 +1368,9 @@ void handleSaveWifi()
   size_t n;
   uint8_t buf[64];
 
-  SdFile dataFile;
+  File dataFile;
   dataFile.open(path.c_str(), O_RDONLY);
-  SdFile dataFile2;
+  File dataFile2;
   dataFile2.open(pathBak.c_str(), O_RDWR | O_CREAT);
 
   while ((n = dataFile.read(buf, sizeof(buf))) > 0)
