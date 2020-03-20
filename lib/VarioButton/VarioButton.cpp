@@ -166,10 +166,10 @@ void VARIOButtonScheduleur::update()
 			char tmpchar[20] = "params.jso";
 			GnuSettings.saveConfigurationVario(tmpchar);
 
-			beeper.generateTone(523, 250);
-			beeper.generateTone(659, 250);
-			beeper.generateTone(784, 250);
-			beeper.generateTone(1046, 250);
+			beeper.generateTone(523, 150);
+			beeper.generateTone(659, 150);
+			beeper.generateTone(784, 150);
+			beeper.generateTone(1046, 150);
 		}
 #endif
 		_stateBA = false;

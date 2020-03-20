@@ -28,4 +28,4 @@ void VarioAlim::init()
 #endif
 }
 
-extern VarioAlim varioAlim;
+// extern VarioAlim varioAlim;

@@ -23,28 +23,27 @@
 #endif //HAVE_SDCARD
 
 #include <VarioSettings.h>
-
+#include <VarioManager.h>
 #include <VarioLog.h>
-#include <VarioAlim.h>
 
 #ifdef HAVE_SPEAKER
 #include <toneHAL.h>
 #include <beeper.h>
 #endif //HAVE_SPEAKER
 
-#ifdef TWOWIRESCHEDULER
-#include <IntTW.h>
-#include <ms5611TW.h>
-#include <vertaccel.h>
-#include <LightInvensense.h>
-#include <TwoWireScheduler.h>
-#else
-#include <MS5611-Ext.h>
-#include <Wire.h>
-#include <vertaccel2.h>
-//#include <SparkFunMPU9250-DMP.h>
-#include <MPU9250-DMP_SF_EXT.h>
-#endif
+// #ifdef TWOWIRESCHEDULER
+// #include <IntTW.h>
+// #include <ms5611TW.h>
+// #include <vertaccel.h>
+// #include <LightInvensense.h>
+// #include <TwoWireScheduler.h>
+// #else
+// #include <MS5611-Ext.h>
+// #include <Wire.h>
+// #include <vertaccel2.h>
+// //#include <SparkFunMPU9250-DMP.h>
+// #include <MPU9250-DMP_SF_EXT.h>
+// #endif
 
 #include <kalmanvert.h>
 
@@ -93,16 +92,6 @@ SimpleBLE ble;
 #endif //HAVE_BLUETOOTH
 
 #include <SysCall.h>
-
-/*******************/
-/* Version         */
-/*******************/
-
-#define VERSION 0
-#define SUB_VERSION 7
-#define BETA_CODE 8
-#define DEVNAME "JPG63"
-#define AUTHOR "J" //J=JPG63  P=PUNKDUMP
 
 /******************************************************************************************************/
 /*                                              VERSION                                               */
@@ -548,35 +537,35 @@ uint8_t variometerState = VARIOMETER_STATE_INITIAL;
 uint8_t variometerState = VARIOMETER_STATE_CALIBRATED;
 #endif //HAVE_GPS
 
-VarioAlim varioAlim;
-
 /*****************/
 /* screen        */
 /*****************/
 
 #include <varioscreenGxEPD.h>
 
-/***************/
-/* IMU objects */
-/***************/
-#ifdef TWOWIRESCHEDULER
-#ifdef HAVE_BMP280
-Bmp280 TWScheduler::bmp280;
-#else
-Ms5611 TWScheduler::ms5611;
-#endif
-#ifdef HAVE_ACCELEROMETER
-Vertaccel TWScheduler::vertaccel;
-#endif //HAVE_ACCELEROMETER
-#else
+VarioManager varioManager;
 
-MS5611 ms5611;
-double referencePressure;
+// /***************/
+// /* IMU objects */
+// /***************/
+// #ifdef TWOWIRESCHEDULER
+// #ifdef HAVE_BMP280
+// Bmp280 TWScheduler::bmp280;
+// #else
+// Ms5611 TWScheduler::ms5611;
+// #endif
+// #ifdef HAVE_ACCELEROMETER
+// Vertaccel TWScheduler::vertaccel;
+// #endif //HAVE_ACCELEROMETER
+// #else
 
-MPU9250_DMP imu;
-Vertaccel vertaccel;
+// MS5611 ms5611;
+// double referencePressure;
 
-#endif
+// MPU9250_DMP imu;
+// Vertaccel vertaccel;
+
+// #endif
 
 //Vertaccel vertaccel;
 
@@ -744,7 +733,7 @@ void setup()
   /*****************************/
   /*  Init Alimentation        */
   /*****************************/
-  varioAlim.init();
+  varioManager.initAlim();
 
   /*****************************/
   /* wait for devices power on */
@@ -766,43 +755,12 @@ void setup()
   /*    BOOT SEQUENCE     */
   /************************/
 
-#ifdef PROG_DEBUG
-
-  ///  while (!SerialPort) { ;}
-  char tmpbuffer[100];
-  sprintf(tmpbuffer, "GNUVARIO compiled on %s", __DATE__); // at %s", __DATE__, __TIME__);
-  SerialPort.println(tmpbuffer);
-  sprintf(tmpbuffer, "VERSION %i.%i - %s", VERSION, SUB_VERSION, DEVNAME);
-  SerialPort.println(tmpbuffer);
-  if (BETA_CODE > 0)
-  {
-    SerialPort.print("Beta ");
-    SerialPort.println(BETA_CODE);
-  }
-  SerialPort.flush();
-#endif //PRO_DEBBUG
-
-#if defined(ESP32)
-  if (BETA_CODE > 0)
-  {
-    ESP_LOGI(TAG, "GnuVario-E version %d.%d Beta %d.", VERSION, SUB_VERSION, BETA_CODE);
-  }
-  else
-  {
-    ESP_LOGI(TAG, "GnuVario-E version %d.%d.", VERSION, SUB_VERSION);
-    //  ESP_LOGE(TAG, "Failed to initialize the card (%d). Make sure SD card lines have pull-up resistors in place.", ret);
-  }
-#endif //ESP32
+  varioManager.init();
 
   /******************/
   /* Init Speaker   */
   /******************/
-
-#if defined(HAVE_SPEAKER)
-  toneHAL.init();
-  beeper.setVolume(10);
-  //beeper.generateTone(2000,300);
-#endif
+  varioManager.initSpeaker();
 
   /******************/
   /* Init SDCARD    */
@@ -1097,119 +1055,120 @@ void setup()
 #endif //SOUND_DEBUG
 
 #endif //HAVE_SPEAKER
+  varioManager.initImu();
 
-#ifdef TWOWIRESCHEDULER
-  /**************************/
-  /* init Two Wires devices */
-  /**************************/
-  //!!!
-#ifdef HAVE_ACCELEROMETER
-  intTW.begin();
-  twScheduler.init();
-  //  vertaccel.init();
+// #ifdef TWOWIRESCHEDULER
+//   /**************************/
+//   /* init Two Wires devices */
+//   /**************************/
+//   //!!!
+// #ifdef HAVE_ACCELEROMETER
+//   intTW.begin();
+//   twScheduler.init();
+//   //  vertaccel.init();
 
-#endif //HAVE_ACCELEROMETER
-#else  //TWOWIRESCHEDULER
-#ifdef MS5611_DEBUG
-  SerialPort.println("Initialize MS5611 Sensor");
-#endif //MS5611_DEBUG
+// #endif //HAVE_ACCELEROMETER
+// #else  //TWOWIRESCHEDULER
+// #ifdef MS5611_DEBUG
+//   SerialPort.println("Initialize MS5611 Sensor");
+// #endif //MS5611_DEBUG
 
-#if defined(VARIO_SDA_PIN) && defined(VARIO_SCL_PIN)
-  while (!ms5611.begin(VARIO_SDA_PIN, VARIO_SCL_PIN))
-#else
-  while (!ms5611.begin())
-#endif
-  {
-    SerialPort.println("Could not find a valid MS5611 sensor, check wiring!");
-#if defined(ESP32)
-    ESP_LOGE(TAG, "Erreur capteur MS5611 introuvable");
-#endif //EPS32
-    delay(500);
-  }
+// #if defined(VARIO_SDA_PIN) && defined(VARIO_SCL_PIN)
+//   while (!ms5611.begin(VARIO_SDA_PIN, VARIO_SCL_PIN))
+// #else
+//   while (!ms5611.begin())
+// #endif
+//   {
+//     SerialPort.println("Could not find a valid MS5611 sensor, check wiring!");
+// #if defined(ESP32)
+//     ESP_LOGE(TAG, "Erreur capteur MS5611 introuvable");
+// #endif //EPS32
+//     delay(500);
+//   }
 
-  // Get reference pressure for relative altitude
-  referencePressure = ms5611.readPressure();
+//   // Get reference pressure for relative altitude
+//   referencePressure = ms5611.readPressure();
 
-  SerialPort.print("Oversampling: ");
-  SerialPort.println(ms5611.getOversampling());
+//   SerialPort.print("Oversampling: ");
+//   SerialPort.println(ms5611.getOversampling());
 
-  vertaccel.init();
+//   vertaccel.init();
 
-#ifdef HAVE_ACCELEROMETER
-#ifdef ACCEL_DEBUG
-  SerialPort.println("configuring device.");
-#endif //ACCEL_DEBUG
+// #ifdef HAVE_ACCELEROMETER
+// #ifdef ACCEL_DEBUG
+//   SerialPort.println("configuring device.");
+// #endif //ACCEL_DEBUG
 
-#ifdef ACCEL_DEBUG
-  SerialPort.println("configured 9Axis I2C MPU9250");
-#endif //ACCEL_DEBUG
+// #ifdef ACCEL_DEBUG
+//   SerialPort.println("configured 9Axis I2C MPU9250");
+// #endif //ACCEL_DEBUG
 
-  // Call imu.begin() to verify communication and initialize
-#if defined(VARIO_SDA_PIN) && defined(VARIO_SCL_PIN)
-  if (imu.begin(VARIO_SDA_PIN, VARIO_SCL_PIN) != INV_SUCCESS)
-#else
-  if (imu.begin() != INV_SUCCESS)
-#endif
+//   // Call imu.begin() to verify communication and initialize
+// #if defined(VARIO_SDA_PIN) && defined(VARIO_SCL_PIN)
+//   if (imu.begin(VARIO_SDA_PIN, VARIO_SCL_PIN) != INV_SUCCESS)
+// #else
+//   if (imu.begin() != INV_SUCCESS)
+// #endif
 
-  {
-    while (1)
-    {
-      SerialPort.println("Unable to communicate with MPU-9250");
-      SerialPort.println("device error");
-      ESP_LOGE(TAG, "Erreur capteur MPU9250 introuvable");
-      while (1)
-        ;
-    }
-  }
+//   {
+//     while (1)
+//     {
+//       SerialPort.println("Unable to communicate with MPU-9250");
+//       SerialPort.println("device error");
+//       ESP_LOGE(TAG, "Erreur capteur MPU9250 introuvable");
+//       while (1)
+//         ;
+//     }
+//   }
 
-  // Use setSensors to turn on or off MPU-9250 sensors.
-  // Any of the following defines can be combined:
-  // INV_XYZ_GYRO, INV_XYZ_ACCEL, INV_XYZ_COMPASS,
-  // INV_X_GYRO, INV_Y_GYRO, or INV_Z_GYRO
-  // Enable all sensors:
-  imu.setSensors(INV_XYZ_GYRO | INV_XYZ_ACCEL | INV_XYZ_COMPASS);
+//   // Use setSensors to turn on or off MPU-9250 sensors.
+//   // Any of the following defines can be combined:
+//   // INV_XYZ_GYRO, INV_XYZ_ACCEL, INV_XYZ_COMPASS,
+//   // INV_X_GYRO, INV_Y_GYRO, or INV_Z_GYRO
+//   // Enable all sensors:
+//   imu.setSensors(INV_XYZ_GYRO | INV_XYZ_ACCEL | INV_XYZ_COMPASS);
 
-  /*  // Use setGyroFSR() and setAccelFSR() to configure the
-  // gyroscope and accelerometer full scale ranges.
-  // Gyro options are +/- 250, 500, 1000, or 2000 dps
-  imu.setGyroFSR(2000); // Set gyro to 2000 dps
-  // Accel options are +/- 2, 4, 8, or 16 g
-  imu.setAccelFSR(8); // Set accel to +/-2g
-  // Note: the MPU-9250's magnetometer FSR is set at 
-  // +/- 4912 uT (micro-tesla's)
+//   /*  // Use setGyroFSR() and setAccelFSR() to configure the
+//   // gyroscope and accelerometer full scale ranges.
+//   // Gyro options are +/- 250, 500, 1000, or 2000 dps
+//   imu.setGyroFSR(2000); // Set gyro to 2000 dps
+//   // Accel options are +/- 2, 4, 8, or 16 g
+//   imu.setAccelFSR(8); // Set accel to +/-2g
+//   // Note: the MPU-9250's magnetometer FSR is set at 
+//   // +/- 4912 uT (micro-tesla's)
 
-  // setLPF() can be used to set the digital low-pass filter
-  // of the accelerometer and gyroscope.
-  // Can be any of the following: 188, 98, 42, 20, 10, 5
-  // (values are in Hz).
-  imu.setLPF(5); // Set LPF corner frequency to 5Hz*/
+//   // setLPF() can be used to set the digital low-pass filter
+//   // of the accelerometer and gyroscope.
+//   // Can be any of the following: 188, 98, 42, 20, 10, 5
+//   // (values are in Hz).
+//   imu.setLPF(5); // Set LPF corner frequency to 5Hz*/
 
-  // The sample rate of the accel/gyro can be set using
-  // setSampleRate. Acceptable values range from 4Hz to 1kHz
-  imu.setSampleRate(100); // Set sample rate to 10Hz
+//   // The sample rate of the accel/gyro can be set using
+//   // setSampleRate. Acceptable values range from 4Hz to 1kHz
+//   imu.setSampleRate(100); // Set sample rate to 10Hz
 
-  // Likewise, the compass (magnetometer) sample rate can be
-  // set using the setCompassSampleRate() function.
-  // This value can range between: 1-100Hz
-  imu.setCompassSampleRate(100); // Set mag rate to 10Hz
+//   // Likewise, the compass (magnetometer) sample rate can be
+//   // set using the setCompassSampleRate() function.
+//   // This value can range between: 1-100Hz
+//   imu.setCompassSampleRate(100); // Set mag rate to 10Hz
 
-  /*  imu.dmpBegin(DMP_FEATURE_6X_LP_QUAT | // Enable 6-axis quat
-               DMP_FEATURE_GYRO_CAL, // Use gyro calibration
-              10); // Set DMP FIFO rate to 10 Hz
-  // DMP_FEATURE_LP_QUAT can also be used. It uses the 
-  // accelerometer in low-power mode to estimate quat's.
-  // DMP_FEATURE_LP_QUAT and 6X_LP_QUAT are mutually exclusive*/
+//   /*  imu.dmpBegin(DMP_FEATURE_6X_LP_QUAT | // Enable 6-axis quat
+//                DMP_FEATURE_GYRO_CAL, // Use gyro calibration
+//               10); // Set DMP FIFO rate to 10 Hz
+//   // DMP_FEATURE_LP_QUAT can also be used. It uses the 
+//   // accelerometer in low-power mode to estimate quat's.
+//   // DMP_FEATURE_LP_QUAT and 6X_LP_QUAT are mutually exclusive*/
 
-  imu.dmpBegin(DMP_FEATURE_SEND_RAW_ACCEL |    // Send accelerometer data
-                                               //                 DMP_FEATURE_SEND_RAW_GYRO  | // Send raw gyroscope values to FIFO
-                   DMP_FEATURE_GYRO_CAL |      // Calibrate the gyro data
-                   DMP_FEATURE_SEND_CAL_GYRO | // Send calibrated gyro data
-                   DMP_FEATURE_6X_LP_QUAT,     // Calculate quat's with accel/gyro
-               100);                           // Set update rate to 10Hz.
+//   imu.dmpBegin(DMP_FEATURE_SEND_RAW_ACCEL |    // Send accelerometer data
+//                                                //                 DMP_FEATURE_SEND_RAW_GYRO  | // Send raw gyroscope values to FIFO
+//                    DMP_FEATURE_GYRO_CAL |      // Calibrate the gyro data
+//                    DMP_FEATURE_SEND_CAL_GYRO | // Send calibrated gyro data
+//                    DMP_FEATURE_6X_LP_QUAT,     // Calculate quat's with accel/gyro
+//                100);                           // Set update rate to 10Hz.
 
-#endif //HAVE_ACCELEROMETER
+// #endif //HAVE_ACCELEROMETER
 
-#endif //TWOWIRESCHEDULER
+// #endif //TWOWIRESCHEDULER
 
 #ifdef HAVE_ACCELEROMETER
   /******************/
@@ -2147,7 +2106,7 @@ void loop()
 #ifdef GPS_DEBUG
     SerialPort.print("Sat : ");
     SerialPort.println(nmeaParser.satelliteCount);
-#endif //GPS_DEBUG
+#endif //GPS_DEBUG \
        //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
   }
 #endif //HAVE_GPS
