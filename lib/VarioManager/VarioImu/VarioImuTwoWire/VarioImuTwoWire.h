@@ -8,14 +8,13 @@
 #include <LightInvensense.h>
 #include <TwoWireScheduler.h>
 
-
-
 class VarioImuTwoWire
 {
 
 public:
     VarioImuTwoWire();
     void init();
+    double getAlti();
 };
 
 #endif

@@ -18,4 +18,6 @@ public:
     void initAlim();
     void initSpeaker();
     void initImu();
+    double getAlti();
+    void initKalman(double startp, double starta, double sigmap, double sigmaa, unsigned long timestamp);
 };

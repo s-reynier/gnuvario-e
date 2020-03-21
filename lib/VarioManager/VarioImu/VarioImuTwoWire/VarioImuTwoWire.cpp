@@ -4,13 +4,13 @@
 
 #ifdef TWOWIRESCHEDULER
 #ifdef HAVE_BMP280
-extern Bmp280 TWScheduler::bmp280;
+Bmp280 TWScheduler::bmp280;
 #else
-extern Ms5611 TWScheduler::ms5611;
+Ms5611 TWScheduler::ms5611;
 #endif
 
 #ifdef HAVE_ACCELEROMETER
-extern Vertaccel TWScheduler::vertaccel;
+Vertaccel TWScheduler::vertaccel;
 #endif //HAVE_ACCELEROMETER
 
 VarioImuTwoWire::VarioImuTwoWire()
@@ -31,4 +31,8 @@ void VarioImuTwoWire::init()
 #endif //HAVE_ACCELEROMETER
 }
 
+double VarioImuTwoWire::getAlti()
+{
+    return twScheduler.getAlti();
+}
 #endif

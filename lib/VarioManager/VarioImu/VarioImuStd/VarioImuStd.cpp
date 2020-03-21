@@ -107,4 +107,8 @@ VarioImuStd::init()
 
 #endif //HAVE_ACCELEROMETER
 }
+
+   double VarioImuStd::getAlti(){
+       return ms5611.readPressure();
+   }
 #endif

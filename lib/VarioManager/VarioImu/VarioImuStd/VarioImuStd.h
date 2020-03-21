@@ -20,6 +20,7 @@ class VarioImuStd
 public:
     VarioImuStd();
     void init();
+    double getAlti();
 };
 
 #endif

@@ -51,6 +51,17 @@ void VarioManager::initSpeaker()
     this->varioSpeaker->init();
 }
 
-void VarioManager::initImu(){
+void VarioManager::initImu()
+{
     this->varioImu->init();
+}
+
+double VarioManager::getAlti()
+{
+    return this->varioImu->getAlti();
+}
+
+void VarioManager::initKalman(double startp, double starta, double sigmap, double sigmaa, unsigned long timestamp)
+{
+    
 }
