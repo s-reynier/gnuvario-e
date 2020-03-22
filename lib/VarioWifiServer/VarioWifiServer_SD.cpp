@@ -348,6 +348,12 @@ void VarioWifiServer::start(void)
   // sauvegarde du contenu du fichier param
   server.on("/wifi", HTTP_POST, handleSaveWifi);
 
+  //récupération du contenu du fichier preference
+  server.on("/webconfig", HTTP_GET, handleWebConfig);
+
+  // sauvegarde du contenu du fichier preference
+  server.on("/webconfig", HTTP_POST, handleSaveWebConfig);
+
   //Aucun route spécifique, on regarde si il s'agit d'un fichier du répertoire www
   server.onNotFound(handleNotFound);
 
@@ -687,6 +693,46 @@ void handleParams()
 #endif
     dataFile.close();
     return returnFail("NO FILE named params.jso");
+  }
+
+  //gestion des CORS
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  if (server.streamFile(dataFile, dataType) != dataFile.fileSize())
+  {
+    SerialPort.println("Sent less data than expected!");
+  }
+
+  dataFile.close();
+
+  return;
+}
+
+// Récupération du contenu du fichier prefs.jso
+/*****************************/
+void handleWebConfig()
+/*****************************/
+{
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleWebConfig");
+#endif
+  if (server.uri() != "/webconfig")
+  {
+    return returnFail("BAD ARGS");
+  }
+
+  String dataType = "application/json";
+  String path = "/prefs.jso";
+
+  File dataFile;
+
+  if (!dataFile.open((char *)path.c_str()), O_RDONLY)
+  {
+#ifdef WIFI_DEBUG
+    SerialPort.println("prefs.jso introuvable");
+#endif
+    dataFile.close();
+    return returnFail("NO FILE named prefs.jso");
   }
 
   //gestion des CORS
@@ -1337,6 +1383,45 @@ void handleSaveParams()
   dataFile.println(content);
 
   dataFile.close();
+  return returnOK();
+}
+
+// sauvegarde des preferences
+/***********************************/
+void handleSaveWebConfig()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleSaveParams");
+#endif
+
+  if (server.uri() != "/webconfig")
+  {
+#ifdef WIFI_DEBUG
+    SerialPort.println("Erreur : BAD ARGS");
+#endif
+    return returnFail("BAD ARGS");
+  }
+
+  String path = "/prefs.jso";
+  String content = server.arg(0);
+
+  size_t n;
+  uint8_t buf[64];
+
+  File dataFile;
+
+  SDHAL_SD.remove((char *)path.c_str());
+
+  if (!dataFile.open(path.c_str(), O_RDWR | O_CREAT))
+  {
+    return returnFail("NO FILE");
+  }
+
+  dataFile.println(content);
+
+  dataFile.close();
+
   return returnOK();
 }
 
