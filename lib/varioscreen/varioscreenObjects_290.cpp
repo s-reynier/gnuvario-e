@@ -59,7 +59,11 @@
  *    1.0.11 19/02/20   Ajout variolog                                           *
  *    1.1.12 21/02/20   Correction bug affichage batterie   					 *	
  *    1.0.13 04/03/20   Réorganisation de l'affichage des variable               *
- *********************************************************************************/ 
+ *    1.0.14 05/03/20   Ajout affichage AGL                                      *
+ *    1.0.15 06/03/20   Ajout gestion icone DISPLAY_OBJECT_TREND                 *
+ *    1.0.16 09/03/20   Modification de l'effacement digit left                  *
+ *    1.0.17 08/04/20   Modification affichage des titres                        *
+*********************************************************************************/ 
  
  
 
@@ -807,10 +811,10 @@ void ScreenDigit::show() {
 			display.drawInvertedBitmap(titleX-6, titleY-8, speedtext, 30, 11, GxEPD_BLACK);
 
 			break;
-		case DISPLAY_OBJECT_TIME :
+/*		case DISPLAY_OBJECT_TIME :
 
 			display.drawInvertedBitmap(titleX-25, titleY-7, timetext, 21, 9, GxEPD_BLACK);
-			break;
+			break;*/
 		case DISPLAY_OBJECT_ALTI :
 
    		    display.fillRect(titleX-72, titleY-6, 22, 9, GxEPD_WHITE);
@@ -2453,7 +2457,18 @@ void ScreenTime::show(void) {
 
   minute.setValue(time[1]);
   minute.show();
- }
+
+  display.fillRect(posX-125, posY-21-7-36, 21, 9, GxEPD_WHITE);
+	
+  if (dot_or_h == false) {	
+//		case DISPLAY_OBJECT_TIME :
+			display.drawInvertedBitmap(posX-125, posY-7-36, timetext, 21, 9, GxEPD_BLACK);
+	}
+	else  {
+//		case DISPLAY_OBJECT_DURATION :
+//			display.drawInvertedBitmap(posX-125, posY-17-36, tdvtext, 88, 17, GxEPD_BLACK);
+	}	
+}
 
 //****************************************************************************************************************************
 //****************************************************************************************************************************
