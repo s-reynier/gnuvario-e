@@ -264,7 +264,7 @@
 #define NMEA_GGA_TIME_PRECISION 1000
 #define NMEA_GGA_ALTI_PRECISION 10.0
 
-#else if defined(NEO_6M)
+#elif defined(NEO_6M)
 
 //NEO-6M
 #define NMEA_RMC_TAG "GPRMC"
