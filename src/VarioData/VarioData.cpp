@@ -30,6 +30,7 @@
  *    1.0.2  07/04/20   ajout updateBeeper(void)                                 *
  *    1.0.3  18/04/20   Ajour reglage du kalman                                  *
  *                      Ajout intégration vario                                  *
+ *    1.0.4  08/05/20   Ajout getCap                                             *
  *                                                                               *
  *********************************************************************************
  */
@@ -56,6 +57,8 @@
 
 #include <VarioLog.h>
 
+#include <SerialNmea.h>
+
 #ifdef HAVE_WIFI
 #include <VarioWifiServer.h>
 #endif //HAVE_WIFI
@@ -67,6 +70,8 @@
 #endif //HAVE_SDCARD && HAVE_GPS
 
 #include <varioscreenGxEPD.h>
+
+#include <math.h>
 
 /**********************/
 /* SDCARD objects     */
@@ -322,6 +327,8 @@ bool VarioData::initLog(void)
 
   INFOLOG(tmpStr);
   TRACELOG(LOG_TYPE_DEBUG, MAIN_DEBUG_LOG);
+
+  return true;
 }
 
 
@@ -332,7 +339,7 @@ bool VarioData::initLog(void)
 bool VarioData::initAGL(void) 
 //*******************************************
 {
-  aglManager.init();
+  return (aglManager.init());
 }
 
 //***********************************************
@@ -590,9 +597,9 @@ void VarioData::update(void)
 	} */
 	
 	/*
-    //**********************************************************
+    // **********************************************************
     //  TEST INNACTIVITE
-    //**********************************************************
+    // **********************************************************
 
     if (abs(varioData.kalmanvert.getVelocity()) > GnuSettings.SLEEP_THRESHOLD_CPS)
     {
@@ -611,9 +618,9 @@ void VarioData::update(void)
       deep_sleep("Power off");
     }
 
-    //**********************************************************
+    // **********************************************************
     //  TRAITEMENT DES DONNEES
-    //**********************************************************
+    // **********************************************************
 
     // * set history *
 #if defined(HAVE_GPS)
@@ -635,18 +642,18 @@ void VarioData::update(void)
 
     // set screen *
 
-    //**********************************************************
+    // **********************************************************
     //  MAJ STATISTIQUE
-    //**********************************************************
+    // **********************************************************
 
     varioData.flystat.SetAlti(currentalti);
     varioData.flystat.SetVario(currentvario);
 
 #ifdef HAVE_SCREEN
 
-    //**********************************************************
+    // **********************************************************
     //  DISPLAY ALTI
-    //**********************************************************
+    // **********************************************************
 
 #ifdef DATA_DEBUG
     //   SerialPort.print("altitude : ");
@@ -661,9 +668,9 @@ void VarioData::update(void)
 #endif
     }
 
-    //**********************************************************
+    // **********************************************************
     //  DISPLAY VARIO
-    //**********************************************************
+    // **********************************************************
 
     if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
     {
@@ -679,9 +686,9 @@ void VarioData::update(void)
         screen.varioDigit->setValue(currentvario);
     }
 
-    //**********************************************************
+    // **********************************************************
     //  DISPLAY FINESSE / TAUX DE CHUTE MOYEN
-    //**********************************************************
+    // **********************************************************
 
     if (varioData.history.haveNewClimbRate())
     {
@@ -846,6 +853,12 @@ int VarioData::getStateTrend(){
 }
 
 //*******************************************
+uint8_t VarioData::getVariometerState(){
+//*******************************************
+	return variometerState;
+}
+
+//*******************************************
 bool VarioData::updateBle(){
 //*******************************************
   return(varioHardwareManager.updateBle(kalmanvert.getVelocity(), kalmanvert.getPosition(), kalmanvert.getCalibratedPosition()));
@@ -896,7 +909,7 @@ void VarioData::updateState(){
 #endif //GPS_DEBUG
 
 			/* we need a good quality value */
-			if (nmeaParser.haveNewAltiValue() && nmeaParser.precision < VARIOMETER_GPS_ALTI_CALIBRATION_PRECISION_THRESHOLD)
+			if (nmeaParser.haveNewAltiValue() && (nmeaParser.precision < VARIOMETER_GPS_ALTI_CALIBRATION_PRECISION_THRESHOLD))
 			{
 
 				compteurGpsFix++;
@@ -906,10 +919,12 @@ void VarioData::updateState(){
 				//         DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,tmpGpsAlti);
 
 				//Moyenne alti gps
-				if (compteurGpsFix > 5)
+/*				if (compteurGpsFix > 5)
 					gpsAlti = (gpsAlti + tmpGpsAlti) / 2;
 				else
-					gpsAlti = tmpGpsAlti;
+					gpsAlti = tmpGpsAlti;*/
+
+				gpsAlti = tmpGpsAlti;
 
 #ifdef GPS_DEBUG
 				SerialPort.print("CompteurGpsFix : ");
@@ -988,7 +1003,7 @@ void VarioData::updateState(){
 					{
 
 #ifdef SDCARD_DEBUG
-            SerialPort.println("createSDCardTrackFile");
+            SerialPort.println("createSDCardTrackFile when GPS Fix");
 #endif //SDCARD_DEBUG
 
 						createSDCardTrackFile();
@@ -999,7 +1014,7 @@ void VarioData::updateState(){
 		}
 
 		/* else check if the flight have started */
-		else
+		else if (variometerState == VARIOMETER_STATE_CALIBRATED)
 		{ //variometerState == VARIOMETER_STATE_CALIBRATED
 
 			/* check flight start condition */
@@ -1008,43 +1023,67 @@ void VarioData::updateState(){
 			DUMP(GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD);
 			DUMP(GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD);
 
-			if ((millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP) &&
-				 ((GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START) &&
-				 ((kalmanvert.getVelocity() < GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD) || (kalmanvert.getVelocity() > GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD))
-#ifdef HAVE_GPS
-         && (nmeaParser.getSpeed() > GnuSettings.FLIGHT_START_MIN_SPEED)
-#endif //HAVE_GPS
-
-          ) ||
-          (!GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START)
-
-            //        && (kalmanvert.getVelocity() < FLIGHT_START_VARIO_LOW_THRESHOLD || kalmanvert.getVelocity() > FLIGHT_START_VARIO_HIGH_THRESHOLD) &&
-          )
+			if (millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP) 
 			{
-				//          variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
-				enableflightStartComponents();
+				if (!GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START)
+				{
+					DUMP(GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START);
+					enableflightStartComponents();
+				}
+				else
+				{
+					if (((kalmanvert.getVelocity() < GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD) || (kalmanvert.getVelocity() > GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD)) &&
+						 (!CompteurStartFlyEnable))
+					{
+						//pré-declenchement du début du vol
+						CompteurStartFlyEnable 	= true;
+						TimeStartFly       			= millis();
+						CompteurStartFly       	= 0;
+					}
+
+          if (CompteurStartFlyEnable) 
+					{
+						if (nmeaParser.getSpeed() < GnuSettings.FLIGHT_START_MIN_SPEED)
+						{
+							// si la vitesse n'est pas atteinte 
+							CompteurStartFly++;
+					
+							if (CompteurStartFly > 10) CompteurStartFlyEnable 	= false;
+						}
+						else
+						{
+							CompteurStartFly = 0;
+							if ((millis()-TimeStartFly) > 3000) 
+							{
+								//          variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
+								TRACE();
+								enableflightStartComponents();
+							}
+						}
+					}
+				}
 			}
-    }
-  }
+		}
 #else // HAVE_GPS
   // * if no GPS, we can't calibrate, and we have juste to check flight start *
-  if (variometerState == VARIOMETER_STATE_CALIBRATED)
-  { //already calibrated at start
-    /*    if( (millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP) &&
-        (kalmanvert.getVelocity() < GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD || kalmanvert.getVelocity() > GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD) ) {
-      variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
-      enableflightStartComponents();*/
+		if (variometerState == VARIOMETER_STATE_CALIBRATED)
+		{ //already calibrated at start
+			/*    if( (millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP) &&
+					(kalmanvert.getVelocity() < GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD || kalmanvert.getVelocity() > GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD) ) {
+				variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
+				enableflightStartComponents();*/
 
-    if ((millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP) &&
-        (((GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START) &&
-          ((kalmanvert.getVelocity() < GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD) || (kalmanvert.getVelocity() > GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD))) ||
-         (!GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START)))
-    {
-      //        variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
-      enableflightStartComponents();
-    }
-  }
+			if ((millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP) &&
+					(((GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START) &&
+						((kalmanvert.getVelocity() < GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD) || (kalmanvert.getVelocity() > GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD))) ||
+					 (!GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START)))
+			{
+				//        variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
+				enableflightStartComponents();
+			}
+		}
 #endif //HAVE_GPS
+	}
 }
 
 /**************************************************/
@@ -1177,11 +1216,13 @@ void VarioData::enableflightStartComponents(void)
     SerialPort.println("Record Start");
 #endif //SDCARD_DEBUG
 
+		gpsFix = 3;
     screen.recordIndicator->setActifRECORD();
     screen.recordIndicator->stateRECORD();
   }
   else
   {
+		gpsFix = 4;
     screen.recordIndicator->setNoRECORD();
     screen.recordIndicator->stateRECORD();
   }
@@ -1295,9 +1336,11 @@ void VarioData::updateVoltage(void) {
 #endif //HAVE_VOLTAGE_DIVISOR
 }
 
+/*******************************************/
+int VarioData::getCap(void) {
+/*******************************************/
 
 /*
-
 > > > Pour la cap magnetique, je pense que tu as compris le principe de base :
 > > > 1) Tu testes si tu as une valeur d'accélération (haveAccel)
 > > > 2) Si oui tu lis l'accélération. (getAccel) en lisant en même temps le
@@ -1328,3 +1371,31 @@ void VarioData::updateVoltage(void) {
 > > > Normalement tu aura alors une flèche qui pointe vers le nord.
 
 */
+
+	int cap = -1;
+	if (twScheduler.haveAccel() ) {
+		double vertVector[3];
+		double vertAccel = twScheduler.getAccel(vertVector);
+		
+		if (twScheduler.haveMag() ) {
+			double northVector[2];
+			twScheduler.getNorthVector(vertVector,  northVector);
+			 
+			double norm = sqrt(northVector[0]*northVector[0]+northVector[1]*northVector[1]);
+			northVector[0] = northVector[0]/norm;
+			northVector[1] = northVector[1]/norm;
+			
+			DUMP(northVector[0]);
+			DUMP(northVector[1]);
+			
+			int tmpcap = 180 - atan2(northVector[1],northVector[0]) * 180/M_PI;
+			
+			tmpcap = 360 - tmpcap;
+			
+			DUMP(tmpcap);
+			return tmpcap;
+		}
+	}
+
+	return cap;
+}

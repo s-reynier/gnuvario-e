@@ -38,13 +38,18 @@
 
 #include <VarioLog.h>
 
+#ifndef ARDUINOTRACE_ENABLE
 #ifdef HARDWARE_DEBUG
 #define ARDUINOTRACE_ENABLE 1
 #else
 #define ARDUINOTRACE_ENABLE 0
 #endif
+#endif
 
+#ifndef ARDUINOTRACE_SERIAL
 #define ARDUINOTRACE_SERIAL SerialPort
+#endif
+
 #include <ArduinoTrace.h>
 
 
@@ -215,23 +220,32 @@ bool VarioHardwareManager::updateGps(Kalmanvert kalmanvert)
 //***********************************
 {
 #if defined(HAVE_GPS)
-	if (varioGps.update(varioData.kalmanvert, &varioBle.lastSentence)) 
+	boolean lastSentencetmp;
+	if (varioGps.update(varioData.kalmanvert, &lastSentencetmp)) 
 	{
 	
 #ifdef HAVE_BLUETOOTH
+		varioBle.lastSentence = lastSentencetmp;
 	//* if this is the last GPS sentence *
 	//* we can send our sentences *
-	if (varioBle.lastSentence)
-	{
-		varioBle.lastSentence = false;
+		if (varioBle.lastSentence)
+		{
+			varioBle.lastSentence = false;
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-    varioBle.bluetoothNMEA.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
+			varioBle.bluetoothNMEA.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
 #else
-    varioBle.bluetoothNMEA.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
+			varioBle.bluetoothNMEA.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
 #endif
-    serialNmea.lock(); //will be writed at next loop
-  }
+			serialNmea.lock(); //will be writed at next loop
+		}
 #endif //HAVE_BLUETOOTH
+    return true;
   }
+  else 
+  {
+    return false;
+  }
+#else //HAVE_GPS
+  return false;
 #endif //HAVE_GPS
 }

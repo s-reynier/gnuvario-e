@@ -30,6 +30,7 @@
  *    1.0.2  07/04/20   ajout updateBeeper(void)                                 *
  *    1.0.3  18/04/20   Ajour reglage du kalman                                  *
  *                      Ajout intégration vario                                  *
+ *    1.0.4  08/05/20   Ajout getCap                                             *
  *                                                                               *
  *********************************************************************************
  */
@@ -64,6 +65,23 @@
 		constexpr int8_t historyGPSPeriodCount = (int8_t)(0.5 + historyGPSPeriodCountF);
 #endif
 
+#define	GPSFIX_NOGPS		0				//no gps
+#define GPSFIX_INIT			1				//time
+#define GPSFIX_FIX			2				//gps fix
+#define GPSFIX_RECORD 	3				//record data
+#define GPSFIX_NORECORD	4				//no record file
+
+#define STATE_PAGE_INIT 0
+#define STATE_PAGE_VARIO 1
+#define STATE_PAGE_CONFIG 2
+#define STATE_PAGE_STAT 3
+#define STATE_PAGE_GPSCAL 4
+#define STATE_PAGE_WEBSERV 5
+#define STATE_PAGE_CONFIG_SOUND 6
+#define STATE_PAGE_DEEP_SLEEP 7
+#define STATE_PAGE_CALIBRATION 8
+#define STATE_PAGE_CALIBRATE 9
+
 class VarioData
 {
 public:
@@ -88,6 +106,8 @@ public:
 		double 	getClimbRate();
 		double 	getTrend();
 		int    	getStateTrend();
+		uint8_t getVariometerState();
+		int 		getCap();
 		
 		bool 	 	haveNewClimbRate();
 				
@@ -104,7 +124,6 @@ public:
 
 		long 		voltage = 0;
 		
-		uint8_t variometerState;
 		unsigned long lastDisplayTimestamp, lastDisplayTimestamp2;
 
     boolean displayLowUpdateState = true;
@@ -158,6 +177,12 @@ private:
 		int 	 	stateTrend;		
 		double 	climbRateBuzzer;
 		bool   	haveNewClimbRateDataBuzzer = false;
+		uint8_t variometerState;
+		
+		bool 		CompteurStartFlyEnable 	= false;
+		unsigned long	TimeStartFly;
+		uint8_t	CompteurStartFly	= 0;
+
 };
 
 extern VarioData varioData;
