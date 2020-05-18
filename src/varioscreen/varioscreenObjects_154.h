@@ -69,6 +69,7 @@
  *    1.1.16 13/04/20   Titre en mode texte                                      *
  *    1.1.17 13/04/20   Titre en mode texte                                      *
  *    1.2.0  29/04/20   Modification font screedigit                             *
+ *    1.2.1  17/05/20   Ajout setPositionTitle                                   *
  *                                                                               *
  *********************************************************************************/
 
@@ -258,13 +259,14 @@ class ScreenDigit: public VarioScreenObject {
  // { lastDisplayWidth = 0; }
   void show(void);
   void setValue(double value);
+	void setPositionTitle(uint16_t X, uint16_t Y);
    
  private:
   int digitsBe4Decimal(double number);
   char * dtostrf2(double number, signed char width, unsigned char prec, char *s, boolean zero);
   double value;
   double oldvalue=-1;
-  const uint16_t anchorX, anchorY, width, precision;
+  uint16_t anchorX, anchorY, width, precision;
   boolean plusDisplay, zero;
 	int8_t Align;
   boolean showtitle;
@@ -276,6 +278,7 @@ class ScreenDigit: public VarioScreenObject {
   int8_t large;
 	int nbCarTitle;
 	int MaxTitleWidth, MaxTitleHeight;
+	uint16_t titleX, titleY;
 };
 
 class ScreenText: public VarioScreenObject {

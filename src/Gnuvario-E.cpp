@@ -247,6 +247,9 @@
 *               16/05/20             Ajout raffraichissement écran toutes les 15min                   *
 *               17/05/20             Maj lib Adafruit_GFX_Library                                     *
 *                                    Nettoyage lib BLE                                                *
+*                                    Ajout position titre                                             *
+*                                    Ajout lib sqlite3                                                *
+*                                    Ajout VarioSqlFlight                                             *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -869,7 +872,14 @@ void setup()
   //***********************************************
 
 #ifdef HAVE_BLUETOOTH
-  if (varioHardwareManager.initBt()) screen.btinfo->setBT();
+  if (varioHardwareManager.initBt()) {
+    TRACE();
+    screen.btinfo->setBT();
+  }
+  else {                              
+    TRACE();
+    screen.btinfo->unsetBT();
+  }
 #endif //HAVE_BLUETOOTH
 
   ButtonScheduleur.Set_StatePage(STATE_PAGE_VARIO);

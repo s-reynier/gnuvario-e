@@ -47,6 +47,7 @@
  *    1.1.0  29/04/20   Changement de font - repositionnement                    *
  *    1.1.1  10/05/20   Correction affichage screenTime (:/h)                    *
  *    1.1.2  11/05/20   Effacement zones multi                                   *
+ *    1.1.3  17/05/20   Ajout position titre avac setPositionTitle               *
  *                                                                               *
  *********************************************************************************/ 
 
@@ -204,7 +205,10 @@ TaskHandle_t VarioScreen::screenTaskHandler;
 #define VARIOSCREEN_WIND_ANCHOR_X 200
 #define VARIOSCREEN_WIND_ANCHOR_Y 33
 
-
+#define VARIOSCREEN_ALTI_TITLE_X 5  
+#define VARIOSCREEN_ALTI_TITLE_Y 40
+#define VARIOSCREEN_VARIO_TITLE_X 5
+#define VARIOSCREEN_VARIO_TITLE_Y 100
 
 /*****************************************/
 /* screen objets Page 1                  */
@@ -341,24 +345,30 @@ void VarioScreen::createScreenObjects(void)
 void VarioScreen::createScreenObjectsPage0(void) {
 //****************************************************************************************************************************
 	altiDigit = new ScreenDigit(VARIOSCREEN_ALTI_ANCHOR_X, VARIOSCREEN_ALTI_ANCHOR_Y, 4, 0, false, false, ALIGNRIGHT, true, DISPLAY_OBJECT_ALTI, TAILLE_FONT, MAX_CAR_TITRE_ALTI);
+  altiDigit->setPositionTitle(VARIOSCREEN_ALTI_TITLE_X,VARIOSCREEN_ALTI_TITLE_Y);
 	heightDigit = new ScreenDigit(VARIOSCREEN_ALTI_ANCHOR_X, VARIOSCREEN_ALTI_ANCHOR_Y, 4, 0, false, false, ALIGNRIGHT, true, DISPLAY_OBJECT_HEIGHT, TAILLE_FONT, MAX_CAR_TITRE_AGL);
-
+  heightDigit->setPositionTitle(VARIOSCREEN_ALTI_TITLE_X,VARIOSCREEN_ALTI_TITLE_Y);
 	munit = new MUnit(VARIOSCREEN_ALTI_UNIT_ANCHOR_X, VARIOSCREEN_ALTI_ANCHOR_Y);
+
+	trendLevel = new TRENDLevel(VARIOSCREEN_TREND_ANCHOR_X, VARIOSCREEN_TREND_ANCHOR_Y);
+	fixgpsinfo = new FIXGPSInfo(VARIOSCREEN_SAT_FIX_ANCHOR_X, VARIOSCREEN_SAT_FIX_ANCHOR_Y);
+
 	varioDigit = new ScreenDigit(VARIOSCREEN_VARIO_ANCHOR_X, VARIOSCREEN_VARIO_ANCHOR_Y, 4, 1, true, false,  ALIGNRIGHT, true, DISPLAY_OBJECT_VARIO, TAILLE_FONT, MAX_CAR_TITRE_VARIO);
+  varioDigit->setPositionTitle(VARIOSCREEN_VARIO_TITLE_X,VARIOSCREEN_VARIO_TITLE_Y);
 //	varioDigit = new ScreenDigit(VARIOSCREEN_VARIO_ANCHOR_X, VARIOSCREEN_VARIO_ANCHOR_Y, 4, 1, true, false,  ALIGNLEFT, true, DISPLAY_OBJECT_VARIO, TAILLE_FONT);
 	msunit = new MSUnit(VARIOSCREEN_VARIO_UNIT_ANCHOR_X, VARIOSCREEN_VARIO_UNIT_ANCHOR_Y);
-	kmhunit = new KMHUnit(VARIOSCREEN_SPEED_UNIT_ANCHOR_X, VARIOSCREEN_SPEED_UNIT_ANCHOR_Y);
+
 	speedDigit = new ScreenDigit(VARIOSCREEN_SPEED_ANCHOR_X, VARIOSCREEN_SPEED_ANCHOR_Y, 2, 0, false, false, ALIGNRIGHT, true, DISPLAY_OBJECT_SPEED, TAILLE_FONT, MAX_CAR_TITRE_SPEED);
+	kmhunit = new KMHUnit(VARIOSCREEN_SPEED_UNIT_ANCHOR_X, VARIOSCREEN_SPEED_UNIT_ANCHOR_Y);
+
 	ratioDigit = new ScreenDigit(VARIOSCREEN_GR_ANCHOR_X, VARIOSCREEN_GR_ANCHOR_Y, 2, 0, false, true, ALIGNLEFT, true, DISPLAY_OBJECT_RATIO, TAILLE_FONT, MAX_CAR_TITRE_TCHUTE);
 	trendDigit = new ScreenDigit(VARIOSCREEN_GR_ANCHOR_X, VARIOSCREEN_GR_ANCHOR_Y, 3, 1, false, true, ALIGNLEFT, true, DISPLAY_OBJECT_TREND, TAILLE_FONT, MAX_CAR_TITRE_FINESSE);
 
-	infoLevel = new INFOLevel(VARIOSCREEN_INFO_ANCHOR_X, VARIOSCREEN_INFO_ANCHOR_Y);
+	btinfo = new BTInfo(VARIOSCREEN_BT_ANCHOR_X, VARIOSCREEN_BT_ANCHOR_Y);
 	volLevel = new VOLLevel(VARIOSCREEN_VOL_ANCHOR_X, VARIOSCREEN_VOL_ANCHOR_Y);
-	recordIndicator = new RECORDIndicator(VARIOSCREEN_RECCORD_ANCHOR_X, VARIOSCREEN_RECCORD_ANCHOR_Y);
-	trendLevel = new TRENDLevel(VARIOSCREEN_TREND_ANCHOR_X, VARIOSCREEN_TREND_ANCHOR_Y);
-
 	batLevel = new BATLevel(VARIOSCREEN_BAT_ANCHOR_X, VARIOSCREEN_BAT_ANCHOR_Y, VOLTAGE_DIVISOR_VALUE, VOLTAGE_DIVISOR_REF_VOLTAGE);
-
+	infoLevel = new INFOLevel(VARIOSCREEN_INFO_ANCHOR_X, VARIOSCREEN_INFO_ANCHOR_Y);
+	recordIndicator = new RECORDIndicator(VARIOSCREEN_RECCORD_ANCHOR_X, VARIOSCREEN_RECCORD_ANCHOR_Y);
 	satLevel = new SATLevel(VARIOSCREEN_SAT_ANCHOR_X, VARIOSCREEN_SAT_ANCHOR_Y);
 
 	timeMDigit = new ScreenDigit (VARIOSCREEN_TIME_ANCHOR_X-55, VARIOSCREEN_TIME_ANCHOR_Y, 2, 0, false, true, ALIGNLEFT, false, DISPLAY_OBJECT_DURATION, TAILLE_FONT, MAX_CAR_TITRE_TIME);
@@ -366,10 +376,6 @@ void VarioScreen::createScreenObjectsPage0(void) {
 
 	screenTime = new ScreenTime(VARIOSCREEN_TIME_ANCHOR_X, VARIOSCREEN_TIME_ANCHOR_Y, *timeHDigit, *timeMDigit,false);
 	screenElapsedTime = new ScreenElapsedTime(VARIOSCREEN_ELAPSED_TIME_ANCHOR_X, VARIOSCREEN_ELAPSED_TIME_ANCHOR_Y, *timeHDigit, *timeMDigit);
-
-	fixgpsinfo = new FIXGPSInfo(VARIOSCREEN_SAT_FIX_ANCHOR_X, VARIOSCREEN_SAT_FIX_ANCHOR_Y);
-	btinfo = new BTInfo(VARIOSCREEN_BT_ANCHOR_X, VARIOSCREEN_BT_ANCHOR_Y);
-	
 
 	/*
   display.drawLine(130, 26, 295, 26, GxEPD_BLACK);

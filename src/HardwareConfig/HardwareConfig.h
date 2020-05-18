@@ -318,6 +318,6 @@
 #define HAVE_POWER_ALIM	
 #define HAVE_BUTTON
 #define HAVE_WIFI
-// #define HAVE_BLUETOOTH
+#define HAVE_BLUETOOTH
 
 #endif
