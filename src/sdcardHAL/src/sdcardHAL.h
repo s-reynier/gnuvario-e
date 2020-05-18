@@ -31,7 +31,8 @@
 #if defined(SDFAT_LIB)
 
 #include <SPI.h>
-#include <SdFat.h>
+#include "SdFat.h"
+
 
 
 //#if ENABLE_SOFTWARE_SPI_CLASS  // Must be set in SdFat/SdFatConfig.h

@@ -34,7 +34,7 @@
 #ifndef AGL_MANAGER_H
 #define AGL_MANAGER_H
 
-#include <HGTReader.h>
+#include "HGTReader.h"
 
 class AglManager
 {
@@ -46,7 +46,7 @@ public:
     void setLongitude(double dLongitude);
     double getHeight() { return currentHeight; }
 		boolean IsOk(void); 
-		void init(void);
+		bool init(void);
     int getGroundLevel();
 		int getAgl();
 

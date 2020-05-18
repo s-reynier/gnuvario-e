@@ -176,7 +176,7 @@ bool VarioData::initSettings(bool Test_SD)
     GnuSettings.setVersion(Version, Sub_Version, Beta_Code);
 
     SerialPort.println("Chargement des parametres depuis le fichier params.jso");
-    char tmpchar[20] = "params.jso";
+    char tmpchar[20] = "/params.jso";
     GnuSettings.loadConfigurationVario(tmpchar);
 
 #ifdef SDCARD_DEBUG
@@ -226,7 +226,7 @@ bool VarioData::initSettings(bool Test_SD)
     header.saveParams(VARIOMETER_MODEL_NAME, __dataPilotName, __dataGliderName);
 
     boolean ModifValue = false;
-    char tmpFileName[15] = "wifi.cfg";
+    char tmpFileName[15] = "/wifi.cfg";
 
     if (SDHAL_SD.exists(tmpFileName))
     {
@@ -262,7 +262,7 @@ bool VarioData::initSettings(bool Test_SD)
 
     //lecture parametre de configuration
 
-    strcpy(tmpFileName, "variocal.cfg");
+    strcpy(tmpFileName, "/variocal.cfg");
 
     if (SDHAL_SD.exists(tmpFileName))
     {

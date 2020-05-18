@@ -67,6 +67,7 @@
  *    1.1.14 09/03/20   Modification de l'effacement digit left                  *
  *    1.1.15 08/04/20   Modification affichage des titres                        *
  *    1.1.16 13/04/20   Titre en mode texte                                      *
+ *    1.1.17 13/04/20   Titre en mode texte                                      *
  *    1.2.0  29/04/20   Modification font screedigit                             *
  *                                                                               *
  *********************************************************************************/

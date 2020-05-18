@@ -235,7 +235,7 @@
 /* Set the GPS precision needed to use the GPS altitude value  */
 /* to calibrate the barometric altitude.                       */
 /*      !!! the best possible precision is 100 !!!             */ 
-#define VARIOMETER_GPS_ALTI_CALIBRATION_PRECISION_THRESHOLD 350
+#define VARIOMETER_GPS_ALTI_CALIBRATION_PRECISION_THRESHOLD 250
 
 /* The GPS RMC and GGA sentences parameters */
 /* Check the SD card ouput or bluetooth output of gps-time-analysis */
@@ -264,7 +264,7 @@
 #define NMEA_GGA_TIME_PRECISION 1000
 #define NMEA_GGA_ALTI_PRECISION 10.0
 
-#elif defined(NEO_6M)
+#else if defined(NEO_6M)
 
 //NEO-6M
 #define NMEA_RMC_TAG "GPRMC"
@@ -318,6 +318,6 @@
 #define HAVE_POWER_ALIM	
 #define HAVE_BUTTON
 #define HAVE_WIFI
-#define HAVE_BLUETOOTH
+// #define HAVE_BLUETOOTH
 
 #endif
