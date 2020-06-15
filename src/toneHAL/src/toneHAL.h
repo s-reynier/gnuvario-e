@@ -141,8 +141,8 @@
 
 //#define TONE // 1 pin PWM
 //#define	TONEAC // 2 pins Push-Pull PWM
-//#define	TONEDAC
-#define TONEDACTIMER
+#define	TONEDAC
+//#define TONEDACTIMER
 //#define TONEI2S
 #endif
 
