@@ -368,7 +368,7 @@ void VarioData::update(void)
 
 	if (varioHardwareManager.updateData()) 
 	{
-    compteurErrorMPU = 0;
+    compteurErrorMPU = millis();
 
 		alti						= varioHardwareManager.getAlti();
 		temperature			= varioHardwareManager.getTemp();
@@ -749,11 +749,9 @@ void VarioData::update(void)
     /*   ERREUR BAROMETRE / MPU                                   */
     /**************************************************************/
 
-    compteurErrorMPU++;
-    if (compteurErrorMPU > 20)
+    if (millis() - compteurErrorMPU > 2000)
     {
      SerialPort.println("ERREUR ERREUR BARO / ACCELEROMETRE");
-     compteurErrorMPU = 20;
 
       //**********************************************************
       //  DISABLE BEEPER
@@ -859,9 +857,9 @@ uint8_t VarioData::getVariometerState(){
 }
 
 //*******************************************
-bool VarioData::updateBle(){
+bool VarioData::updateBluetooth(){
 //*******************************************
-  return(varioHardwareManager.updateBle(kalmanvert.getVelocity(), kalmanvert.getPosition(), kalmanvert.getCalibratedPosition()));
+  return(varioHardwareManager.updateBluetooth(kalmanvert.getVelocity(), kalmanvert.getPosition(), kalmanvert.getCalibratedPosition()));
 }
 
 //*******************************************
@@ -1264,10 +1262,12 @@ bool VarioData::updateSpeed(void) {
 			ratio = 0.0;
 //      screen.ratioDigit->setValue(0.0);
     }
+		SpeedAvalable = true;
 		return true;
   }
 	else 
 	{
+		SpeedAvalable = false;
 		return false;
 	}
 #endif //HAVE_GPS
@@ -1372,7 +1372,32 @@ int VarioData::getCap(void) {
 
 */
 
-	int cap = -1;
+	if ((variometerState > VARIOMETER_STATE_CALIBRATED) && (SpeedAvalable) && (currentSpeed > 5)) {
+    if (nmeaParser.haveBearing())
+    {
+
+      bearing = nmeaParser.getBearing();
+			
+			GpsAvalable = true;
+			TimeCapMesure = millis();		
+			
+#ifdef DATA_DEBUG
+      SerialPort.print("Compas GPS : ");
+      SerialPort.println(bearing);
+#endif //DATA_DEBUG
+//      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearing);
+			return bearing;
+    }
+	}	
+	
+	TRACE();
+	if ((GpsAvalable) && ((millis() - TimeCapMesure) < 1500)) {
+		return bearing;	 
+	} else {
+		GpsAvalable = false;
+	}
+
+	TRACE();
 	if (twScheduler.haveAccel() ) {
 		double vertVector[3];
 		double vertAccel = twScheduler.getAccel(vertVector);
@@ -1393,9 +1418,42 @@ int VarioData::getCap(void) {
 			tmpcap = 360 - tmpcap;
 			
 			DUMP(tmpcap);
-			return tmpcap;
+			
+#ifdef DATA_DEBUG
+      SerialPort.print("Compas magnetique : ");
+      SerialPort.println(tmpcap);
+#endif //DATA_DEBUG
+			
+//Moyenne
+			
+			if (nbMesureCap < 10) {
+				if (moyCap == -1) moyCap = 0;
+				moyCap += tmpcap;
+				nbMesureCap++;
+				DUMP(nbMesureCap);
+			}
+			else {
+				moyCap += tmpcap;
+				DUMP(moyCap);
+				bearing = moyCap / 10;
+				moyCap = 0;
+				nbMesureCap = 0;				
+			}
+			 
+			DUMP(bearing); 
+			return bearing;
 		}
+		else {
+/*		bearing = -1;
+		nbMesureCap = 0;
+		TRACE();*/
+		}
+	} 
+	else {
+		bearing = -1;
+		nbMesureCap = 0;
+		TRACE();
 	}
-
-	return cap;
+	
+	return bearing;
 }

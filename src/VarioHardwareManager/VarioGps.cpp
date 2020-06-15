@@ -17,9 +17,9 @@
 void VarioGps::init()
 // *********************
 {
-  serialNmea.begin(9600, true);
+	serialNmea.begin(9600, true);
 #ifdef GPS_DEBUG
-  SerialPort.println("SerialNmea init");
+	SerialPort.println("SerialNmea init");
 #endif //GPS_DEBUG
 }
 
@@ -32,7 +32,7 @@ bool VarioGps::update(Kalmanvert kalmanvert, bool *lastSentence)
 	{
 
 #ifdef GPS_DEBUG
-    SerialPort.println("mneaParser : beginRMC");
+		SerialPort.println("mneaParser : beginRMC");
 #endif //GPS_DEBUG
 
 		nmeaParser.beginRMC();
@@ -41,13 +41,14 @@ bool VarioGps::update(Kalmanvert kalmanvert, bool *lastSentence)
 	{
 
 #ifdef GPS_DEBUG
-    SerialPort.println("mneaParser : beginGGA");
+		SerialPort.println("mneaParser : beginGGA");
 #endif //GPS_DEBUG
 
-    nmeaParser.beginGGA();
-#ifdef HAVE_BLUETOOTH
-    *lastSentence = true;
-#endif //HAVE_BLUETOOTH
+		nmeaParser.beginGGA();
+#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+		*lastSentence = true;
+#endif //HAVE_BLUETOOTH || HAVE_BLE
+
 #ifdef HAVE_SDCARD
 		/* start to write IGC B frames */
 		if (!GnuSettings.NO_RECORD)
@@ -60,11 +61,11 @@ bool VarioGps::update(Kalmanvert kalmanvert, bool *lastSentence)
 	{
 
 #ifdef GPS_DEBUG
-    SerialPort.println("mneaParser : isParsing");
+		SerialPort.println("mneaParser : isParsing");
 #endif //GPS_DEBUG
 
 #ifdef SDCARD_DEBUG
-    SerialPort.print("writeGGA : ");
+		SerialPort.print("writeGGA : ");
 #endif //SDCARD_DEBUG
 
 		while (nmeaParser.isParsing())
@@ -91,24 +92,23 @@ bool VarioGps::update(Kalmanvert kalmanvert, bool *lastSentence)
 					igcSD.writeGGA();
 			}
 #endif //HAVE_SDCARD
-    }
+		}
 
 #ifdef NMEAPARSER_DEBUG
-      SerialPort.println("");
+		SerialPort.println("");
 #endif //NMEAPARSER_DEBUG
 
-    serialNmea.release();
+		serialNmea.release();
 #ifdef HAVE_SDCARD
-    fileIgc.flush();
+		fileIgc.flush();
 #endif //HAVE_SDCARD
 #ifdef SDCARD_DEBUG
-    SerialPort.println("");
+		SerialPort.println("");
 #endif //SDCARD_DEBUG
 
-   return true;
-
+		return true;
 	}
- return false;
+	return false;
 }
 
 #endif //HAVE_GPS

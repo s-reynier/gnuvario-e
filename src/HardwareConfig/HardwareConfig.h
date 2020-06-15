@@ -47,19 +47,19 @@
 /*            SCREEN          */
 /******************************/
 
-#define VARIOSCREEN_SIZE 	154			//Ecran 1.54''
+#define VARIOSCREEN_SIZE 154 //Ecran 1.54''
 //#define VARIOSCREEN_SIZE	290 	//Ecran 2.90'' Paysage
 //#define VARIOSCREEN_SIZE 	291 	//Ecran 2.90'' Portrait
 
 #if (VARIOSCREEN_SIZE == 154)
 #define DISPLAY_LOW_UPDATE 50
-#define DISPLAY_UPDATE     10
+#define DISPLAY_UPDATE 10
 #elif (VARIOSCREEN_SIZE == 290)
 #define DISPLAY_LOW_UPDATE 40
-#define DISPLAY_UPDATE     10
+#define DISPLAY_UPDATE 10
 #elif (VARIOSCREEN_SIZE == 291)
 #define DISPLAY_LOW_UPDATE 40
-#define DISPLAY_UPDATE     10
+#define DISPLAY_UPDATE 10
 #endif
 
 /***********************/
@@ -67,7 +67,7 @@
 /***********************/
 
 #ifndef VOLTAGE_DIVISOR_VALUE
-#define VOLTAGE_DIVISOR_VALUE 1.27  //270k et 1M
+#define VOLTAGE_DIVISOR_VALUE 1.27 //270k et 1M
 #endif
 
 #ifndef VOLTAGE_DIVISOR_REF_VOLTAGE
@@ -79,7 +79,7 @@
 /*****************************/
 //  IGC Header			0x00		195		0xC8
 //  Sound volume		0xC8    1     0xD0
-//  Fly Stat        0xD0    48X10 0x2B0     
+//  Fly Stat        0xD0    48X10 0x2B0
 //  Calibration     0x2C0   56 		0x2FA				(762)
 
 /*****************************/
@@ -87,7 +87,7 @@
 /*****************************/
 
 #ifndef IGC_SENTENCE_HEADER_EEPROM_ADDRESS
-#define IGC_SENTENCE_HEADER_EEPROM_ADDRESS 0x30 
+#define IGC_SENTENCE_HEADER_EEPROM_ADDRESS 0x30
 #define IGC_SENTENCE_HEADER_MAX_SIZE (0x200 - 0x30)
 #endif
 
@@ -110,7 +110,7 @@
 #ifndef FLY_STAT_HEADER_EEPROM_ADDRESS
 #define FLY_STAT_HEADER_EEPROM_ADDRESS 0x210
 #endif
- 
+
 #define FLY_STAT_EEPROM_TAG 2025
 
 /*****************************/
@@ -119,7 +119,7 @@
 #ifndef CAL_MPU_HEADER_EEPROM_ADDRESS
 #define CAL_MPU_HEADER_EEPROM_ADDRESS 0x3F0
 #endif
- 
+
 #define CAL_MPU_EEPROM_TAG 3030
 
 /*****************************/
@@ -169,10 +169,19 @@
 // or by static value
 
 /* Parametre par defaut */
-#define VERTACCEL_GYRO_CAL_BIAS {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-#define VERTACCEL_ACCEL_CAL_BIAS {0, 0, 0}
+#define VERTACCEL_GYRO_CAL_BIAS                                                \
+    {                                                                          \
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 \
+    }
+#define VERTACCEL_ACCEL_CAL_BIAS \
+    {                            \
+        0, 0, 0                  \
+    }
 #define VERTACCEL_ACCEL_CAL_SCALE 0
-#define VERTACCEL_MAG_CAL_BIAS {0, 0, 0}
+#define VERTACCEL_MAG_CAL_BIAS \
+    {                          \
+        0, 0, 0                \
+    }
 #define VERTACCEL_MAG_CAL_PROJ_SCALE -16689
 #define VERTACCEL_ACCEL_CAL_BIAS_MULTIPLIER 7
 #define VERTACCEL_MAG_CAL_BIAS_MULTIPLIER 5
@@ -213,7 +222,7 @@
 #define VARIOMETER_SENT_LXNAV_SENTENCE
 
 /* When there is no GPS to sync variometer bluetooth sentences */
-/* set the delay between sendings in milliseconds.             */ 
+/* set the delay between sendings in milliseconds.             */
 #define VARIOMETER_SENTENCE_DELAY 2000
 
 /*****************************/
@@ -223,18 +232,17 @@
 #define LF16_FILE_NAME_NUMBER_SIZE 2
 #define LF16_FILE_NAME_NUMBER_LIMIT 100
 
-
 /******************************/
 /*             GPS            */
 /******************************/
 
 /* The GPS period in ms                             */
 /* use the gps-time-analysis sketch to determine it */
-#define GPS_PERIOD 997.5  //default 1000
+#define GPS_PERIOD 997.5 //default 1000
 
 /* Set the GPS precision needed to use the GPS altitude value  */
 /* to calibrate the barometric altitude.                       */
-/*      !!! the best possible precision is 100 !!!             */ 
+/*      !!! the best possible precision is 100 !!!             */
 #define VARIOMETER_GPS_ALTI_CALIBRATION_PRECISION_THRESHOLD 250
 
 /* The GPS RMC and GGA sentences parameters */
@@ -274,24 +282,24 @@
 #define NMEA_GGA_TIME_PRECISION 100
 #define NMEA_GGA_ALTI_PRECISION 10.0
 
-#endif 
+#endif
 
 /******************************/
 /*            WIFI            */
 /******************************/
 
-#define servername "GNUVARIO-E"  // Set your server's logical name here e.g. if 'myserver' then address is http://myserver.local/
+#define servername "GNUVARIO-E" // Set your server's logical name here e.g. if 'myserver' then address is http://myserver.local/
 //#define IP_FIXE
-#define LOCAL_IP 192,168,1,150 // Set your server's fixed IP address here
-#define GATEWAY  192,168,1,1   // Set your network Gateway usually your Router base address
-#define SUBNET   255,255,255,0 // Set your network sub-network mask here
-#define DNS      192,168,1,1   // Set your network DNS usually your Router base address
+#define LOCAL_IP 192, 168, 1, 150 // Set your server's fixed IP address here
+#define GATEWAY 192, 168, 1, 1    // Set your network Gateway usually your Router base address
+#define SUBNET 255, 255, 255, 0   // Set your network sub-network mask here
+#define DNS 192, 168, 1, 1        // Set your network DNS usually your Router base address
 
 /*************************/
 /*         AUDIO         */
 /*************************/
 
-#ifndef  AUDIO_AMPLI_LOWPOWER
+#ifndef AUDIO_AMPLI_LOWPOWER
 // #define AUDIO_AMPLI_LOWPOWER
 #endif //AUDIO_AMPLI_LOWPOWER
 
@@ -307,17 +315,26 @@
 /*----------------------------*/
 
 /* Comment or uncomment according to  */
-/* what you embed in the variometer   */ 
+/* what you embed in the variometer   */
 #define HAVE_SPEAKER
 #define HAVE_ACCELEROMETER
 #define HAVE_SCREEN
 #define HAVE_GPS
 #define HAVE_SDCARD
 #define HAVE_VOLTAGE_DIVISOR
-//#define HAVE_AUDIO_AMPLI	
-#define HAVE_POWER_ALIM	
+//#define HAVE_AUDIO_AMPLI
+#define HAVE_POWER_ALIM
 #define HAVE_BUTTON
 #define HAVE_WIFI
-#define HAVE_BLUETOOTH
+// #define HAVE_BLUETOOTH
+#define HAVE_BLE
+
+#if defined(HAVE_WIFI) && defined(HAVE_BLUETOOTH)
+#undef HAVE_BLUETOOTH
+#endif
+
+#if defined(HAVE_BLUETOOTH) && defined(HAVE_BLE)
+#undef HAVE_BLUETOOTH
+#endif
 
 #endif

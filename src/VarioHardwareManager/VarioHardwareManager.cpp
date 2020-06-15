@@ -28,7 +28,7 @@
  *                                                                               *
  *********************************************************************************
  */
- 
+
 #include <Arduino.h>
 
 #include <HardwareConfig.h>
@@ -52,7 +52,6 @@
 
 #include <ArduinoTrace.h>
 
-
 #include <VarioData.h>
 
 #include <VarioButton.h>
@@ -66,28 +65,20 @@ VarioHardwareManager varioHardwareManager;
 VarioHardwareManager::VarioHardwareManager()
 //**********************************
 {
-//	varioAlim 		= new VarioAlim();
-//	varioSpeaker 	= new VarioSpeaker();
-//	varioImu 			= new VarioImu();
-//	varioGps 			= new VarioGps();
-//	varioBle 			= new VarioBle();
-		
 #ifndef HAVE_GPS
-	lastVarioSentenceTimestamp = 0;
-#endif // !HAVE_GPS		
-		
+  lastVarioSentenceTimestamp = 0;
+#endif // !HAVE_GPS
 }
 
 void VarioHardwareManager::init()
 {
-
 }
 
 //**********************************
 void VarioHardwareManager::initAlim()
 //**********************************
 {
-	varioAlim.init();
+  varioAlim.init();
 }
 
 //**********************************
@@ -101,14 +92,14 @@ void VarioHardwareManager::initSpeaker()
 void VarioHardwareManager::initSound()
 //**********************************
 {
-	varioSpeaker.initSound();
+  varioSpeaker.initSound();
 }
 
 //**********************************
 void VarioHardwareManager::initImu()
 //**********************************
 {
-	varioImu.init();
+  varioImu.init();
 }
 
 //**********************************
@@ -128,7 +119,6 @@ void VarioHardwareManager::initButton()
   VarioButton.begin();
   ButtonScheduleur.Set_StatePage(STATE_PAGE_INIT);
 #endif
-
 }
 
 //**********************************
@@ -144,9 +134,9 @@ void VarioHardwareManager::initGps()
 bool VarioHardwareManager::initBt()
 //**********************************
 {
-#ifdef HAVE_BLUETOOTH
-  return(varioBle.init());
-#endif
+#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+  return (varioBT.init());
+#endif //HAVE_BLUETOOTH || HAVE_BLE
 }
 
 //**********************************
@@ -167,52 +157,52 @@ double VarioHardwareManager::getTemp()
 double VarioHardwareManager::getAccel()
 //**********************************
 {
-	return varioImu.getAccel();
+  return varioImu.getAccel();
 }
 
 //***********************************
 double VarioHardwareManager::firstAlti(void)
 //***********************************
 {
-  return(varioImu.firstAlti());
+  return (varioImu.firstAlti());
 }
 
 //***********************************
 bool VarioHardwareManager::updateData(void)
 //***********************************
 {
-	return(varioImu.updateData());
+  return (varioImu.updateData());
 }
 
 //***********************************
 void VarioHardwareManager::testInactivity(double velocity)
 //***********************************
 {
-    if (abs(velocity) > GnuSettings.SLEEP_THRESHOLD_CPS)
-    {
-      // reset sleep timeout watchdog if there is significant vertical motion
-      sleepTimeoutSecs = millis();
-    }
-    else if ((GnuSettings.SLEEP_THRESHOLD_CPS != 0) && ((millis() - sleepTimeoutSecs) >= (GnuSettings.SLEEP_TIMEOUT_MINUTES * 60 * 1000)))
-    {
+  if (abs(velocity) > GnuSettings.SLEEP_THRESHOLD_CPS)
+  {
+    // reset sleep timeout watchdog if there is significant vertical motion
+    sleepTimeoutSecs = millis();
+  }
+  else if ((GnuSettings.SLEEP_THRESHOLD_CPS != 0) && ((millis() - sleepTimeoutSecs) >= (GnuSettings.SLEEP_TIMEOUT_MINUTES * 60 * 1000)))
+  {
 #ifdef HARDWARE_DEBUG
-      SerialPort.println("Timed out with no significant climb/sink, put MPU9250 and ESP8266 to sleep to minimize current draw");
-      SerialPort.flush();
+    SerialPort.println("Timed out with no significant climb/sink, put MPU9250 and ESP8266 to sleep to minimize current draw");
+    SerialPort.flush();
 #endif
-      indicatePowerDown();
-      //     TRACELOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG);
-      MESSLOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG, "Deep sleep - inactivite");
-      deep_sleep(varioLanguage.getText(TITRE_VEILLE)); //"En veille");
-    }
+    indicatePowerDown();
+    //     TRACELOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG);
+    MESSLOG(LOG_TYPE_DEBUG, DEEPSLEEP_DEBUG_LOG, "Deep sleep - inactivite");
+    deep_sleep(varioLanguage.getText(TITRE_VEILLE)); //"En veille");
+  }
 }
 
 //***********************************
-bool VarioHardwareManager::updateBle(double velocity, double alti, double altiCalibrated)
+bool VarioHardwareManager::updateBluetooth(double velocity, double alti, double altiCalibrated)
 //***********************************
 {
-#ifdef HAVE_BLUETOOTH
-	return(varioBle.update(velocity, alti, altiCalibrated));
-#endif
+#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+  return (varioBT.update(velocity, alti, altiCalibrated));
+#endif //HAVE_BLUETOOTH || HAVE_BLE
 }
 
 //***********************************
@@ -220,32 +210,35 @@ bool VarioHardwareManager::updateGps(Kalmanvert kalmanvert)
 //***********************************
 {
 #if defined(HAVE_GPS)
-	boolean lastSentencetmp;
-	if (varioGps.update(varioData.kalmanvert, &lastSentencetmp)) 
-	{
-	
-#ifdef HAVE_BLUETOOTH
-		varioBle.lastSentence = lastSentencetmp;
-	//* if this is the last GPS sentence *
-	//* we can send our sentences *
-		if (varioBle.lastSentence)
-		{
-			varioBle.lastSentence = false;
+  boolean lastSentencetmp;
+  if (varioGps.update(varioData.kalmanvert, &lastSentencetmp))
+  {
+
+#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+    varioBT.lastSentence = lastSentencetmp;
+    //* if this is the last GPS sentence *
+    //* we can send our sentences *
+    if (varioBT.lastSentence)
+    {
+      varioBT.lastSentence = false;
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-			varioBle.bluetoothNMEA.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
+      varioBT.bluetoothNMEA.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
 #else
-			varioBle.bluetoothNMEA.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
+      varioBT.bluetoothNMEA.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
 #endif
-			serialNmea.lock(); //will be writed at next loop
-		}
-#endif //HAVE_BLUETOOTH
+#ifdef HAVE_BLUETOOTH
+      serialNmea.lock(); //will be writed at next loop
+#endif                   //HAVE_BLUETOOTH
+    }
+#endif //HAVE_BLUETOOTH || HAVE_BLE
+
     return true;
   }
-  else 
+  else
   {
     return false;
   }
-#else //HAVE_GPS
+#else  //HAVE_GPS
   return false;
 #endif //HAVE_GPS
 }

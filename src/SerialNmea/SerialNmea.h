@@ -26,7 +26,9 @@
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
 
+#ifdef HAVE_BLUETOOTH
 #include "BluetoothSerial.h"
+#endif
 
 /********************/
 /* output parameter */

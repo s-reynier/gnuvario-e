@@ -3,12 +3,12 @@
 
 #include <HardwareConfig.h>
 
-#ifdef HAVE_BLUETOOTH
+#ifdef HAVE_BLE
 
 //#include "SimpleBLE.h"
 
 #ifdef HAVE_GPS
-#include <SerialNmea.h>
+// #include <SerialNmea.h>
 #include <NmeaParser.h>
 #include <LxnavSentence.h>
 #include <LK8Sentence.h>
@@ -19,23 +19,24 @@
 class VarioBle
 {
 public:
- //   VarioAlim();
+    //   VarioAlim();
+    bool isSending;
     bool init();
-		bool update(double velocity, double position, double calibratedPosition);
-		
-//		SimpleBLE ble;
-		boolean lastSentence  = false;
+    bool update(double velocity, double position, double calibratedPosition);
+    bool sendTrame(char *trame);
+
+    //		SimpleBLE ble;
+    boolean lastSentence = false;
 
 #if defined(VARIOMETER_SENT_LXNAV_SENTENCE)
-		LxnavSentence bluetoothNMEA;
+    LxnavSentence bluetoothNMEA;
 #elif defined(VARIOMETER_SENT_LK8000_SENTENCE)
-		LK8Sentence bluetoothNMEA;
+    LK8Sentence bluetoothNMEA;
 #else
 #error No bluetooth sentence type specified !
 #endif
-		
 };
 
-#endif //HAVE_BLUETOOTH
+#endif //HAVE_BLE
 
 #endif //VARIO_BLE_H

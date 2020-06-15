@@ -25,7 +25,10 @@
 #include <esp32-hal-uart.h>
 #include "freertos/queue.h"
 #include "soc/uart_struct.h"
+
+#ifdef HAVE_BLUETOOTH
 #include "BluetoothSerial.h"
+#endif
 
 #include <HardwareConfig.h>
 #include <DebugConfig.h>

@@ -94,7 +94,7 @@ public:
 		void 		initTime(void);
 
     void   	update();
-		bool   	updateBle();
+		bool   	updateBluetooth();
 		void   	updateGps();
 		void    updateState();
 		bool 		updateSpeed(void);
@@ -155,7 +155,7 @@ public:
 		FlightHistory<50, 40> buzzerHistory;
 
 private:
-		int compteurErrorMPU = 0;
+		unsigned long compteurErrorMPU = 0;
 		int compteurBoucle = 0;
 
 
@@ -182,7 +182,12 @@ private:
 		bool 		CompteurStartFlyEnable 	= false;
 		unsigned long	TimeStartFly;
 		uint8_t	CompteurStartFly	= 0;
-
+		bool		SpeedAvalable = false;
+		bool    GpsAvalable   = false;
+		unsigned long	TimeCapMesure = 0;		
+		int 		bearing = 0;
+		int 		moyCap = 0;
+		int			nbMesureCap = 0;
 };
 
 extern VarioData varioData;
