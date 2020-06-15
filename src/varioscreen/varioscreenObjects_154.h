@@ -70,6 +70,7 @@
  *    1.1.17 13/04/20   Titre en mode texte                                      *
  *    1.2.0  29/04/20   Modification font screedigit                             *
  *    1.2.1  17/05/20   Ajout setPositionTitle                                   *
+ *    1.2.2  25/05/20   Modification screendigit.setvalue                        *
  *                                                                               *
  *********************************************************************************/
 
@@ -298,6 +299,7 @@ class ScreenText: public VarioScreenObject {
  // { lastDisplayWidth = 0; }
   void show(void);
   void setValue(String value);
+	void setPositionTitle(uint16_t X, uint16_t Y);
    
  private:
   String value;
@@ -313,6 +315,7 @@ class ScreenText: public VarioScreenObject {
 	int8_t displayTypeID;
 	int nbCarTitle;
 	int MaxTitleWidth, MaxTitleHeight;
+	uint16_t titleX, titleY;
 };
 
 /* meters unit */
@@ -508,6 +511,7 @@ class ScreenTime : public VarioScreenObject {
   void correctTimeZone(int8_t UTCDrift);
   int8_t* getTime(void);
   void show(void);
+	void setPositionTitle(uint16_t X, uint16_t Y);
 
  protected:
   const uint8_t posX;
@@ -515,6 +519,8 @@ class ScreenTime : public VarioScreenObject {
   ScreenDigit& hour, minute;
   int8_t time[3];
   bool dot_or_h = false;
+	uint16_t titleX, titleY;
+	bool titlePosition = false;
 };
 
 
