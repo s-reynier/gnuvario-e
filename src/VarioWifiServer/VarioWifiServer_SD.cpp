@@ -256,10 +256,22 @@ void VarioWifiServer::connect(void)
   }
 #endif //IP_FIXE
 
-  wifiMulti.addAP(ssid_1, password_1); // add Wi-Fi networks you want to connect to, it connects strongest to weakest
-  wifiMulti.addAP(ssid_2, password_2); // Adjust the values in the Network tab
-  wifiMulti.addAP(ssid_3, password_3);
-  wifiMulti.addAP(ssid_4, password_4); // You don't need 4 entries, this is for example!
+  if (ssid_1[0] != '\0' && password_1[0] != '\0')
+  {
+    wifiMulti.addAP(ssid_1, password_1); // add Wi-Fi networks you want to connect to, it connects strongest to weakest
+  }
+  if (ssid_2[0] != '\0' && password_2[0] != '\0')
+  {
+    wifiMulti.addAP(ssid_2, password_2);
+  }
+  if (ssid_3[0] != '\0' && password_3[0] != '\0')
+  {
+    wifiMulti.addAP(ssid_3, password_3);
+  }
+  if (ssid_4[0] != '\0' && password_4[0] != '\0')
+  {
+    wifiMulti.addAP(ssid_4, password_4);
+  }
 
   SerialPort.println("Connecting ...");
 #ifdef ENABLE_DISPLAY_WEBSERVER
@@ -299,6 +311,8 @@ void VarioWifiServer::connect(void)
     SerialPort.println(F("Error setting up MDNS responder!"));
     ESP.restart();
   }
+
+  checkDbVersion();
 }
 
 //Démarrage du serveur Web
@@ -314,6 +328,15 @@ void VarioWifiServer::start(void)
   // téléchargements de "mes vols" = contenu du repertoire vols
   server.on("/flights", HTTP_GET, handleListFlights);
 
+  // téléchargements de "mes vols" en BDD
+  server.on("/flightsbdd", HTTP_GET, handleGetFlights);
+
+  // enregistrement un vol en BDD
+  server.on("/flightsbdd", HTTP_POST, handleSetFlight);
+
+  // enregistrement un vol en BDD
+  server.on("/flightsbdd", HTTP_DELETE, handleDelFlight);
+
   //récupération de la liste du contenu de la carte SD
   server.on("/list", HTTP_GET, handlePrintDirectory);
 
@@ -328,6 +351,9 @@ void VarioWifiServer::start(void)
 
   //suppression d'un fichier dont le nom complet avec chemin se trouve en param
   server.on("/file", HTTP_DELETE, handleFileDelete);
+
+  //creation d'un fichier ou d'un repertoire
+  server.on("/create", HTTP_PUT, handleFileCreate);
 
   //recuperation des versions de firmware
   server.on("/firmwareversion", HTTP_GET, handleFirmwareVersion);
@@ -361,6 +387,15 @@ void VarioWifiServer::start(void)
 
   // sauvegarde du contenu du fichier preference
   server.on("/parseigc", HTTP_GET, handleParseIgc);
+
+  // récupération de la liste des sites
+  server.on("/site", HTTP_GET, handleGetSites);
+
+  // sauvegarde d'un site
+  server.on("/site", HTTP_POST, handleSetSite);
+
+  // suppression d'un site
+  server.on("/site", HTTP_DELETE, handleDelSite);
 
   //Aucun route spécifique, on regarde si il s'agit d'un fichier du répertoire www
   server.onNotFound(handleNotFound);
@@ -1034,12 +1069,6 @@ void handleFileUpload()
     return returnFail("BAD URL");
   }
 
-  if (server.method() == HTTP_OPTIONS)
-  {
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-    returnOK();
-  }
-
   HTTPUpload &upload = server.upload();
   if (upload.status == UPLOAD_FILE_START)
   {
@@ -1265,6 +1294,37 @@ void deleteRecursive(String path)
 }
 
 /***********************************/
+void handleFileCreate()
+{
+  /***********************************/
+  if (server.args() == 0)
+  {
+    return returnFail("BAD ARGS");
+  }
+  String path = server.arg(0);
+  if (path == "/" || SDHAL_SD.exists((char *)path.c_str()))
+  {
+    returnFail("BAD PATH");
+    return;
+  }
+
+  if (path.indexOf('.') > 0)
+  {
+    File fileSD = SDHAL_SD.open((char *)path.c_str(), FILE_WRITE);
+    if (fileSD)
+    {
+      fileSD.print("\0");
+      fileSD.close();
+    }
+  }
+  else
+  {
+    SDHAL_SD.mkdir((char *)path.c_str());
+  }
+  returnOK();
+}
+
+/***********************************/
 void handleNotFound()
 {
 /***********************************/
@@ -1272,22 +1332,39 @@ void handleNotFound()
   SerialPort.println("handleNotFound");
 #endif
 
-  if (hasSD && loadFromSdCard(server.uri()))
-  {
-    return;
-  }
-
   if (server.method() == HTTP_OPTIONS)
   {
     server.sendHeader("Access-Control-Allow-Origin", "*");
-    returnOK();
+    server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    server.sendHeader("Access-Control-Allow-Methods", "POST,GET,PUT,OPTION,DELETE");
+    return returnOK();
+  }
+
+  if (hasSD && loadFromSdCard(server.uri()))
+  {
+    return;
   }
 
   String message = ""; //"SDCARD Not Detected\n\n";
   message += "URI: ";
   message += server.uri();
   message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  if (server.method() == HTTP_GET)
+  {
+    message += "GET";
+  }
+  else if (server.method() == HTTP_POST)
+  {
+    message += "POST";
+  }
+  else if (server.method() == HTTP_DELETE)
+  {
+    message += "DELETE";
+  }
+  else if (server.method() == HTTP_OPTIONS)
+  {
+    message += "OPTIONS";
+  }
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
@@ -1518,14 +1595,286 @@ void handleParseIgc()
 
   String path = server.arg(0);
 
-  //parsage du fichier IGC
-  VarioIgcParser varioIgcParser;
-  varioIgcParser.parseFile(path);
+  File dataFile;
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  //test présence fichier
+  if (dataFile = SDHAL_SD.open(path, FILE_READ))
+  {
+    //parsage du fichier IGC
+    VarioIgcParser varioIgcParser;
+    varioIgcParser.parseFile(path);
+
+    VarioSqlFlight varioSqlFlight;
+    varioSqlFlight.insertFlight(varioIgcParser.getJson());
+
+    String tmpFullName = dataFile.name();
+    dataFile.close();
+
+    String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
+    if (!SDHAL_SD.exists("/vols/parsed"))
+    {
+      SDHAL_SD.mkdir("/vols/parsed");
+    }
+    SDHAL_SD.rename(path, "/vols/parsed/" + filename);
+
+    return returnOK();
+  }
+  return returnFail("NO");
+}
+
+// Récupération de la liste des vols en bdd
+/***********************************/
+void handleGetFlights()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleGetFlights");
+#endif
+  if (server.uri() != "/flightsbdd")
+  {
+    return returnFail("BAD URL");
+  }
+
+  uint8_t offset;
+  uint8_t limit;
+  if (server.hasArg("offset"))
+  {
+    offset = server.arg("offset").toInt();
+  }
+  else
+  {
+    offset = 0;
+  }
+  if (server.hasArg("limit"))
+  {
+    limit = server.arg("limit").toInt();
+  }
+  else
+  {
+    limit = 20;
+  }
 
   VarioSqlFlight varioSqlFlight;
-  varioSqlFlight.insertFlight(varioIgcParser.getJson());
 
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", "");
+  server.sendContent("[");
+
+  WiFiClient client = server.client();
+  varioSqlFlight.initGetFlightsQuery(limit, offset);
+  String unvol = varioSqlFlight.getNextFlight();
+  boolean firstLine = true;
+  while (unvol != "")
+  {
+    if (firstLine)
+    {
+      firstLine = false;
+    }
+    else
+    {
+      unvol = "," + unvol;
+    }
+    server.sendContent(unvol);
+    unvol = varioSqlFlight.getNextFlight();
+  }
+  server.sendContent("]");
+
+  //correction bug chunk transfer webserver
+  server.sendContent("");
+  server.client().stop();
+}
+
+// Enregistrement d'un vol
+/***********************************/
+void handleSetFlight()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleSetFlight");
+#endif
+
+  if (server.uri() != "/flightsbdd")
+  {
+    return returnFail("BAD URL");
+  }
+
+  VarioSqlFlight varioSqlFlight;
+  String content;
+
+  if (server.hasArg("id"))
+  {
+    uint8_t id = server.arg("id").toInt();
+    content = server.arg(1);
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(id);
+    SerialPort.println(content);
+#endif
+
+    varioSqlFlight.updateFlight(id, content);
+  }
+  else
+  {
+    content = server.arg(0);
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(content);
+#endif
+
+    varioSqlFlight.insertFlight(content);
+  }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   return returnOK();
+}
+
+// Suppression d'un vol
+/***********************************/
+void handleDelFlight()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleDelFlight");
+#endif
+
+  if (server.uri() != "/flightsbdd")
+  {
+    return returnFail("BAD URL");
+  }
+
+  if (server.hasArg("filename"))
+  {
+    String filename = server.arg("filename");
+    File dataFile;
+    if (dataFile = SDHAL_SD.open("/vols/parsed/" + filename, FILE_READ))
+    {
+      dataFile.close();
+      SDHAL_SD.rename("/vols/parsed/" + filename, "/vols/" + filename);
+    }
+  }
+
+  VarioSqlFlight varioSqlFlight;
+
+  if (server.hasArg("id"))
+  {
+    uint8_t id = server.arg("id").toInt();
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(id);
+
+#endif
+
+    varioSqlFlight.delFlight(id);
+  }
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  return returnOK();
+}
+
+// Récupération de la liste des sites
+/***********************************/
+void handleGetSites()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleGetSites");
+#endif
+  if (server.uri() != "/site")
+  {
+    return returnFail("BAD URL");
+  }
+
+  VarioSqlFlight varioSqlFlight;
+
+  server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", "");
+  WiFiClient client = server.client();
+
+  server.sendContent(varioSqlFlight.getSites());
+
+  //correction bug chunk transfer webserver
+  server.sendContent("");
+  server.client().stop();
+}
+
+// Enregistrement d'un site
+/***********************************/
+void handleSetSite()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleSetSite");
+#endif
+
+  if (server.uri() != "/site")
+  {
+    return returnFail("BAD URL");
+  }
+
+  VarioSqlFlight varioSqlFlight;
+  String content;
+
+  if (server.hasArg("id"))
+  {
+    uint8_t id = server.arg("id").toInt();
+    content = server.arg(1);
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(id);
+    SerialPort.println(content);
+#endif
+
+    varioSqlFlight.updateSite(id, content);
+  }
+  else
+  {
+    content = server.arg(0);
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(content);
+#endif
+
+    varioSqlFlight.insertSite(content);
+  }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  return returnOK();
+}
+
+// Enregistrement d'un site
+/***********************************/
+void handleDelSite()
+{
+/***********************************/
+#ifdef WIFI_DEBUG
+  SerialPort.println("handleSetSite");
+#endif
+
+  if (server.uri() != "/site")
+  {
+    return returnFail("BAD URL");
+  }
+
+  VarioSqlFlight varioSqlFlight;
+  String content;
+
+  if (server.hasArg("id"))
+  {
+    uint8_t id = server.arg("id").toInt();
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(id);
+    SerialPort.println(content);
+#endif
+
+    varioSqlFlight.deleteSite(id);
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    return returnOK();
+  }
+  else
+  {
+    return returnFail("ID introuvable");
+  }
 }
 
 //////////////////////////////////////
@@ -1551,6 +1900,79 @@ String getFileSizeStringFromBytes(int bytes)
   return fsize;
 }
 
+bool checkDbVersion()
+{
+#ifdef WIFI_DEBUG
+  SerialPort.println("checkDbVersion");
+#endif
+
+  if (!SDHAL_SD.exists("/db"))
+  {
+    SDHAL_SD.mkdir("/db");
+    File myOrigFile;
+    File myDestFile;
+
+    if (SDHAL_SD.exists("/www/db/vol.db") && !SDHAL_SD.exists("/db/vol.db"))
+    {
+      myDestFile = SDHAL_SD.open("/db/vol.db", FILE_WRITE);
+      myOrigFile = SDHAL_SD.open("/www/db/vol.db", FILE_READ);
+      if (myDestFile && myOrigFile)
+      {
+        int data;
+        while ((data = myOrigFile.read()) >= 0)
+        {
+          myDestFile.write(data);
+        }
+        myDestFile.close();
+        myOrigFile.close();
+      }
+      else
+      {
+        return false;
+      }
+    }
+  }
+  String path;
+  path = "/www/sql";
+
+  File dir;
+  dir = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
+
+  path = String();
+  if (!dir.isDirectory())
+  {
+    dir.close();
+    return false;
+  }
+  dir.rewindDirectory();
+  VarioSqlFlight varioSqlFlight;
+
+  for (int cnt = 0; true; ++cnt)
+  {
+    File entry;
+    entry = dir.openNextFile(FILE_READ);
+    if (!entry)
+    {
+      TRACE();
+      break;
+    }
+
+    TRACE();
+    String output;
+    String tmpFullName = entry.name();
+    String version = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
+    version = version.substring(0, version.lastIndexOf("."));
+    varioSqlFlight.executeMigration(version, entry.readString());
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(version);
+#endif
+  }
+
+  dir.close();
+  TRACE();
+  return true;
+}
 /***********************************
 void handleCreate() {
 // ***********************************
