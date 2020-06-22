@@ -321,7 +321,7 @@
 #define HAVE_BLUETOOTH
 #define HAVE_BLE
 
-#if defined(HAVE_WIFI) && defined(HAVE_BLUETOOTH)
+#if defined(HAVE_WIFI) && defined(HAVE_BLUETOOTH) && !defined(HAVE_BLE)
 #undef HAVE_BLUETOOTH
 #endif
 
