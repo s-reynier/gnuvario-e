@@ -68,8 +68,6 @@
 
 #ifdef HAVE_SDCARD
 #include <sdcardHAL.h>
-// #include <SdFat.h>
-// SdFat SD;
 #endif
 
 #include <VarioSettings.h>
@@ -185,15 +183,14 @@ boolean VarioWifiServer::begin(void)
     dataFile.close();
   }
 
+#ifdef WIFI_DEBUG
   dataFile = SDHAL_SD.open("/", FILE_READ);
   dataFile.rewindDirectory();
-
-#ifdef WIFI_DEBUG
   // SerialPort.println("");
   // SerialPort.println("ListeDirectory");
   // listDirectory(dataFile, 0);
-#endif //WIFI_DEBUG
   dataFile.close();
+#endif //WIFI_DEBUG
 
   if (hasSD != true)
   {
@@ -634,13 +631,11 @@ void handleListFlights()
   SerialPort.println("handleListFlights");
 #endif
 
-  String path;
-  path = "/vols";
+  String path = "/vols";
 
   File dir;
   dir = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
 
-  path = String();
   if (!dir.isDirectory())
   {
     dir.close();
@@ -651,7 +646,8 @@ void handleListFlights()
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", "");
-  WiFiClient client = server.client();
+
+  //  WiFiClient client = server.client();
 
   server.sendContent("[");
   for (int cnt = 0; true; ++cnt)
@@ -677,28 +673,44 @@ void handleListFlights()
     {
       int bytes = entry.size();
       fsize = getFileSizeStringFromBytes(bytes);
+      output += "{\"type\":\"";
+
+      output += (entry.isDirectory()) ? "dir" : "file";
+
+      output += "\",\"name\":\"";
+
+      output += entry.name();
+
+      output += "\",\"size\":\"";
+      output += fsize;
+      output += "\"";
+      //VarioIgcParser varioIgcParser;
+      // varioIgcParser.parseFile("/vols/" + String(entry.name()));
+      //output += ", \"info\": " + varioIgcParser.getJson();
+      output += "}";
+      server.sendContent(output);
     }
     else
     {
       fsize = "na";
     }
 
-    output += "{\"type\":\"";
+    // output += "{\"type\":\"";
 
-    output += (entry.isDirectory()) ? "dir" : "file";
+    // output += (entry.isDirectory()) ? "dir" : "file";
 
-    output += "\",\"name\":\"";
+    // output += "\",\"name\":\"";
 
-    output += entry.name();
+    // output += entry.name();
 
-    output += "\",\"size\":\"";
-    output += fsize;
-    output += "\"";
-    //VarioIgcParser varioIgcParser;
-    // varioIgcParser.parseFile("/vols/" + String(entry.name()));
-    //output += ", \"info\": " + varioIgcParser.getJson();
-    output += "}";
-    server.sendContent(output);
+    // output += "\",\"size\":\"";
+    // output += fsize;
+    // output += "\"";
+    // //VarioIgcParser varioIgcParser;
+    // // varioIgcParser.parseFile("/vols/" + String(entry.name()));
+    // //output += ", \"info\": " + varioIgcParser.getJson();
+    // output += "}";
+    // server.sendContent(output);
     entry.close();
   }
   server.sendContent("]");
@@ -1164,7 +1176,7 @@ void handleFirmwareVersion()
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", "");
-  WiFiClient client = server.client();
+  //WiFiClient client = server.client();
 
   server.sendContent(output);
 
@@ -1661,7 +1673,7 @@ void handleGetFlights()
   server.send(200, "application/json", "");
   server.sendContent("[");
 
-  WiFiClient client = server.client();
+  //WiFiClient client = server.client();
   varioSqlFlight.initGetFlightsQuery(limit, offset);
   String unvol = varioSqlFlight.getNextFlight();
   boolean firstLine = true;
@@ -1789,7 +1801,7 @@ void handleGetSites()
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "application/json", "");
-  WiFiClient client = server.client();
+  //WiFiClient client = server.client();
 
   server.sendContent(varioSqlFlight.getSites());
 
@@ -1973,30 +1985,6 @@ bool checkDbVersion()
   TRACE();
   return true;
 }
-/***********************************
-void handleCreate() {
-// ***********************************
-  if (server.args() == 0) {
-    return returnFail("BAD ARGS");
-  }
-  String path = server.arg(0);
-  if (path == "/" || SDHAL.exists((char *)path.c_str())) {
-    returnFail("BAD PATH");
-    return;
-  }
-
-  if (path.indexOf('.') > 0) {
-    File fileSD = SDHAL.open((char *)path.c_str(), FILE_WRITE);
-    if (fileSD) {
-      fileSD.write("\0");
-      fileSD.close();
-    }
-  } else {
-    SDHAL.mkdir((char *)path.c_str());
-  }
-  returnOK();
-}
-*/
 
 VarioWifiServer varioWifiServer;
 

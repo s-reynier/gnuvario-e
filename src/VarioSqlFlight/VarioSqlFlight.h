@@ -36,7 +36,7 @@ public:
     bool insertSite(String data);
     bool updateSite(uint8_t id, String data);
     bool deleteSite(uint8_t id);
-    String initGetFlightsQuery(uint8_t limit, uint8_t offset);
+    bool initGetFlightsQuery(uint8_t limit, uint8_t offset);
     String getNextFlight();
     void executeMigration(String version, String sql);
 };
