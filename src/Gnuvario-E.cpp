@@ -859,7 +859,7 @@ void setup()
   // Initialisation BT
   //***********************************************
 
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+#if defined(HAVE_BLUETOOTH)
   if (varioHardwareManager.initBt())
   {
     TRACE();
@@ -870,7 +870,7 @@ void setup()
     TRACE();
     screen.btinfo->unsetBT();
   }
-#endif //HAVE_BLUETOOTH || HAVE_BLE
+#endif //HAVE_BLUETOOTH
 
   ButtonScheduleur.Set_StatePage(STATE_PAGE_VARIO);
 
@@ -1004,9 +1004,9 @@ void loop()
 
 //sans gps, le bluetooth doit etre mis a jour manuellement
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-//TODO
+  varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getCalibratedPosition(), varioData.kalmanvert.getVelocity());
 #else
-//TODO
+  varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getPosition(), varioData.kalmanvert.getVelocity());
 #endif
 
   // * if no GPS, we can't calibrate, and we have juste to check flight start *
@@ -1023,14 +1023,14 @@ void loop()
   /* update Bluetooth */
   /********************/
 
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+#if defined(HAVE_BLUETOOTH) 
   if (varioData.updateBluetooth())
   {
 #ifdef GPS_DEBUG
     SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
   }
-#endif // HAVE_BLUETOOTH || HAVE_BLE
+#endif // HAVE_BLUETOOTH 
 
 #ifdef HAVE_SCREEN
   if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))

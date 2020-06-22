@@ -326,15 +326,15 @@
 #define HAVE_POWER_ALIM
 #define HAVE_BUTTON
 #define HAVE_WIFI
-// #define HAVE_BLUETOOTH
+#define HAVE_BLUETOOTH
 #define HAVE_BLE
 
 #if defined(HAVE_WIFI) && defined(HAVE_BLUETOOTH)
 #undef HAVE_BLUETOOTH
 #endif
 
-#if defined(HAVE_BLUETOOTH) && defined(HAVE_BLE)
-#undef HAVE_BLUETOOTH
+#if defined(HAVE_BLE) && !defined(HAVE_BLUETOOTH)
+#define HAVE_BLUETOOTH
 #endif
 
 #endif

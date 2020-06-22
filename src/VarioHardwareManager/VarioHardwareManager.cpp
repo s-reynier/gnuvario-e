@@ -134,9 +134,9 @@ void VarioHardwareManager::initGps()
 bool VarioHardwareManager::initBt()
 //**********************************
 {
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
-  return (varioBT.init());
-#endif //HAVE_BLUETOOTH || HAVE_BLE
+#if defined(HAVE_BLUETOOTH)
+  return varioBT.init();
+#endif //HAVE_BLUETOOTH
 }
 
 //**********************************
@@ -200,9 +200,9 @@ void VarioHardwareManager::testInactivity(double velocity)
 bool VarioHardwareManager::updateBluetooth(double velocity, double alti, double altiCalibrated)
 //***********************************
 {
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+#if defined(HAVE_BLUETOOTH)
   return (varioBT.update(velocity, alti, altiCalibrated));
-#endif //HAVE_BLUETOOTH || HAVE_BLE
+#endif //HAVE_BLUETOOTH
 }
 
 //***********************************
@@ -214,7 +214,7 @@ bool VarioHardwareManager::updateGps(Kalmanvert kalmanvert)
   if (varioGps.update(varioData.kalmanvert, &lastSentencetmp))
   {
 
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+#if defined(HAVE_BLUETOOTH)
     varioBT.lastSentence = lastSentencetmp;
     //* if this is the last GPS sentence *
     //* we can send our sentences *
@@ -226,11 +226,10 @@ bool VarioHardwareManager::updateGps(Kalmanvert kalmanvert)
 #else
       varioBT.bluetoothNMEA.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
 #endif
-#ifdef HAVE_BLUETOOTH
+
       serialNmea.lock(); //will be writed at next loop
-#endif                   //HAVE_BLUETOOTH
     }
-#endif //HAVE_BLUETOOTH || HAVE_BLE
+#endif //HAVE_BLUETOOTH
 
     return true;
   }

@@ -42,9 +42,6 @@
 #include <VarioBluetooth.h>
 #endif
 
-#ifdef HAVE_BLE
-#include <VarioBle.h>
-#endif
 /*******************/
 /* General objects */
 /*******************/
@@ -62,9 +59,6 @@ private:
 	VarioGps varioGps;
 #ifdef HAVE_BLUETOOTH
 	VarioBluetooth varioBT;
-#endif
-#ifdef HAVE_BLE
-	VarioBle varioBT;
 #endif
 
 public:
