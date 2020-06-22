@@ -45,10 +45,9 @@ bool VarioGps::update(Kalmanvert kalmanvert, bool *lastSentence)
 #endif //GPS_DEBUG
 
 		nmeaParser.beginGGA();
-#if defined(HAVE_BLUETOOTH)
+#ifdef HAVE_BLUETOOTH
 		*lastSentence = true;
 #endif //HAVE_BLUETOOTH
-
 #ifdef HAVE_SDCARD
 		/* start to write IGC B frames */
 		if (!GnuSettings.NO_RECORD)

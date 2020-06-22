@@ -43,7 +43,6 @@ VarioSqlFlight::~VarioSqlFlight()
     closeDb();
 }
 
-
 int VarioSqlFlight::callback(void *data, int argc, char **argv, char **azColName)
 {
     int i;

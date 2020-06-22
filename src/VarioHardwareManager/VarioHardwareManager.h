@@ -42,6 +42,7 @@
 #include <VarioBluetooth.h>
 #endif
 
+
 /*******************/
 /* General objects */
 /*******************/
@@ -60,6 +61,7 @@ private:
 #ifdef HAVE_BLUETOOTH
 	VarioBluetooth varioBT;
 #endif
+
 
 public:
 	VarioHardwareManager();

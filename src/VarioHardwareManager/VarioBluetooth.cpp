@@ -1,3 +1,35 @@
+/* VarioBle -- 
+ *
+ * Copyright 2020 MichelPa / Jpg63
+ * 
+ * This file is part of GnuVario-E.
+ *
+ * ToneHAL is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ToneHAL is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* 
+ *********************************************************************************
+ *                                                                               *
+ *                          VarioBle                                             *
+ *                                                                               *
+ *  version    Date     Description                                              *
+ *    1.0                                                                        *
+ *    1.0.1  09/06/20   Ajout GnuSettings.VARIOMETER_SENT_LXNAV_SENTENCE         *
+ *											Ajout GnuSettings.BLUETOOTH_SEND_CALIBRATED_ALTITUDE     *                                          
+ *                                                                               *
+ *********************************************************************************
+ */
 #include <Arduino.h>
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
@@ -33,53 +65,54 @@
 bool VarioBluetooth::init()
 // ******************************
 {
-	if (GnuSettings.VARIOMETER_ENABLE_BT) {
+	if (GnuSettings.VARIOMETER_ENABLE_BT)
+	{
 		TRACE();
 		return true;
 	}
-	else {
+	else
+	{
 		TRACE();
 		return false;
 	}
 }
 
-
 // ******************************
 bool VarioBluetooth::update(double velocity, double position, double calibratedPosition)
 // ******************************
 {
-  // ********************
-  // * update bluetooth *
-  // ********************
+	// ********************
+	// * update bluetooth *
+	// ********************
 #ifdef HAVE_GPS
-  /* in priority send vario nmea sentence */
-  if (bluetoothNMEA.available())
-  {
-    while (bluetoothNMEA.available())
-    {
-      serialNmea.write(bluetoothNMEA.get());
-    }
-    serialNmea.release();
+	/* in priority send vario nmea sentence */
+	if (bluetoothNMEA.available())
+	{
+		while (bluetoothNMEA.available())
+		{
+			serialNmea.write(bluetoothNMEA.get());
+		}
+		serialNmea.release();
 		return true;
-  }
+	}
 #else //!HAVE_GPS
-  /* check the last vario nmea sentence */
-  if (millis() - lastVarioSentenceTimestamp > VARIOMETER_SENTENCE_DELAY)
-  {
-    lastVarioSentenceTimestamp = millis();
+	/* check the last vario nmea sentence */
+	if (millis() - lastVarioSentenceTimestamp > VARIOMETER_SENTENCE_DELAY)
+	{
+		lastVarioSentenceTimestamp = millis();
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-    bluetoothNMEA.begin(calibratedPosition, velocity);
+		bluetoothNMEA.begin(calibratedPosition, velocity);
 #else
-    bluetoothNMEA.begin(position, velocity);
+		bluetoothNMEA.begin(position, velocity);
 #endif
-    while (bluetoothNMEA.available())
-    {
-      serialNmea.write(bluetoothNMEA.get());
-    }
-	  return true;
-  }
+		while (bluetoothNMEA.available())
+		{
+			serialNmea.write(bluetoothNMEA.get());
+		}
+		return true;
+	}
 #endif //!HAVE_GPS
-  return false;
+	return false;
 }
 
 #endif //HAVE_BLUETOOTH

@@ -32,7 +32,7 @@
 #ifndef _DEBUGCONFIG_H_
 #define _DEGUGCONFIG_H_
 
-//Monitor Port
+//Monitor Port 
 #if defined(ESP8266)
 #define SerialPort Serial
 #elif defined(ESP32)
@@ -62,12 +62,14 @@
 
 #if defined(ENABLE_DEBUG)
 
+
 // 							OUTPUT SERIALNMEA
 //#define SERIAL_NMEA_SERIAL_OUTPUT
 #define SERIAL_NMEA_BLUETOOTH_OUTPUT
 
+
 //              DEBUGING MODE
-#define PROG_DEBUG //debug principal program
+#define PROG_DEBUG			  //debug principal program
 //#define HARDWARE_DEBUG
 //#define IMU_DEBUG			  //debug IMU
 //#define I2CDEV_SERIAL_DEBUG   //debug I2Cdev
@@ -87,10 +89,9 @@
 //#define IGC_DEBUG
 #define DATA_DEBUG
 //#define BT_DEBUG
-// #define WIFI_DEBUG
-//#define SOUND_DEBUG
+//#define WIFI_DEBUG
+#define SOUND_DEBUG
 //#define AGL_DEBUG
 #define SQL_DEBUG
-
 #endif //ENABLE_DEBUG
 #endif

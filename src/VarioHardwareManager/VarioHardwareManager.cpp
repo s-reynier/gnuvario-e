@@ -25,6 +25,7 @@
  *                                                                               *
  *  version    Date     Description                                              *
  *    1.0    22/03/20                                                            *
+ *    1.0.1  09/06/20   Ajout GnuSettings.BLUETOOTH_SEND_CALIBRATED_ALTITUDE     *
  *                                                                               *
  *********************************************************************************
  */
@@ -58,6 +59,8 @@
 #include <Utility.h>
 
 #include <VarioLanguage.h>
+
+#include <VarioSettings.h>
 
 VarioHardwareManager varioHardwareManager;
 
