@@ -871,7 +871,7 @@ void setup()
   // Initialisation BT
   //***********************************************
 
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+#if defined(HAVE_BLUETOOTH)
   if (varioHardwareManager.initBt())
   {
     TRACE();
@@ -1070,14 +1070,14 @@ void loop()
   /* update Bluetooth */
   /********************/
 
-#if defined(HAVE_BLUETOOTH) || defined(HAVE_BLE)
+#if defined(HAVE_BLUETOOTH)
   if (varioData.updateBluetooth())
   {
 #ifdef GPS_DEBUG
     SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
   }
-#endif // HAVE_BLUETOOTH || HAVE_BLE
+#endif // HAVE_BLUETOOTH 
 
 #ifdef HAVE_SCREEN
   if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
