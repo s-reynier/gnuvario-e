@@ -86,31 +86,67 @@ bool VarioBluetooth::update(double velocity, double position, double calibratedP
 	// ********************
 #ifdef HAVE_GPS
 	/* in priority send vario nmea sentence */
-	if (bluetoothNMEA.available())
+	if (GnuSettings.VARIOMETER_SENT_LXNAV_SENTENCE == LK8000_SENTENCE)
 	{
-		while (bluetoothNMEA.available())
+		if (bluetoothNMEA_Lk.available())
 		{
-			serialNmea.write(bluetoothNMEA.get());
+			while (bluetoothNMEA_Lk.available())
+			{
+				serialNmea.write(bluetoothNMEA_Lk.get());
+			}
+			serialNmea.release();
+			return true;
 		}
-		serialNmea.release();
-		return true;
 	}
-#else //!HAVE_GPS
+	else
+	{
+		if (bluetoothNMEA_Lx.available())
+		{
+			while (bluetoothNMEA_Lx.available())
+			{
+				serialNmea.write(bluetoothNMEA_Lx.get());
+			}
+			serialNmea.release();
+			return true;
+		}
+	}
+#else  //!HAVE_GPS
 	/* check the last vario nmea sentence */
 	if (millis() - lastVarioSentenceTimestamp > VARIOMETER_SENTENCE_DELAY)
 	{
 		lastVarioSentenceTimestamp = millis();
-#ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-		bluetoothNMEA.begin(calibratedPosition, velocity);
-#else
-		bluetoothNMEA.begin(position, velocity);
-#endif
-		while (bluetoothNMEA.available())
+
+		if (GnuSettings.VARIOMETER_SENT_LXNAV_SENTENCE == LK8000_SENTENCE)
 		{
-			serialNmea.write(bluetoothNMEA.get());
+			//#ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
+			if (GnuSettings.BLUETOOTH_SEND_CALIBRATED_ALTITUDE)
+				bluetoothNMEA_Lk.begin(calibratedPosition, velocity);
+			//#else
+			else
+				bluetoothNMEA_Lk.begin(position, velocity);
+			//#endif
+			while (bluetoothNMEA_Lk.available())
+			{
+				serialNmea.write(bluetoothNMEA_Lk.get());
+			}
+		}
+		else
+		{
+			//#ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
+			if (GnuSettings.BLUETOOTH_SEND_CALIBRATED_ALTITUDE)
+				bluetoothNMEA_Lx.begin(calibratedPosition, velocity);
+			//#else
+			else
+				bluetoothNMEA_Lx.begin(position, velocity);
+			//#endif
+			while (bluetoothNMEA_Lx.available())
+			{
+				serialNmea.write(bluetoothNMEA_Lx.get());
+			}
 		}
 		return true;
 	}
+}
 #endif //!HAVE_GPS
 	return false;
 }

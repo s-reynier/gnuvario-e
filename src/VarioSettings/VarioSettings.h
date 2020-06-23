@@ -310,7 +310,7 @@ class VarioSettings {
   /* Possible values are :                                  */
   /*  - VARIOMETER_SENT_LXNAV_SENTENCE                      */
   /*  - VARIOMETER_SENT_LK8000_SENTENCE                     */
-  int VARIOMETER_SENT_LXNAV_SENTENCE			      	= DEFAULT_VARIOMETER_SENT_LXNAV_SENTENCE;
+  int VARIOMETER_SENT_LXNAV_SENTENCE 			      	= DEFAULT_VARIOMETER_SENT_LXNAV_SENTENCE;
 	
 	bool BLUETOOTH_SEND_CALIBRATED_ALTITUDE         = DEFAULT_BLUETOOTH_SEND_CALIBRATED_ALTITUDE;
 

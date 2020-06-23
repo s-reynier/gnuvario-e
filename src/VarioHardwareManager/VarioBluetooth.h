@@ -57,8 +57,8 @@ public:
 
 	boolean lastSentence = false;
 
-	LxnavSentence bluetoothNMEA;
-	// LK8Sentence bluetoothNMEA_Lk;
+	LxnavSentence bluetoothNMEA_Lx;
+	LK8Sentence bluetoothNMEA_Lk;
 };
 
 #endif //HAVE_BLUETOOTH

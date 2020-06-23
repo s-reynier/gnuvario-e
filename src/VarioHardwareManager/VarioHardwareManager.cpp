@@ -225,9 +225,15 @@ bool VarioHardwareManager::updateGps(Kalmanvert kalmanvert)
     {
       varioBT.lastSentence = false;
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-      varioBT.bluetoothNMEA.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
+      if (GnuSettings.VARIOMETER_SENT_LXNAV_SENTENCE == LK8000_SENTENCE)
+        varioBT.bluetoothNMEA_Lk.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
+      else
+        varioBT.bluetoothNMEA_Lx.begin(kalmanvert.getCalibratedPosition(), kalmanvert.getVelocity());
 #else
-      varioBT.bluetoothNMEA.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
+      if (GnuSettings.VARIOMETER_SENT_LXNAV_SENTENCE == LK8000_SENTENCE)
+        varioBT.bluetoothNMEA_Lk.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
+      else
+        varioBT.bluetoothNMEA_Lx.begin(kalmanvert.getPosition(), kalmanvert.getVelocity());
 #endif
 
       serialNmea.lock(); //will be writed at next loop
