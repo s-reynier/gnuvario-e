@@ -841,7 +841,9 @@ bool VarioSqlFlight::deleteSite(uint8_t id)
 
 bool VarioSqlFlight::initGetFlightsQuery(uint8_t limit, uint8_t offset)
 {
+#ifdef SQL_DEBUG
     Serial.println(ESP.getFreeHeap());
+#endif //SQL_DEBUG
     haveNextFlight = false;
 
     int rc;

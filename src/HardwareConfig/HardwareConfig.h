@@ -318,8 +318,8 @@
 #define HAVE_POWER_ALIM	
 #define HAVE_BUTTON
 #define HAVE_WIFI
-#define HAVE_BLUETOOTH
-#define HAVE_BLE
+// #define HAVE_BLUETOOTH
+// #define HAVE_BLE
 
 #if defined(HAVE_WIFI) && defined(HAVE_BLUETOOTH) && !defined(HAVE_BLE)
 #undef HAVE_BLUETOOTH
