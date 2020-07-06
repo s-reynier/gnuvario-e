@@ -1647,8 +1647,8 @@ void handleGetFlights()
     return returnFail("BAD URL");
   }
 
-  uint8_t offset;
-  uint8_t limit;
+  int16_t offset;
+  int16_t limit;
   if (server.hasArg("offset"))
   {
     offset = server.arg("offset").toInt();
@@ -1663,7 +1663,7 @@ void handleGetFlights()
   }
   else
   {
-    limit = 20;
+    limit = 50;
   }
 
   VarioSqlFlight varioSqlFlight;
@@ -1673,23 +1673,50 @@ void handleGetFlights()
   server.send(200, "application/json", "");
   server.sendContent("[");
 
-  //WiFiClient client = server.client();
-  varioSqlFlight.initGetFlightsQuery(limit, offset);
-  String unvol = varioSqlFlight.getNextFlight();
   boolean firstLine = true;
-  while (unvol != "")
+  //ruse pour contourner le pb de mémoire sur sqlite
+  int16_t limitTemp = limit;
+  int16_t offsetTemp = offset;
+  uint8_t limitMax = 5;
+  String unvol = "";
+  do
   {
-    if (firstLine)
+    if (limit > limitMax)
     {
-      firstLine = false;
+      limitTemp = limitMax;
     }
     else
     {
-      unvol = "," + unvol;
+      limitTemp = limit;
     }
-    server.sendContent(unvol);
+    varioSqlFlight.initGetFlightsQuery(limitTemp, offsetTemp);
     unvol = varioSqlFlight.getNextFlight();
-  }
+    if (unvol == "")
+    {
+      //pas la peine de continuer, on est a la fin
+      limit = 0;
+    }
+    else
+    {
+      while (unvol != "")
+      {
+        if (firstLine)
+        {
+          firstLine = false;
+        }
+        else
+        {
+          unvol = "," + unvol;
+        }
+        server.sendContent(unvol);
+        unvol = varioSqlFlight.getNextFlight();
+      }
+    }
+
+    offsetTemp = offsetTemp + limitMax;
+    limit = limit - limitMax;
+  } while (limit > 0);
+
   server.sendContent("]");
 
   //correction bug chunk transfer webserver

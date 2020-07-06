@@ -47,9 +47,9 @@
 /*            SCREEN          */
 /******************************/
 
-#define VARIOSCREEN_SIZE 	154		//Ecran 1.54''
+//#define VARIOSCREEN_SIZE 	154		//Ecran 1.54''
 //#define VARIOSCREEN_SIZE	290 	//Ecran 2.90'' Paysage
-//#define VARIOSCREEN_SIZE 	291 	//Ecran 2.90'' Portrait
+#define VARIOSCREEN_SIZE 	291 	//Ecran 2.90'' Portrait
 
 #if (VARIOSCREEN_SIZE == 154)
 #define DISPLAY_LOW_UPDATE 50
@@ -264,7 +264,7 @@
 #define NMEA_GGA_TIME_PRECISION 1000
 #define NMEA_GGA_ALTI_PRECISION 10.0
 
-#else if defined(NEO_6M)
+#elif defined(NEO_6M)
 
 //NEO-6M
 #define NMEA_RMC_TAG "GPRMC"

@@ -66,7 +66,7 @@
 #include <beeper.h>
 #include <varioscreenGxEPD.h>
 #ifdef HAVE_WIFI
-#include <VarioWifiServer.h>
+// #include <VarioWifiServer.h>
 #endif //HAVE_WIFI
 
 #include <Utility.h>
@@ -94,6 +94,9 @@
 #include <GPSSentence.h>
 
 #include <VarioLanguage.h>
+
+#include <VarioWifi.h>
+VarioWifi wf;
 
 uint8_t RegVolume;
 
@@ -489,16 +492,16 @@ void VARIOButtonScheduleur::WifiServeur(void)
 #endif //BUTTON_DEBUG
 
 	/*START SERVEUR WEB */
-	varioWifiServer.begin();
-	varioWifiServer.connect();
+	wf.begin();
+	// varioWifiServer.connect();
 
-	varioWifiServer.start();
+	// varioWifiServer.start();
 
 	Set_StatePage(STATE_PAGE_WEBSERV);
 
 	while (1)
 	{
-		varioWifiServer.handleClient();
+		// varioWifiServer.handleClient();
 		update();
 	}
 }

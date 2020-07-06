@@ -41,6 +41,7 @@ VarioSqlFlight::VarioSqlFlight()
 VarioSqlFlight::~VarioSqlFlight()
 {
     closeDb();
+    sqlite3_shutdown();
 }
 
 int VarioSqlFlight::callback(void *data, int argc, char **argv, char **azColName)
@@ -77,11 +78,14 @@ int VarioSqlFlight::openDb(const char *filename, sqlite3 **db)
 
 void VarioSqlFlight::closeDb()
 {
+    if (isOpened)
+    {
 #ifdef SQL_DEBUG
-    Serial.printf("close db");
+        Serial.printf("close db");
 #endif //SQL_DEBUG
-    sqlite3_close(myDb);
-    isOpened = false;
+        sqlite3_close(myDb);
+        isOpened = false;
+    }
 }
 
 int VarioSqlFlight::db_exec(sqlite3 *db, const char *sql)
@@ -844,12 +848,11 @@ bool VarioSqlFlight::initGetFlightsQuery(uint8_t limit, uint8_t offset)
     // sqlite3_stmt *res;
     const char *tail;
 
-#ifdef SQL_DEBUG
-    SerialPort.println("openDb");
-#endif //SQL_DEBUG
-
     if (!isOpened)
     {
+#ifdef SQL_DEBUG
+        SerialPort.println("openDb");
+#endif //SQL_DEBUG
         if (openDb((char *)dbPath.c_str(), &myDb))
         {
             return false;
@@ -889,7 +892,6 @@ String VarioSqlFlight::getNextFlight()
 
         if (step_res == SQLITE_ROW)
         {
-
             //JsonObject obj1 = doc.createNestedObject();
             obj1["id"] = sqlite3_column_int(nextFlightRes, 0);
             obj1["site_id"] = sqlite3_column_int(nextFlightRes, 1);
@@ -926,6 +928,7 @@ String VarioSqlFlight::getNextFlight()
             Serial.println("ERROR ICI");
 #endif //SQL_DEBUG
             haveNextFlight = false;
+            sqlite3_clear_bindings(nextFlightRes);
             sqlite3_finalize(nextFlightRes);
             return "";
         }
@@ -935,12 +938,15 @@ String VarioSqlFlight::getNextFlight()
             Serial.println("Plus aucun vol" + String(step_res));
 #endif //SQL_DEBUG
             haveNextFlight = false;
+            sqlite3_clear_bindings(nextFlightRes);
             sqlite3_finalize(nextFlightRes);
             return "";
         }
     }
     else
     {
+        sqlite3_clear_bindings(nextFlightRes);
+        sqlite3_finalize(nextFlightRes);
 #ifdef SQL_DEBUG
         Serial.println("Aucun vol");
 #endif //SQL_DEBUG

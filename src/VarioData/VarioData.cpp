@@ -60,7 +60,7 @@
 #include <SerialNmea.h>
 
 #ifdef HAVE_WIFI
-#include <VarioWifiServer.h>
+// #include <VarioWifiServer.h>
 #endif //HAVE_WIFI
 
 #include <GPSSentence.h>
@@ -166,9 +166,6 @@ bool VarioData::initSettings(bool Test_SD)
     ESP_LOGI("SDCARD", "initialization done.");
 #endif //EPS32
 
-#ifdef HAVE_WIFI
-    SD_present = true;
-#endif //HAVE_WIFI
     sdcardState = SDCARD_STATE_INITIALIZED;
     /*    char FileName[15] = "SETTINGS.TXT";
     GnuSettings.readSDSettings(FileName);*/
@@ -272,9 +269,6 @@ bool VarioData::initSettings(bool Test_SD)
   }
   else
   {
-#ifdef HAVE_WIFI
-    SD_present = false;
-#endif //HAVE_WIFI
 
 #ifdef SDCARD_DEBUG
     SerialPort.println("initialization failed!");
@@ -293,9 +287,6 @@ bool VarioData::initSettings(bool Test_SD)
 		return false;
   }
 #else //HAVE_SDCARD
-#ifdef HAVE_WIFI
-  SD_present = false;
-#endif //HAVE_WIFI
 
 #ifdef SDCARD_DEBUG
   SerialPort.println("initialization failed!");

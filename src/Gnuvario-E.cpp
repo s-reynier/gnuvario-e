@@ -544,19 +544,7 @@
 
 #include <GPSSentence.h>
 
-/*#ifdef HAVE_GPS
-#include <SerialNmea.h>
-#include <LxnavSentence.h>
-#include <LK8Sentence.h>
-#include <IGCSentence.h>
-#include <NmeaParser.h>
-#endif //HAVE_GPS*/
-
 #include <VarioButton.h>
-
-//#include <Utility.h>
-
-//#include <driver/adc.h>
 
 /*****************/
 /* screen        */
@@ -579,8 +567,8 @@ VarioData varioData;
 //*******************************
 
 #ifdef HAVE_WIFI
-#include <VarioWifiServer.h>
-#include <esp32fota2.h>
+#include <VarioWifi.h>
+// #include <esp32fota2.h>
 #endif //HAVE_WIFI
 
 /*************************************************
@@ -589,28 +577,30 @@ VarioData varioData;
 #ifdef HAVE_WIFI
 String webpage = "";
 
-#ifdef ESP8266
-ESP8266WiFiMulti wifiMulti;
-ESP8266WebServer server(80);
-#else
-WiFiMulti wifiMulti;
-#ifdef ESP32WEBSERVEUR
-VarioESP32WebServer server(80);
-#elif defined(ESPASYNCWEBSERVER)
-#include <WiFi.h>
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-AsyncWebServer server(80);
-#elif defined(ETHERNETWEBSERVER)
-EthernetServer server(80);
-#elif defined(ESPRESSIFWEBSERVEUR)
-WebServer server(80);
-#else  //ESP32WEBSERVEUR
-VarioWebServer server(80);
-#endif //ESP32WEBSERVEUR
-#endif
+// #ifdef ESP8266
+// ESP8266WiFiMulti wifiMulti;
+// ESP8266WebServer server(80);
+// #else
+// WiFiMulti wifiMulti;
+// #ifdef ESP32WEBSERVEUR
+// VarioESP32WebServer server(80);
+// #elif defined(ESPASYNCWEBSERVER)
+// #include <WiFi.h>
+// #include <AsyncTCP.h>
+// #include <ESPAsyncWebServer.h>
+// AsyncWebServer server(80);
+// #elif defined(ETHERNETWEBSERVER)
+// EthernetServer server(80);
+// #elif defined(ESPRESSIFWEBSERVEUR)
+// WebServer server(80);
+// #else  //ESP32WEBSERVEUR
+// VarioWebServer server(80);
+// #endif //ESP32WEBSERVEUR
+// #endif
 
-esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE); //esp32-fota-http", 0,6,0);
+
+
+// esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE); //esp32-fota-http", 0,6,0);
 
 #endif //HAVE_WIFI
 
