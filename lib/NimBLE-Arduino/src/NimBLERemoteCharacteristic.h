@@ -71,9 +71,10 @@ public:
         return *((T *)pData);
     }
 
-    uint8_t                                        readUInt8()  __attribute__ ((deprecated));
-    uint16_t                                       readUInt16() __attribute__ ((deprecated));
-    uint32_t                                       readUInt32() __attribute__ ((deprecated));
+    uint8_t                                        readUInt8()  __attribute__ ((deprecated("Use template readValue<uint8_t>()")));
+    uint16_t                                       readUInt16() __attribute__ ((deprecated("Use template readValue<uint16_t>()")));
+    uint32_t                                       readUInt32() __attribute__ ((deprecated("Use template readValue<uint32_t>()")));
+    float                                          readFloat()  __attribute__ ((deprecated("Use template readValue<float>()")));
     std::string                                    getValue(time_t *timestamp = nullptr);
 
     template<typename T>
@@ -90,14 +91,18 @@ public:
     bool                                           unsubscribe(bool response = true);
     bool                                           registerForNotify(notify_callback notifyCallback,
                                                                      bool notifications = true,
-                                                                     bool response = true) __attribute__ ((deprecated));
+                                                                     bool response = true)
+                                                                     __attribute__ ((deprecated("Use subscribe()/unsubscribe()")));
     bool                                           writeValue(const uint8_t* data,
                                                               size_t length,
                                                               bool response = false);
     bool                                           writeValue(const std::string &newValue,
                                                               bool response = false);
-    bool                                           writeValue(uint8_t newValue,
-                                                              bool response = false);
+    template<typename T>
+    bool writeValue(const T &s, bool response = false) {
+        return writeValue((uint8_t*)&s, sizeof(T), response);
+    }
+
     std::string                                    toString();
     NimBLERemoteService*                           getRemoteService();
 
