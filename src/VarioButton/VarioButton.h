@@ -139,4 +139,5 @@ extern void createSDCardTrackFile(void);
 #error “This library only supports boards with ESP32 processor.”
 #endif
 
+extern bool wifiIsRunning;
 #endif

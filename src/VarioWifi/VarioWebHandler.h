@@ -23,10 +23,10 @@
 
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
-#include "FS.h"
-#include "SD.h"
 #include <VarioIgcParser.h>
 #include <VarioSqlFlight.h>
+#include <VarioSqlFlightHelper.h>
+#include <sdcardHAL.h>
 
 class VarioWebHandler
 {
@@ -73,11 +73,15 @@ public:
     // parsage d'un fichier IGC
     AsyncWebServerResponse *handleParseIgc(AsyncWebServerRequest *request);
 
+    // téléchargements de "mes vols" en BDD
+    AsyncWebServerResponse *handleGetFlights(AsyncWebServerRequest *request);
+
 private:
     String getFileSizeStringFromBytes(int bytes);
     void printDirectoryRecurse(AsyncResponseStream *response, String path, boolean isRecursive);
     void deleteRecursive(String path);
     static void backupFile(String pathOrig, String pathBack);
+    int readFlightsData(uint8_t *buffer, size_t maxLength);
 };
 
 #endif //VARIO_WEBHANDLER_H

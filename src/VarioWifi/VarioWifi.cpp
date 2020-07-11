@@ -168,6 +168,11 @@ bool VarioWifi::checkDbVersion()
     SerialPort.println("checkDbVersion");
 #endif
 
+    // if (SDHAL_SD.exists("/dist.gz"))
+    // {
+    //     tarGzExpander(SD, "/dist.gz", SD, "/tmp");
+    // }
+
     if (!SDHAL_SD.exists("/db"))
     {
         SDHAL_SD.mkdir("/db");
@@ -398,9 +403,12 @@ void VarioWifi::startWebServer()
         request->send(varioWebHandler.handleParseIgc(request));
     });
 
+    // téléchargements de "mes vols" en BDD
+    server.on("/flightsbdd", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(varioWebHandler.handleGetFlights(request));
+    });
+
     //TODO
-    // // téléchargements de "mes vols" en BDD
-    //   server.on("/flightsbdd", HTTP_GET, handleGetFlights);
 
     //   // enregistrement un vol en BDD
     //   server.on("/flightsbdd", HTTP_POST, handleSetFlight);

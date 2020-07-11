@@ -31,6 +31,7 @@
 #include <esp32fota2.h>
 #include <VarioIgcParser.h>
 #include <VarioSqlFlight.h>
+ #include <ESP32-targz.h>
 
 #ifdef WIFI_DEBUG
 #define ARDUINOTRACE_ENABLE 1

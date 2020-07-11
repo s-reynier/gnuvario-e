@@ -864,12 +864,15 @@ bool VarioSqlFlight::initGetFlightsQuery(uint8_t limit, uint8_t offset)
     String sql = "SELECT f.id, f.site_id, f.filename, f.md5, f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, f.minimap, s.lib FROM flight f LEFT JOIN site s ON(s.id = f.site_id) ORDER BY f.flight_date DESC, f.start_flight_time ASC LIMIT " + String(limit) + " OFFSET " + String(offset);
 
 #ifdef SQL_DEBUG
-    SerialPort.println(sql);
+   // SerialPort.println(sql);
 #endif //SQL_DEBUG
 
     rc = sqlite3_prepare_v2(myDb, sql.c_str(), sql.length(), &nextFlightRes, &tail);
     if (rc != SQLITE_OK)
     {
+#ifdef SQL_DEBUG
+        Serial.printf("ERROR preparing sql: %s\n", sqlite3_errmsg(myDb));
+#endif //SQL_DEBUG
         closeDb();
         return false;
     }
@@ -881,7 +884,11 @@ bool VarioSqlFlight::initGetFlightsQuery(uint8_t limit, uint8_t offset)
 
 String VarioSqlFlight::getNextFlight()
 {
-    DynamicJsonDocument doc(4196);
+#ifdef SQL_DEBUG
+    SerialPort.println("getNextFlight");
+#endif //SQL_DEBUG
+
+    DynamicJsonDocument doc(4096);
 
     // create an object
     JsonObject obj1 = doc.to<JsonObject>();
@@ -916,11 +923,12 @@ String VarioSqlFlight::getNextFlight()
             obj1["minimap"] = String((char *)sqlite3_column_text(nextFlightRes, 18));
             obj1["site_lib"] = String((char *)sqlite3_column_text(nextFlightRes, 19));
 
+
             String unvol;
             serializeJson(obj1, unvol);
 
 #ifdef SQL_DEBUG
-            Serial.println(unvol);
+           // Serial.println(unvol);
 #endif //SQL_DEBUG
             return unvol;
         }

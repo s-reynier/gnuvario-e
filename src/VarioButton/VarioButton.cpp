@@ -461,7 +461,8 @@ void VARIOButtonScheduleur::treatmentBtnC(bool Debounce)
 /**********************************************************/
 void VARIOButtonScheduleur::WifiServeur(void)
 {
-/**********************************************************/
+	/**********************************************************/
+	wifiIsRunning = true;
 #ifdef BUTTON_DEBUG
 	SerialPort.println("liste des fichiers");
 #endif //BUTTON_DEBUG
@@ -476,8 +477,9 @@ void VARIOButtonScheduleur::WifiServeur(void)
 	root = SDHAL_SD.open("/");
 	if (root)
 	{
-#endif //SDFAT_LIB \
-	//printDirectory(root, 0);
+#endif //SDFAT_LIB
+
+		//printDirectory(root, 0);
 		root.close();
 	}
 	else

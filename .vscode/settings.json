@@ -18,6 +18,7 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "random": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "bitset": "cpp"
     }
 }

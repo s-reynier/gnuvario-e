@@ -565,7 +565,7 @@ VarioData varioData;
 //*******************************
 // GESTION WIFI                 *
 //*******************************
-
+bool wifiIsRunning = false;
 #ifdef HAVE_WIFI
 #include <VarioWifi.h>
 // #include <esp32fota2.h>
@@ -597,8 +597,6 @@ String webpage = "";
 // VarioWebServer server(80);
 // #endif //ESP32WEBSERVEUR
 // #endif
-
-
 
 // esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE); //esp32-fota-http", 0,6,0);
 
@@ -895,21 +893,22 @@ void loop()
   //****************************
   // Gestion Des chrono
   //***************************
-
-  /*  LOW UPDATE DISPLAY */
-  if (millis() - varioData.lastDisplayTimestamp > DISPLAY_LOW_UPDATE)
+  if (!wifiIsRunning)
   {
-    varioData.lastDisplayTimestamp = millis();
-    varioData.displayLowUpdateState = true;
-  }
+    /*  LOW UPDATE DISPLAY */
+    if (millis() - varioData.lastDisplayTimestamp > DISPLAY_LOW_UPDATE)
+    {
+      varioData.lastDisplayTimestamp = millis();
+      varioData.displayLowUpdateState = true;
+    }
 
-  // DISPLAY
-  if (millis() - varioData.lastDisplayTimestamp2 > DISPLAY_UPDATE)
-  {
-    varioData.lastDisplayTimestamp2 = millis();
-    varioData.displayUpdateState = true;
+    // DISPLAY
+    if (millis() - varioData.lastDisplayTimestamp2 > DISPLAY_UPDATE)
+    {
+      varioData.lastDisplayTimestamp2 = millis();
+      varioData.displayUpdateState = true;
+    }
   }
-
   //**********************************************************
   //  TRAITEMENT DU SON
   //**********************************************************
@@ -925,36 +924,61 @@ void loop()
   //**********************************************************
   //  ACQUISITION DES DONNEES
   //**********************************************************
-
-  varioData.update();
-
+  if (!wifiIsRunning)
+  {
+    varioData.update();
+  }
   //**********************************************************
   //  TEST INNACTIVITE
   //**********************************************************
-  varioHardwareManager.testInactivity(varioData.getVelocity());
+  if (!wifiIsRunning)
+  {
+    varioHardwareManager.testInactivity(varioData.getVelocity());
+  }
 
   //**********************************************************
   //  MISE A JOUR DE L'ECRAN
   //**********************************************************
-
-  if (varioData.displayLowUpdateState)
+  if (!wifiIsRunning)
   {
-
-    //**********************************************************
-    //  DISPLAY ALTI
-    //**********************************************************
-
-    screen.altiDigit->setValue(varioData.getCalibratedAlti());
-
-    //**********************************************************
-    //  DISPLAY VARIO
-    //**********************************************************
-
-    if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
+    if (varioData.displayLowUpdateState)
     {
-      if (varioData.haveNewClimbRate())
+
+      //**********************************************************
+      //  DISPLAY ALTI
+      //**********************************************************
+
+      screen.altiDigit->setValue(varioData.getCalibratedAlti());
+
+      //**********************************************************
+      //  DISPLAY VARIO
+      //**********************************************************
+
+      if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
       {
-        double tmpvalue = varioData.getClimbRate();
+        if (varioData.haveNewClimbRate())
+        {
+          double tmpvalue = varioData.getClimbRate();
+#if (VARIOSCREEN_SIZE == 154)
+          if (tmpvalue > 9.9)
+            tmpvalue = 9.9;
+          if (tmpvalue < -9.9)
+            tmpvalue = -9.9;
+#else
+          if (tmpvalue > 99.9)
+            tmpvalue = 99.9;
+          if (tmpvalue < -99.9)
+            tmpvalue = -99.9;
+#endif
+          screen.varioDigit->setValue(tmpvalue);
+
+          //       screen.varioDigit->setValue(varioData.getClimbRate());
+        }
+      }
+      else
+      {
+
+        double tmpvalue = varioData.getVelocity();
 #if (VARIOSCREEN_SIZE == 154)
         if (tmpvalue > 9.9)
           tmpvalue = 9.9;
@@ -968,57 +992,38 @@ void loop()
 #endif
         screen.varioDigit->setValue(tmpvalue);
 
-        //       screen.varioDigit->setValue(varioData.getClimbRate());
+        //      screen.varioDigit->setValue(varioData.getVelocity());
+      }
+
+      //**********************************************************
+      //  DISPLAY FINESSE / TAUX DE CHUTE MOYEN
+      //**********************************************************
+
+      if (varioData.haveNewClimbRate())
+      {
+        if (GnuSettings.RATIO_CLIMB_RATE > 1)
+          screen.trendDigit->setValue(varioData.getTrend());
+        else
+          screen.trendDigit->setValue(0);
+        screen.trendLevel->stateTREND(varioData.getStateTrend());
       }
     }
-    else
-    {
-
-      double tmpvalue = varioData.getVelocity();
-#if (VARIOSCREEN_SIZE == 154)
-      if (tmpvalue > 9.9)
-        tmpvalue = 9.9;
-      if (tmpvalue < -9.9)
-        tmpvalue = -9.9;
-#else
-      if (tmpvalue > 99.9)
-        tmpvalue = 99.9;
-      if (tmpvalue < -99.9)
-        tmpvalue = -99.9;
-#endif
-      screen.varioDigit->setValue(tmpvalue);
-
-      //      screen.varioDigit->setValue(varioData.getVelocity());
-    }
-
-    //**********************************************************
-    //  DISPLAY FINESSE / TAUX DE CHUTE MOYEN
-    //**********************************************************
-
-    if (varioData.haveNewClimbRate())
-    {
-      if (GnuSettings.RATIO_CLIMB_RATE > 1)
-        screen.trendDigit->setValue(varioData.getTrend());
-      else
-        screen.trendDigit->setValue(0);
-      screen.trendLevel->stateTREND(varioData.getStateTrend());
-    }
   }
-
   //**********************************************************
   //  EMISSION DES BIPS
   //**********************************************************
-
-  /*****************/
-  /* update beeper */
-  /*****************/
+  if (!wifiIsRunning)
+  {
+    /*****************/
+    /* update beeper */
+    /*****************/
 #ifdef HAVE_SPEAKER
-  beeper.update();
+    beeper.update();
 #ifdef PROG_DEBUG
 //    SerialPort.println("beeper update");
 #endif //PROG_DEBUG
 #endif //HAVE_SPEAKER
-
+  }
   //**********************************************************
   //  EMISSION TRAME BT
   //  ACQUISITION GPS
@@ -1029,109 +1034,117 @@ void loop()
   /**************/
   /* update GPS */
   /**************/
-
-  varioData.updateGps();
-
+  if (!wifiIsRunning)
+  {
+    varioData.updateGps();
+  }
   //**********************************************************
   //  DETECTION FIX GPS / DEBUT DU VOL
   //**********************************************************
-
-  varioData.updateState();
+  if (!wifiIsRunning)
+  {
+    varioData.updateState();
+  }
 #else //HAVE_GPS
-
+  if (!wifiIsRunning)
+  {
 //sans gps, le bluetooth doit etre mis a jour manuellement
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-  varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getCalibratedPosition(), varioData.kalmanvert.getVelocity());
+    varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getCalibratedPosition(), varioData.kalmanvert.getVelocity());
 #else
-  varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getPosition(), varioData.kalmanvert.getVelocity());
+    varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getPosition(), varioData.kalmanvert.getVelocity());
 #endif
 
-  // * if no GPS, we can't calibrate, and we have juste to check flight start */
+    // * if no GPS, we can't calibrate, and we have juste to check flight start */
 
-  //**********************************************************
-  //  DETECTION FIX GPS / DEBUT DU VOL
-  //**********************************************************
+    //**********************************************************
+    //  DETECTION FIX GPS / DEBUT DU VOL
+    //**********************************************************
 
-  varioData.updateState();
-
+    varioData.updateState();
+  }
 #endif //HAVE_GPS
 
   /********************/
   /* update Bluetooth */
   /********************/
-
-#if defined(HAVE_BLUETOOTH)
-  if (varioData.updateBluetooth())
+  if (!wifiIsRunning)
   {
+#if defined(HAVE_BLUETOOTH)
+    if (varioData.updateBluetooth())
+    {
 #ifdef GPS_DEBUG
-    SerialPort.println("Update BLE");
+      SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
+    }
+#endif // HAVE_BLUETOOTH
   }
-#endif // HAVE_BLUETOOTH 
-
+  if (!wifiIsRunning)
+  {
 #ifdef HAVE_SCREEN
-  if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
-    screen.recordIndicator->setActifGPSFIX();
-  if (varioData.gpsFix == 2)
-    screen.fixgpsinfo->setFixGps();
+    if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
+      screen.recordIndicator->setActifGPSFIX();
+    if (varioData.gpsFix == 2)
+      screen.fixgpsinfo->setFixGps();
 
 #endif //HAVE_SCREEN
+  }
+  ////////////////////////////////////
 
-    ////////////////////////////////////
-
-    /**********************************/
-    /* update low freq screen objects */
-    /**********************************/
+  /**********************************/
+  /* update low freq screen objects */
+  /**********************************/
 #ifdef HAVE_SCREEN
 
-    //**********************************************************
-    //  DISPLAY TIME / DUREE DU VOL
-    //**********************************************************
+  //**********************************************************
+  //  DISPLAY TIME / DUREE DU VOL
+  //**********************************************************
 
-    /************************************/
-    /* Update Time, duration            */
-    /* Voltage, SatLevel                */
-    /************************************/
+  /************************************/
+  /* Update Time, duration            */
+  /* Voltage, SatLevel                */
+  /************************************/
 
 #ifdef HAVE_GPS
-
-  if (varioData.displayLowUpdateState)
+  if (!wifiIsRunning)
   {
-    if (nmeaParser.haveDate())
+    if (varioData.displayLowUpdateState)
     {
+      if (nmeaParser.haveDate())
+      {
 
-      /* set time */
+        /* set time */
 #if defined(GPS_DEBUG) || defined(DATA_DEBUG)
-      SerialPort.print("Time : ");
-      SerialPort.println(nmeaParser.time);
+        SerialPort.print("Time : ");
+        SerialPort.println(nmeaParser.time);
 #endif //GPS_DEBUG
 
-      //      DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.time);
+        //      DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.time);
 
-      screen.screenTime->setTime(nmeaParser.time);
-      screen.screenTime->correctTimeZone(GnuSettings.VARIOMETER_TIME_ZONE);
-      if (varioData.getVariometerState() == VARIOMETER_STATE_FLIGHT_STARTED)
-      {
-        screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
-        varioData.flystat.SetTime(screen.screenTime->getTime());
-        varioData.flystat.SetDuration(screen.screenElapsedTime->getTime());
+        screen.screenTime->setTime(nmeaParser.time);
+        screen.screenTime->correctTimeZone(GnuSettings.VARIOMETER_TIME_ZONE);
+        if (varioData.getVariometerState() == VARIOMETER_STATE_FLIGHT_STARTED)
+        {
+          screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
+          varioData.flystat.SetTime(screen.screenTime->getTime());
+          varioData.flystat.SetDuration(screen.screenElapsedTime->getTime());
+        }
+        else
+        {
+          screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
+        }
       }
-      else
-      {
-        screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
-      }
-    }
 
-    /* update satelite count */
-    screen.satLevel->setSatelliteCount(nmeaParser.satelliteCount);
+      /* update satelite count */
+      screen.satLevel->setSatelliteCount(nmeaParser.satelliteCount);
 #ifdef GPS_DEBUG
-    SerialPort.print("Sat : ");
-    SerialPort.println(nmeaParser.satelliteCount);
+      SerialPort.print("Sat : ");
+      SerialPort.println(nmeaParser.satelliteCount);
 #endif //GPS_DEBUG \
        //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
-  }
+    }
 #endif //HAVE_GPS
-
+  }
   /*****************/
   /* update screen */
   /*****************/
@@ -1139,50 +1152,52 @@ void loop()
   //**********************************************************
   //  DISPLAY SPEED
   //**********************************************************
-
+  if (!wifiIsRunning)
+  {
 #ifdef HAVE_GPS
 
-  if (varioData.updateSpeed())
-  {
-    screen.speedDigit->setValue(varioData.currentSpeed);
-    screen.ratioDigit->setValue(varioData.ratio);
-  }
-  else
-  {
-    screen.ratioDigit->setValue(0);
-  }
+    if (varioData.updateSpeed())
+    {
+      screen.speedDigit->setValue(varioData.currentSpeed);
+      screen.ratioDigit->setValue(varioData.ratio);
+    }
+    else
+    {
+      screen.ratioDigit->setValue(0);
+    }
 
 #endif //HAVE_GPS
-
+  }
   //**********************************************************
   //   DISPLAY LOW FRECQUENCE OBJECT
   //**********************************************************
-
-  if (varioData.displayLowUpdateState)
+  if (!wifiIsRunning)
   {
+    if (varioData.displayLowUpdateState)
+    {
 
-    //**********************************************************
-    //  ACQUISITION / DISPLAY TENSION BATTERIE
-    //**********************************************************
+      //**********************************************************
+      //  ACQUISITION / DISPLAY TENSION BATTERIE
+      //**********************************************************
 
 #if defined(HAVE_SCREEN) && defined(HAVE_VOLTAGE_DIVISOR)
-    varioData.updateVoltage();
-    screen.batLevel->setVoltage(varioData.voltage);
+      varioData.updateVoltage();
+      screen.batLevel->setVoltage(varioData.voltage);
 
 #endif //HAVE_VOLTAGE_DIVISOR
 
-    //**********************************************************
-    //  DISPLAY STATE RECORD
-    //**********************************************************
+      //**********************************************************
+      //  DISPLAY STATE RECORD
+      //**********************************************************
 
-    screen.recordIndicator->stateRECORD();
+      screen.recordIndicator->stateRECORD();
 #ifdef PROG_DEBUG
-    //    SerialPort.println("Record Indicator : staterecord ");
-    SerialPort.print("VarioState : ");
-    SerialPort.println(varioData.getVariometerState());
+      //    SerialPort.println("Record Indicator : staterecord ");
+      SerialPort.print("VarioState : ");
+      SerialPort.println(varioData.getVariometerState());
 #endif //PROG_DEBUG
+    }
   }
-
   //**********************************************************
   //  DISPLAY TEMPERATURE ESP32
   //**********************************************************
@@ -1200,81 +1215,82 @@ void loop()
   //**********************************************************
   //  DISPLAY BEARING
   //**********************************************************
-
-  if (varioData.displayLowUpdateState)
+  if (!wifiIsRunning)
   {
-
-    int tmpcap = varioData.getCap();
-    if (tmpcap > 0)
+    if (varioData.displayLowUpdateState)
     {
-      String bearingStr = nmeaParser.Bearing_to_Ordinal(tmpcap);
-#ifdef DATA_DEBUG
-      SerialPort.print("Compas : ");
-      SerialPort.print(tmpcap);
-      SerialPort.print(" - ");
-      SerialPort.println(bearingStr);
-#endif //DATA_DEBUG
-      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, tmpcap);
-      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearingStr);
 
-      screen.gpsBearing->setValue(tmpcap);
-      screen.gpsBearingText->setValue(bearingStr);
+      int tmpcap = varioData.getCap();
+      if (tmpcap > 0)
+      {
+        String bearingStr = nmeaParser.Bearing_to_Ordinal(tmpcap);
+#ifdef DATA_DEBUG
+        SerialPort.print("Compas : ");
+        SerialPort.print(tmpcap);
+        SerialPort.print(" - ");
+        SerialPort.println(bearingStr);
+#endif //DATA_DEBUG
+        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, tmpcap);
+        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearingStr);
+
+        screen.gpsBearing->setValue(tmpcap);
+        screen.gpsBearingText->setValue(bearingStr);
 #if (VARIOSCREEN_SIZE == 291)
-      screen.bearing->setValue(tmpcap);
-      screen.bearingText->setValue(bearingStr);
+        screen.bearing->setValue(tmpcap);
+        screen.bearingText->setValue(bearingStr);
 #endif
-    }
+      }
 
-    if (nmeaParser.haveLongitude())
-    {
-      String longitude = nmeaParser.getLongitude();
+      if (nmeaParser.haveLongitude())
+      {
+        String longitude = nmeaParser.getLongitude();
 #ifdef DATA_DEBUG
-      SerialPort.print("Longitude : ");
-      SerialPort.println(longitude);
+        SerialPort.print("Longitude : ");
+        SerialPort.println(longitude);
 #endif //DATA_DEBUG
-      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, longitude);
+        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, longitude);
 #ifdef AGL_MANAGER_H
-      varioData.aglManager.setLongitude(nmeaParser.getLong());
+        varioData.aglManager.setLongitude(nmeaParser.getLong());
 #endif
-      //      screen.gpsLongDir->setValue(String(nmeaParser.getLongDir()));
-      //      screen.gpsLong->setValue(nmeaParser.getLong());
-      screen.gpsLong->setValue(nmeaParser.getLongDegree());
-    }
+        //      screen.gpsLongDir->setValue(String(nmeaParser.getLongDir()));
+        //      screen.gpsLong->setValue(nmeaParser.getLong());
+        screen.gpsLong->setValue(nmeaParser.getLongDegree());
+      }
 
-    if (nmeaParser.haveLatitude())
-    {
-      String latitude = nmeaParser.getLatitude();
+      if (nmeaParser.haveLatitude())
+      {
+        String latitude = nmeaParser.getLatitude();
 #ifdef DATA_DEBUG
-      SerialPort.print("Latitude : ");
-      SerialPort.println(latitude);
+        SerialPort.print("Latitude : ");
+        SerialPort.println(latitude);
 #endif //DATA_DEBUG
-      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, latitude);
+        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, latitude);
 #ifdef AGL_MANAGER_H
-      varioData.aglManager.setLatitude(nmeaParser.getLat());
+        varioData.aglManager.setLatitude(nmeaParser.getLat());
 #endif
-      //      screen.gpsLatDir->setValue(String(nmeaParser.getLatDir()));
-      //      screen.gpsLat->setValue(nmeaParser.getLat());
-      screen.gpsLat->setValue(nmeaParser.getLatDegree());
-    }
+        //      screen.gpsLatDir->setValue(String(nmeaParser.getLatDir()));
+        //      screen.gpsLat->setValue(nmeaParser.getLat());
+        screen.gpsLat->setValue(nmeaParser.getLatDegree());
+      }
 
 #ifdef AGL_MANAGER_H
-    varioData.currentHeight = varioData.aglManager.getHeight();
+      varioData.currentHeight = varioData.aglManager.getHeight();
 #ifdef PROG_DEBUG
-    SerialPort.print("Height : ");
-    SerialPort.println(varioData.currentHeight);
+      SerialPort.print("Height : ");
+      SerialPort.println(varioData.currentHeight);
 #endif //PROG_DEBUG
-    screen.heightDigit->setValue(varioData.currentHeight);
+      screen.heightDigit->setValue(varioData.currentHeight);
 #endif
 
-    if (nmeaParser.haveNewAltiValue())
-    {
-      varioData.gpsAlti = nmeaParser.getAlti();
-      varioData.aglManager.setAltiGps(varioData.gpsAlti);
+      if (nmeaParser.haveNewAltiValue())
+      {
+        varioData.gpsAlti = nmeaParser.getAlti();
+        varioData.aglManager.setAltiGps(varioData.gpsAlti);
+      }
     }
+
+    varioData.displayLowUpdateState = false;
   }
-
-  varioData.displayLowUpdateState = false;
-
   // Passes control to other tasks when called
   //  SysCall::yield();
 
@@ -1296,9 +1312,10 @@ void loop()
   //**********************************************************
   //  UPDATE STATISTIQUE
   //**********************************************************
-
-  varioData.flystat.Handle();
-
+  if (!wifiIsRunning)
+  {
+    varioData.flystat.Handle();
+  }
   //*****************************************
   //      FORCE L'ACTIVATION DE L'AMPLI
   //*****************************************

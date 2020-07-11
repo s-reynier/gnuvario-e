@@ -1,12 +1,13 @@
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
-#include "SD.h"
 #include <Update.h>
 #include "VarioWebHandler.h"
 
-
 File uploadFile;
-
+File varioParamFile;
+File wifiParamFile;
+File webParamFile;
+VarioSqlFlightHelper varioSqlFlightHelper;
 
 AsyncResponseStream *VarioWebHandler::handleListFlights(AsyncWebServerRequest *request)
 {
@@ -15,7 +16,7 @@ AsyncResponseStream *VarioWebHandler::handleListFlights(AsyncWebServerRequest *r
     String path = "/vols";
 
     File dir;
-    dir = SD.open((char *)path.c_str(), FILE_READ);
+    dir = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
 
     if (!dir.isDirectory())
     {
@@ -102,7 +103,7 @@ AsyncResponseStream *VarioWebHandler::handlePrintDirectory(AsyncWebServerRequest
 #endif
 
     File dir;
-    dir = SD.open((char *)path.c_str(), FILE_READ);
+    dir = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
     dir.rewindDirectory();
 
     if (!dir.isDirectory())
@@ -164,7 +165,7 @@ void VarioWebHandler::printDirectoryRecurse(AsyncResponseStream *response, Strin
 {
 
     File dir;
-    dir = SD.open((char *)path.c_str(), FILE_READ);
+    dir = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
     dir.rewindDirectory();
 
     int tmpcnt = 0;
@@ -258,27 +259,27 @@ void VarioWebHandler::handleSaveParams(AsyncWebServerRequest *request, uint8_t *
 #ifdef WIFI_DEBUG
     SerialPort.println("handleSaveParams");
 #endif
-
     String path = "/params.jso";
     String pathBak = "/params.bak";
-    File dataFile;
 
-    backupFile(path, pathBak);
-
-    if (!(dataFile = SD.open(path.c_str(), FILE_WRITE)))
+    if (!index)
     {
-        request->send(500, "text/plain", "NO FILE");
-        return;
+        backupFile(path, pathBak);
+        if (!(varioParamFile = SDHAL_SD.open(path.c_str(), FILE_WRITE)))
+        {
+            request->send(500, "text/plain", "NO FILE");
+            return;
+        }
     }
 
-    for (size_t i = 0; i < len; i++)
+    varioParamFile.write(data, len);
+
+    if (index + len == total)
     {
-        Serial.write(data[i]);
-        dataFile.write(data[i]);
+        varioParamFile.close();
+        request->send(200);
     }
 
-    dataFile.close();
-    request->send(200);
     return;
 }
 
@@ -345,7 +346,7 @@ AsyncWebServerResponse *VarioWebHandler::handleFileDownload(AsyncWebServerReques
         return response;
     }
 
-    if (!SD.exists((char *)path.c_str()))
+    if (!SDHAL_SD.exists((char *)path.c_str()))
     {
         response = request->beginResponse(500, "text/plain", "NO FILE");
         return response;
@@ -371,7 +372,7 @@ AsyncWebServerResponse *VarioWebHandler::handleFileDelete(AsyncWebServerRequest 
         return response;
     }
 
-    if (!SD.exists((char *)path.c_str()))
+    if (!SDHAL_SD.exists((char *)path.c_str()))
     {
         response = request->beginResponse(500, "text/plain", "NO FILE");
         return response;
@@ -388,13 +389,13 @@ void VarioWebHandler::handleFileUpload(AsyncWebServerRequest *request, String fi
 
     if (!index)
     {
-        if (SD.exists(filename))
+        if (SDHAL_SD.exists(filename))
         {
-            SD.remove(filename);
+            SDHAL_SD.remove(filename);
         }
 
         Serial.printf("UploadStart: %s\n", filename.c_str());
-        uploadFile = SD.open(filename, FILE_WRITE);
+        uploadFile = SDHAL_SD.open(filename, FILE_WRITE);
         if (!uploadFile)
         {
             //return error
@@ -438,7 +439,7 @@ void VarioWebHandler::handleFileCreate(AsyncWebServerRequest *request, uint8_t *
         return;
     }
 
-    if (path == "/" || SD.exists((char *)path.c_str()))
+    if (path == "/" || SDHAL_SD.exists((char *)path.c_str()))
     {
         request->send(500, "text/plain", "BAD PATH");
         return;
@@ -446,7 +447,7 @@ void VarioWebHandler::handleFileCreate(AsyncWebServerRequest *request, uint8_t *
 
     if (path.indexOf('.') > 0)
     {
-        File fileSD = SD.open((char *)path.c_str(), FILE_WRITE);
+        File fileSD = SDHAL_SD.open((char *)path.c_str(), FILE_WRITE);
         if (fileSD)
         {
             fileSD.print("\0");
@@ -455,7 +456,7 @@ void VarioWebHandler::handleFileCreate(AsyncWebServerRequest *request, uint8_t *
     }
     else
     {
-        SD.mkdir((char *)path.c_str());
+        SDHAL_SD.mkdir((char *)path.c_str());
     }
     request->send(200, "text/plain", "OK");
     return;
@@ -483,20 +484,25 @@ void VarioWebHandler::handleSaveWifi(AsyncWebServerRequest *request, uint8_t *da
 
     String path = "/wifi.cfg";
     String pathBak = "/wifi.bak";
-    File dataFile;
 
-    backupFile(path, pathBak);
-
-    if (!(dataFile = SD.open(path.c_str(), FILE_WRITE)))
+    if (!index)
     {
-        request->send(500, "text/plain", "NO FILE");
-        return;
+        backupFile(path, pathBak);
+        if (!(wifiParamFile = SDHAL_SD.open(path.c_str(), FILE_WRITE)))
+        {
+            request->send(500, "text/plain", "NO FILE");
+            return;
+        }
     }
 
-    dataFile.write(data, len);
+    wifiParamFile.write(data, len);
 
-    dataFile.close();
-    request->send(200);
+    if (index + len == total)
+    {
+        wifiParamFile.close();
+        request->send(200);
+    }
+
     return;
 }
 
@@ -505,8 +511,16 @@ AsyncWebServerResponse *VarioWebHandler::handleWebConfig(AsyncWebServerRequest *
 #ifdef WIFI_DEBUG
     SerialPort.println("handleParams");
 #endif
+    AsyncWebServerResponse *response;
 
-    AsyncWebServerResponse *response = request->beginResponse(SD, "/prefs.jso", "application/json");
+    if (!SDHAL_SD.exists("/prefs.jso"))
+    {
+        response = request->beginResponse(404, "text/plain", "NO FILE");
+    }
+    else
+    {
+        response = request->beginResponse(SD, "/prefs.jso", "application/json");
+    }
 
     return response;
 }
@@ -521,20 +535,25 @@ void VarioWebHandler::handleSaveWebConfig(AsyncWebServerRequest *request, uint8_
 
     String path = "/prefs.jso";
     String pathBak = "/prefs.bak";
-    File dataFile;
 
-    backupFile(path, pathBak);
-
-    if (!(dataFile = SD.open(path.c_str(), FILE_WRITE)))
+    if (!index)
     {
-        request->send(500, "text/plain", "NO FILE");
-        return;
+        backupFile(path, pathBak);
+        if (!(webParamFile = SDHAL_SD.open(path.c_str(), FILE_WRITE)))
+        {
+            request->send(500, "text/plain", "NO FILE");
+            return;
+        }
     }
 
-    dataFile.write(data, len);
+    webParamFile.write(data, len);
 
-    dataFile.close();
-    request->send(200);
+    if (index + len == total)
+    {
+        webParamFile.close();
+        request->send(200);
+    }
+
     return;
 }
 
@@ -562,7 +581,7 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
     File dataFile;
 
     //test présence fichier
-    if (dataFile = SD.open(path, FILE_READ))
+    if (dataFile = SDHAL_SD.open(path, FILE_READ))
     {
         //parsage du fichier IGC
         VarioIgcParser varioIgcParser;
@@ -575,16 +594,54 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
         dataFile.close();
 
         String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
-        if (!SD.exists("/vols/parsed"))
+        if (!SDHAL_SD.exists("/vols/parsed"))
         {
-            SD.mkdir("/vols/parsed");
+            SDHAL_SD.mkdir("/vols/parsed");
         }
-        SD.rename(path, "/vols/parsed/" + filename);
+        SDHAL_SD.rename(path, "/vols/parsed/" + filename);
 
         response = request->beginResponse(200, "text/plain", "OK");
         return response;
     }
     response = request->beginResponse(500, "text/plain", "BAD ARGS");
+    return response;
+}
+
+AsyncWebServerResponse *VarioWebHandler::handleGetFlights(AsyncWebServerRequest *request)
+{
+    int16_t offset;
+    int16_t limit;
+
+    if (request->hasParam("offset"))
+    {
+        AsyncWebParameter *p = request->getParam("offset");
+        offset = p->value().toInt();
+    }
+    else
+    {
+        offset = 0;
+    }
+
+    if (request->hasParam("limit"))
+    {
+        AsyncWebParameter *p = request->getParam("limit");
+        limit = p->value().toInt();
+    }
+    else
+    {
+        limit = 0;
+    }
+
+    varioSqlFlightHelper.init(limit, offset);
+
+    AsyncWebServerResponse *response = request->beginChunkedResponse("application/json", [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        //Write up to "maxLen" bytes into "buffer" and return the amount written.
+        //index equals the amount of bytes that have been already sent
+        //You will be asked for more data until 0 is returned
+        //Keep in mind that you can not delay or yield waiting for more data!
+        return varioSqlFlightHelper.readData(buffer, maxLen);
+    });
+
     return response;
 }
 
@@ -612,11 +669,11 @@ void VarioWebHandler::deleteRecursive(String path)
 
     File fileSD;
 
-    fileSD = SD.open((char *)path.c_str(), FILE_READ);
+    fileSD = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
     if (!fileSD.isDirectory())
     {
         fileSD.close();
-        SD.remove((char *)path.c_str());
+        SDHAL_SD.remove((char *)path.c_str());
         return;
     }
 
@@ -640,34 +697,37 @@ void VarioWebHandler::deleteRecursive(String path)
         else
         {
             entry.close();
-            SD.remove((char *)entryPath.c_str());
+            SDHAL_SD.remove((char *)entryPath.c_str());
         }
     }
 
-    SD.rmdir((char *)path.c_str());
+    SDHAL_SD.rmdir((char *)path.c_str());
     fileSD.close();
 }
 
 void VarioWebHandler::backupFile(String pathOrig, String pathBack)
 {
-    if (SD.exists((char *)pathBack.c_str()))
+    if (SDHAL_SD.exists((char *)pathBack.c_str()))
     {
-        SD.remove((char *)pathBack.c_str());
+        SDHAL_SD.remove((char *)pathBack.c_str());
     }
     size_t n;
     uint8_t buf[64];
 
-    File dataFile;
-    dataFile = SD.open(pathOrig.c_str(), FILE_READ);
-    File dataFile2;
-    dataFile2 = SD.open(pathBack.c_str(), FILE_WRITE);
-
-    while ((n = dataFile.read(buf, sizeof(buf))) > 0)
+    if (SDHAL_SD.exists((char *)pathOrig.c_str()))
     {
-        dataFile2.write(buf, n);
-    }
-    dataFile.close();
-    dataFile2.close();
+        File dataFile;
+        dataFile = SDHAL_SD.open(pathOrig.c_str(), FILE_READ);
+        File dataFile2;
+        dataFile2 = SDHAL_SD.open(pathBack.c_str(), FILE_WRITE);
 
-    SD.remove((char *)pathOrig.c_str());
+        while ((n = dataFile.read(buf, sizeof(buf))) > 0)
+        {
+            dataFile2.write(buf, n);
+        }
+        dataFile.close();
+        dataFile2.close();
+
+        SDHAL_SD.remove((char *)pathOrig.c_str());
+    }
 }
