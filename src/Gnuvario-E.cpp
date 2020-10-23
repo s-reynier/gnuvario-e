@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Adafruit_I2CDevice.h>
 
 /*******************/
 /* Version         */
