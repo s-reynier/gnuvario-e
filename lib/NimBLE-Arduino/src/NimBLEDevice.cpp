@@ -137,16 +137,18 @@ void NimBLEDevice::stopAdvertising() {
 /**
  * @brief Creates a new client object and maintains a list of all client objects
  * each client can connect to 1 peripheral device.
+ * @param [in] peerAddress An optional peer address that is copied to the new client
+ * object, allows for calling NimBLEClient::connect(bool) without a device or address parameter.
  * @return A reference to the new client object.
  */
 #if defined(CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-/* STATIC */ NimBLEClient* NimBLEDevice::createClient() {
+/* STATIC */ NimBLEClient* NimBLEDevice::createClient(NimBLEAddress peerAddress) {
     if(m_cList.size() >= NIMBLE_MAX_CONNECTIONS) {
         NIMBLE_LOGW("Number of clients exceeds Max connections. Max=(%d)",
                                             NIMBLE_MAX_CONNECTIONS);
     }
 
-    NimBLEClient* pClient = new NimBLEClient();
+    NimBLEClient* pClient = new NimBLEClient(peerAddress);
     m_cList.push_back(pClient);
 
     return pClient;
@@ -539,8 +541,10 @@ void NimBLEDevice::stopAdvertising() {
 
 /**
  * @brief Shutdown the NimBLE stack/controller.
+ * @param [in] clearAll If true, deletes all server/advertising/scan/client objects after deinitializing.
+ * @note If clearAll is true when called, any references to the created objects become invalid.
  */
-/* STATIC */ void NimBLEDevice::deinit() {
+/* STATIC */ void NimBLEDevice::deinit(bool clearAll) {
     int ret = nimble_port_stop();
     if (ret == 0) {
         nimble_port_deinit();
@@ -552,6 +556,42 @@ void NimBLEDevice::stopAdvertising() {
 
         initialized = false;
         m_synced = false;
+
+        if(clearAll) {
+#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+            if(NimBLEDevice::m_pServer != nullptr) {
+                delete NimBLEDevice::m_pServer;
+                NimBLEDevice::m_pServer = nullptr;
+            }
+#endif
+
+#if defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER)
+            if(NimBLEDevice::m_bleAdvertising != nullptr) {
+                delete NimBLEDevice::m_bleAdvertising;
+                NimBLEDevice::m_bleAdvertising = nullptr;
+            }
+#endif
+
+#if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
+            if(NimBLEDevice::m_pScan != nullptr) {
+                delete NimBLEDevice::m_pScan;
+                NimBLEDevice::m_pScan= nullptr;
+            }
+#endif
+
+#if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
+            for(auto &it : m_cList) {
+                deleteClient(it);
+                m_cList.clear();
+            }
+#endif
+
+            m_ignoreList.clear();
+
+            if(m_securityCallbacks != nullptr) {
+                delete m_securityCallbacks;
+            }
+        }
     }
 } // deinit
 

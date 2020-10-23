@@ -1,7 +1,11 @@
+[Latest release ![Release Version](https://img.shields.io/github/release/h2zero/NimBLE-Arduino.svg?style=plastic)
+![Release Date](https://img.shields.io/github/release-date/h2zero/NimBLE-Arduino.svg?style=plastic)](https://github.com/h2zero/NimBLE-Arduino/releases/latest/)  
+<br/>
+
 # NimBLE-Arduino
 A fork of the NimBLE stack restructured for compilation in the Ardruino IDE with a CPP library for use with ESP32.  
 
-**Note for IDF users: An ESP-IDF component version of this library can be [found here](https://github.com/h2zero/esp-nimble-cpp), this will not compile correctly in ESP-IDF**.
+**Note for IDF users: This repo will not compile correctly in ESP-IDF. An ESP-IDF component version of this library can be [found here.](https://github.com/h2zero/esp-nimble-cpp)**
 
 This library **significantly** reduces resource usage and improves performance for ESP32 BLE applications as compared    
 with the bluedroid based library. The goal is to maintain, as much as reasonable, compatibility with the original   
@@ -33,18 +37,25 @@ Memory after connection: Free Heap: **269792**
 <br/>
 
 # Installation
-Download as .zip and extract to Arduino/libraries folder, or in Arduino IDE from Sketch menu -> Include library -> Add .Zip library.
+**Arduino Library manager:** Go to `sketch` -> `Include Library` -> `Manage Libraries` and search for NimBLE and install.  
+
+**Alternatively:** Download as .zip and extract to Arduino/libraries folder, or in Arduino IDE from Sketch menu -> Include library -> Add .Zip library.
 
 `#include "NimBLEDevice.h"` at the beginning of your sketch.
 
-Tested and working with esp32-arduino v1.0.2 and 1.0.4 in Arduino IDE v1.8.12 and platform IO.  
+Tested and working with esp32-arduino in Arduino IDE and platform IO.  
 <br/>
 
 # Using
 This library is intended to be compatible with the original ESP32 BLE functions and types with minor changes.  
-See: [Breaking API Changes vs Original](docs/BREAKING_API_CHANGES.md) for changes that might required to adapt your exisiting projects.  
 
-Also see [Improvements_and_updates](docs/Improvements_and_updates.md) for information about non-breaking changes.  
+If you have not used the original Bluedroid library please refer to the [New user guide](docs/New_user_guide.md).  
+
+If you are familiar with the original library, see: [The migration guide](docs/Migration_guide.md) for details about breaking changes and migration.  
+
+Also see [Improvements_and_updates](docs/Improvements_and_updates.md) for information about non-breaking changes.
+
+[Full API documentation and class list can be found here.](https://h2zero.github.io/esp-nimble-cpp/)  
 
 Check the Refactored_original_examples in the examples folder for highlights of the differences with the original library.
 
@@ -52,11 +63,12 @@ More advanced examples highlighting many available features are in examples/ Nim
 
 Beacon examples provided by @beegee-tokyo are in examples/ BLE_Beacon_Scanner, BLE_EddystoneTLM_Beacon, BLE_EddystoneURL_Beacon.   
 
-Change the settings in the `nimconfig.h` file to customize NimBLE to your project, such as increasing max connections, default is 3.  
+Change the settings in the `src/nimconfig.h` file to customize NimBLE to your project,  
+such as increasing max connections, default is 3, absolute maximum connections is 9.  
 <br/>
 
-# Continuing development
-This Library is tracking the esp-nimble repo, nimble-1.2.0-idf master branch, currently [@46c1d9f.](https://github.com/espressif/esp-nimble)  
+# Development Status
+This Library is tracking the esp-nimble repo, nimble-1.2.0-idf master branch, currently [@95bd864.](https://github.com/espressif/esp-nimble)  
 
 Also tracking the NimBLE related changes in ESP-IDF, master branch, currently [@2ef4890.](https://github.com/espressif/esp-idf/tree/master/components/bt/host/nimble)  
 <br/>
@@ -68,9 +80,8 @@ Also tracking the NimBLE related changes in ESP-IDF, master branch, currently [@
 <br/>  
 
 # Todo
-1. Implement random addresses.
-2. Implement NimBLEServer::removeService
-3. Implement extra fields in NimBLEAdvertisedDevice.
-4. Document nimconfig.
-5. Add BLE Mesh code.  
+- Improve host reset handler
+- Implement random address handling
+- Implement bond management
+- Add Bluetooth Mesh
 <br/>  

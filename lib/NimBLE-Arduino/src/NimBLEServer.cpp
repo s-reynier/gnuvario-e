@@ -42,6 +42,7 @@ NimBLEServer::NimBLEServer() {
     m_gattsStarted          = false;
     m_advertiseOnDisconnect = true;
     m_svcChanged            = false;
+    m_deleteCallbacks       = true;
 } // NimBLEServer
 
 
@@ -51,6 +52,10 @@ NimBLEServer::NimBLEServer() {
 NimBLEServer::~NimBLEServer() {
     for(auto &it : m_svcVec) {
         delete it;
+    }
+
+    if(m_deleteCallbacks && m_pServerCallbacks != &defaultCallbacks) {
+        delete m_pServerCallbacks;
     }
 }
 
@@ -182,10 +187,6 @@ void NimBLEServer::start() {
             // we do it now.
             if((chr->m_properties & BLE_GATT_CHR_F_INDICATE) ||
                 (chr->m_properties & BLE_GATT_CHR_F_NOTIFY)) {
-
-                if(nullptr == chr->getDescriptorByUUID(uint16_t(0x2902))) {
-                    chr->createDescriptor(uint16_t(0x2902));
-                }
                 m_notifyChrVec.push_back(chr);
             }
         }
@@ -303,9 +304,9 @@ size_t NimBLEServer::getConnectedCount() {
         } // BLE_GAP_EVENT_DISCONNECT
 
         case BLE_GAP_EVENT_SUBSCRIBE: {
-            NIMBLE_LOGI(LOG_TAG, "subscribe event; cur_notify=%d\n value handle; "
-                              "val_handle=%d\n",
-                        event->subscribe.cur_notify, event->subscribe.attr_handle);
+            NIMBLE_LOGI(LOG_TAG, "subscribe event; attr_handle=%d, subscribed: %s",
+                                 event->subscribe.attr_handle,
+                                 (event->subscribe.cur_notify ? "true":"false"));
 
             for(auto &it : server->m_notifyChrVec) {
                 if(it->getHandle() == event->subscribe.attr_handle) {
@@ -351,6 +352,12 @@ size_t NimBLEServer::getConnectedCount() {
 
             return 0;
         } // BLE_GAP_EVENT_NOTIFY_TX
+
+        case BLE_GAP_EVENT_ADV_COMPLETE: {
+            NIMBLE_LOGD(LOG_TAG, "Advertising Complete");
+            NimBLEDevice::getAdvertising()->advCompleteCB();
+            return 0;
+        }
 
         case BLE_GAP_EVENT_CONN_UPDATE: {
             NIMBLE_LOGD(LOG_TAG, "Connection parameters updated.");
@@ -469,10 +476,12 @@ size_t NimBLEServer::getConnectedCount() {
  * events are detected.
  *
  * @param [in] pCallbacks The callbacks to be invoked.
+ * @param [in] deleteCallbacks if true callback class will be deleted when server is destructed.
  */
-void NimBLEServer::setCallbacks(NimBLEServerCallbacks* pCallbacks) {
+void NimBLEServer::setCallbacks(NimBLEServerCallbacks* pCallbacks, bool deleteCallbacks) {
     if (pCallbacks != nullptr){
         m_pServerCallbacks = pCallbacks;
+        m_deleteCallbacks = deleteCallbacks;
     } else {
         m_pServerCallbacks = &defaultCallbacks;
     }
@@ -531,11 +540,9 @@ void NimBLEServer::removeService(NimBLEService* service, bool deleteSvc) {
 
 /**
  * @brief Adds a service which was already created, but removed from availability.
- *
+ * @param [in] service The service object to add.
  * @note If it is desired to advertise the service it must be added by
  * calling NimBLEAdvertising::addServiceUUID.
- *
- * @param [in} service The service object to add.
  */
 void NimBLEServer::addService(NimBLEService* service) {
     // If adding a service that was not removed just return.

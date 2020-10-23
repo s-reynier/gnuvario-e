@@ -45,6 +45,13 @@ NimBLEScan::NimBLEScan() {
 
 
 /**
+ * @brief Scan destructor, release any allocated resources.
+ */
+NimBLEScan::~NimBLEScan() {
+     clearResults();
+}
+
+/**
  * @brief Handle GAP events related to scans.
  * @param [in] event The event type for this event.
  * @param [in] param Parameter data for this event.
@@ -52,21 +59,12 @@ NimBLEScan::NimBLEScan() {
 /*STATIC*/int NimBLEScan::handleGapEvent(ble_gap_event* event, void* arg) {
 
     NimBLEScan* pScan = (NimBLEScan*)arg;
-    struct ble_hs_adv_fields fields;
-    int rc = 0;
 
     switch(event->type) {
 
         case BLE_GAP_EVENT_DISC: {
             if(pScan->m_stopped) {
                 NIMBLE_LOGE(LOG_TAG, "Scan stop called, ignoring results.");
-                return 0;
-            }
-
-            rc = ble_hs_adv_parse_fields(&fields, event->disc.data,
-                                     event->disc.length_data);
-            if (rc != 0) {
-                NIMBLE_LOGE(LOG_TAG, "Gap Event Parse ERROR.");
                 return 0;
             }
 
@@ -92,7 +90,6 @@ NimBLEScan::NimBLEScan() {
             // Otherwise just update the relevant parameters of the already known device.
             if(advertisedDevice == nullptr){
                 advertisedDevice = new NimBLEAdvertisedDevice();
-                advertisedDevice->setAddressType(event->disc.addr.type);
                 advertisedDevice->setAddress(advertisedAddress);
                 advertisedDevice->setAdvType(event->disc.event_type);
                 pScan->m_scanResults.m_advertisedDevicesVector.push_back(advertisedDevice);
@@ -102,9 +99,9 @@ NimBLEScan::NimBLEScan() {
                 NIMBLE_LOGI(LOG_TAG, "UPDATING PREVIOUSLY FOUND DEVICE: %s", advertisedAddress.toString().c_str());
             }
             advertisedDevice->setRSSI(event->disc.rssi);
-            advertisedDevice->parseAdvertisement(&fields);
-            advertisedDevice->setScan(pScan);
-            advertisedDevice->setAdvertisementResult(event->disc.data, event->disc.length_data);
+            if(event->disc.length_data > 0) {
+                advertisedDevice->parseAdvertisement(event->disc.data, event->disc.length_data);
+            }
             advertisedDevice->m_timestamp = time(nullptr);
 
             if (pScan->m_pAdvertisedDeviceCallbacks) {
@@ -164,22 +161,22 @@ void NimBLEScan::setActiveScan(bool active) {
 /**
  * @brief Set whether or not the BLE controller should only report results
  * from devices it has not already seen.
- * @param [in] active If true, scanned devices will only be reported once.
+ * @param [in] enabled If true, scanned devices will only be reported once.
  * @details The controller has a limited buffer and will start reporting
  * dupicate devices once the limit is reached.
  */
-void NimBLEScan::setDuplicateFilter(bool active) {
-    m_scan_params.filter_duplicates = active;
+void NimBLEScan::setDuplicateFilter(bool enabled) {
+    m_scan_params.filter_duplicates = enabled;
 } // setDuplicateFilter
 
 
 /**
  * @brief Set whether or not the BLE controller only report scan results
  * from devices advertising in limited discovery mode, i.e. directed advertising.
- * @param [in] active If true, only limited discovery devices will be in scan results.
+ * @param [in] enabled If true, only limited discovery devices will be in scan results.
  */
-void NimBLEScan::setLimitedOnly(bool active) {
-    m_scan_params.limited = active;
+void NimBLEScan::setLimitedOnly(bool enabled) {
+    m_scan_params.limited = enabled;
 } // setLimited
 
 
@@ -234,6 +231,15 @@ void NimBLEScan::setInterval(uint16_t intervalMSecs) {
 void NimBLEScan::setWindow(uint16_t windowMSecs) {
     m_scan_params.window = windowMSecs / 0.625;
 } // setWindow
+
+
+/**
+ * @brief Get the status of the scanner.
+ * @return true if scanning or scan starting.
+ */
+bool NimBLEScan::isScanning() {
+    return !m_stopped;
+}
 
 
 /**

@@ -91,7 +91,7 @@ extern "C" void ble_store_config_init(void);
 class NimBLEDevice {
 public:
     static void             init(const std::string &deviceName);
-    static void             deinit();
+    static void             deinit(bool clearAll = false);
     static bool             getInitialized();
     static NimBLEAddress    getAddress();
     static std::string      toString();
@@ -130,7 +130,7 @@ public:
 #endif
 
 #if defined( CONFIG_BT_NIMBLE_ROLE_CENTRAL)
-    static NimBLEClient*    createClient();
+    static NimBLEClient*    createClient(NimBLEAddress peerAddress = NimBLEAddress(""));
     static bool             deleteClient(NimBLEClient* pClient);
     static NimBLEClient*    getClientByID(uint16_t conn_id);
     static NimBLEClient*    getClientByPeerAddress(const NimBLEAddress &peer_addr);
