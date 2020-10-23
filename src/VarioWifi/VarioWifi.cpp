@@ -35,9 +35,7 @@
 #include <varioscreenGxEPD.h>
 #endif
 
-#define VERSION 0
-#define SUB_VERSION 8
-#define BETA_CODE 3
+#include <varioversion.h>
 
 WiFiMulti wifiMulti;
 AsyncWebServer server(80);
@@ -52,19 +50,27 @@ bool VarioWifi::begin()
     {
         return false;
     }
-
+    Serial.println("Free heap connectToWifi");
+    Serial.println(ESP.getFreeHeap());
     if (!connectToWifi())
     {
         return false;
     }
+    Serial.println("Free heap setClock");
+    Serial.println(ESP.getFreeHeap());
 
     setClock();
 
+    Serial.println("Free heap setMDNS");
+    Serial.println(ESP.getFreeHeap());
     setMDNS();
 
     checkDbVersion();
 
     esp32FOTA.checkURL = GnuSettings.URL_UPDATE; //"http://gnuvario-e.yj.fr/update/firmware.json";
+
+    Serial.println("Free heap startWebServer");
+    Serial.println(ESP.getFreeHeap());
 
     startWebServer();
 
@@ -199,13 +205,12 @@ bool VarioWifi::checkDbVersion()
             }
         }
     }
-    String path;
-    path = "/www/sql";
 
+    char path[] = "/www/sql";
     File dir;
-    dir = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
 
-    path = String();
+    dir = SDHAL_SD.open(path, FILE_READ);
+
     if (!dir.isDirectory())
     {
         dir.close();
@@ -226,12 +231,14 @@ bool VarioWifi::checkDbVersion()
         }
 
         TRACE();
-        String output;
         String tmpFullName = entry.name();
         String version = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
         version = version.substring(0, version.lastIndexOf("."));
+        Serial.println("avant migration");
+        Serial.println(ESP.getFreeHeap());
         varioSqlFlight.executeMigration(version, entry.readString());
-
+        Serial.println("apres migration");
+        Serial.println(ESP.getFreeHeap());
 #ifdef WIFI_DEBUG
         SerialPort.println(version);
 #endif
@@ -408,35 +415,47 @@ void VarioWifi::startWebServer()
         request->send(varioWebHandler.handleGetFlights(request));
     });
 
-    //TODO
+    // enregistrement un vol en BDD
+    server.on(
+        "/flightsbdd", HTTP_POST, [](AsyncWebServerRequest *request) {
+            // le reponse est envoyé par le handler sur le body
+        },
+        NULL, varioWebHandler.handleSetFlight);
 
-    //   // enregistrement un vol en BDD
-    //   server.on("/flightsbdd", HTTP_POST, handleSetFlight);
+    // suppression d'un vol en BDD
+    server.on("/flightsbdd", HTTP_DELETE, [](AsyncWebServerRequest *request) {
+        request->send(varioWebHandler.handleDelFlight(request));
+    });
 
-    //   // suppression d'un vol en BDD
-    //   server.on("/flightsbdd", HTTP_DELETE, handleDelFlight);
+    //recuperation des versions de firmware
+    server.on("/firmwareversion", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(varioWebHandler.handleFirmwareVersion(request));
+    });
 
-    //   //recuperation des versions de firmware
-    //   server.on("/firmwareversion", HTTP_GET, handleFirmwareVersion);
+    //Mise à jour via internet
+    server.on("/upgradeweb", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(varioWebHandler.handleUpgradeWeb(request));
+    });
 
-    //   //Mise à jour via internet
-    //   server.on("/upgradeweb", HTTP_GET, handleUpgradeWeb);
+    // récupération de la liste des sites
+    server.on("/site", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(varioWebHandler.handleGetSites(request));
+    });
 
-    //   // récupération de la liste des sites
-    //   server.on("/site", HTTP_GET, handleGetSites);
+    // sauvegarde d'un site
+    server.on(
+        "/site", HTTP_POST, [](AsyncWebServerRequest *request) {
+            // le reponse est envoyé par le handler sur le body
+        },
+        NULL, varioWebHandler.handleSetSite);
 
-    //   // sauvegarde d'un site
-    //   server.on("/site", HTTP_POST, handleSetSite);
-
-    //   // suppression d'un site
-    //   server.on("/site", HTTP_DELETE, handleDelSite);
-
-    server.on("/img.jpg", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(SD, "/www/img.jpg", "image/jpeg");
+    // suppression d'un site
+    server.on("/site", HTTP_DELETE, [](AsyncWebServerRequest *request) {
+        request->send(varioWebHandler.handleDelSite(request));
     });
 
     //default web dir "/www"
-    server.serveStatic("/", SD, "/www").setDefaultFile("index.htm");
+    server.serveStatic("/", SD, "/www/").setDefaultFile("index.htm");
 
     server.onNotFound([](AsyncWebServerRequest *request) {
         Serial.printf("NOT_FOUND: ");

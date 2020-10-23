@@ -1,14 +1,13 @@
-#include <Arduino.h>
+#define CONFIG_ASYNC_TCP_RUNNING_CORE 1
+#define CONFIG_ASYNC_TCP_USE_WDT 0
 
+#include <Arduino.h>
+#include <Adafruit_I2CDevice.h>
 /*******************/
 /* Version         */
 /*******************/
 
-#define VERSION 0
-#define SUB_VERSION 8
-#define BETA_CODE 3
-#define DEVNAME "JPG63/MICELPA/RATAMUSE"
-#define AUTHOR "J" //J=JPG63  P=PUNKDUMP  M=MICHELPA
+#include "varioversion.h"
 
 /******************************************************************************************************/
 /*                                              VERSION                                               */
@@ -528,11 +527,11 @@
 
 #include <HardwareConfig.h>
 
-#ifdef HAVE_SDCARD
-#include <sdcardHAL.h>
-#endif //HAVE_SDCARD
+// #ifdef HAVE_SDCARD
+// #include <sdcardHAL.h>
+// #endif //HAVE_SDCARD
 
-#include <Update.h>
+// #include <Update.h>
 #include <SD_Update.h>
 
 #include <VarioHardwareManager.h>
@@ -575,7 +574,6 @@ bool wifiIsRunning = false;
  Serveur Web
  *************************************************/
 #ifdef HAVE_WIFI
-String webpage = "";
 
 // #ifdef ESP8266
 // ESP8266WiFiMulti wifiMulti;
@@ -627,25 +625,31 @@ void setup()
   TestSDCARD(true);
 #endif
 
-  /*****************************/
-  /*  Init Alimentation        */
-  /*****************************/
-  varioHardwareManager.initAlim();
+  /*****************************************/
+  /* Initialisation en deux parties        */
+  /* - ce qui est névessaire au wifi       */
+  /* - si le wifi ne démarre pas, le reste */
+  /*****************************************/
 
   /*****************************/
   /* wait for devices power on */
   /*****************************/
 #ifdef PROG_DEBUG
-  delay(5000);
+  delay(1000);
 #else
   delay(VARIOMETER_POWER_ON_DELAY);
 #endif
+
+  /*****************************/
+  /*  Init Alimentation        */
+  /*****************************/
+  varioHardwareManager.initAlim();
 
   /************************/
   /*    BOOT SEQUENCE     */
   /************************/
 
-  varioData.init(VERSION, SUB_VERSION, BETA_CODE, String(DEVNAME));
+  varioData.init();
 
   varioHardwareManager.init();
 
@@ -687,12 +691,6 @@ void setup()
   /*********************/
 
   varioData.initLog();
-
-  //***********************************************
-  // INIT AGL
-  //***********************************************
-
-  varioData.initAGL();
 
   /***************/
   /* init screen */
@@ -762,131 +760,150 @@ void setup()
   varioHardwareManager.initSound();
 
   //***********************************************
-  // INIT MPU / MS5611
-  //***********************************************
-
-  varioHardwareManager.initImu();
-
-  //***********************************************
-  // Première mesure d'altitude
-  //***********************************************
-
-  double firstAlti = varioHardwareManager.firstAlti();
-#ifdef DATA_DEBUG
-  SerialPort.print("first alti : ");
-  SerialPort.println(firstAlti);
-#endif //KALMAN_DEBUG
-
-  //***********************************************
   // Calibration
   //***********************************************
 
   if (ButtonScheduleur.Get_StatePage() == STATE_PAGE_CALIBRATION)
     screen.ScreenViewMessage("Calibration", 5);
 
+  // On attend pour voir si calibration ou wifi, sinon on continue
+  const TickType_t delay = (5000) / portTICK_PERIOD_MS;
+  vTaskDelay(delay);
+
+  if (!wifiIsRunning)
+  {
+
+    //***********************************************
+    // INIT AGL
+    //***********************************************
+
+    varioData.initAGL();
+
+    //***********************************************
+    // INIT MPU / MS5611
+    //***********************************************
+
+    varioHardwareManager.initImu();
+
+    //***********************************************
+    // Première mesure d'altitude
+    //***********************************************
+
+    double firstAlti = varioHardwareManager.firstAlti();
+#ifdef DATA_DEBUG
+    SerialPort.print("first alti : ");
+    SerialPort.println(firstAlti);
+#endif //KALMAN_DEBUG
+
     //***********************************************
     // Affiche l'écran de statistique
     //***********************************************
 
 #ifdef HAVE_SCREEN
-  // Affichage Statistique
-  varioData.flystat.Display();
-  screen.ScreenViewStat();
+    // Affichage Statistique
+    varioData.flystat.Display();
+    screen.ScreenViewStat();
 
-  unsigned long TmplastDisplayTimestamp = millis();
-  int compteur = 0;
-  while (compteur < GnuSettings.DISPLAY_STAT_DURATION)
-  {
-
-    if (millis() - TmplastDisplayTimestamp > 1000)
+    unsigned long TmplastDisplayTimestamp = millis();
+    int compteur = 0;
+    while (compteur < GnuSettings.DISPLAY_STAT_DURATION)
     {
 
-      TmplastDisplayTimestamp = millis();
-      compteur++;
+      if (millis() - TmplastDisplayTimestamp > 1000)
+      {
 
-      //    Messure d'altitude
-      firstAlti = varioHardwareManager.getAlti();
+        TmplastDisplayTimestamp = millis();
+        compteur++;
+
+        //    Messure d'altitude
+        firstAlti = varioHardwareManager.getAlti();
+      }
     }
-  }
 
 #endif //HAVE_SCREEN
 
-  //***********************************************
-  // Initialise le filtre de Kalman
-  //***********************************************
+    //***********************************************
+    // Initialise le filtre de Kalman
+    //***********************************************
 
-  varioData.initKalman(firstAlti);
+    varioData.initKalman(firstAlti);
 
-  varioData.compteurGpsFix = 0;
+    varioData.compteurGpsFix = 0;
 
-  //***********************************************
-  // Initialise l'integration (climb rate)
-  //***********************************************
+    //***********************************************
+    // Initialise l'integration (climb rate)
+    //***********************************************
 
-  if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
-    varioData.history.init(firstAlti, millis());
+    if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
+      varioData.history.init(firstAlti, millis());
 
-  //***********************************************
-  // Initialise GPS
-  //***********************************************
+    //***********************************************
+    // Initialise GPS
+    //***********************************************
 
-  varioHardwareManager.initGps();
+    varioHardwareManager.initGps();
 
-  //***********************************************
-  // Affiche la première page
-  //***********************************************
+    //***********************************************
+    // Affiche la première page
+    //***********************************************
 
 #ifdef HAVE_SCREEN
 
-  screen.ScreenViewPage(0, true);
-  screen.volLevel->setVolume(toneHAL.getVolume());
-  screen.updateScreen();
+    screen.ScreenViewPage(0, true);
+    screen.volLevel->setVolume(toneHAL.getVolume());
+    screen.updateScreen();
 
 #ifdef SOUND_DEBUG
-  SerialPort.print("ToneHal Volume Sound : ");
-  SerialPort.println(toneHAL.getVolume()); //GnuSettings.VARIOMETER_BEEP_VOLUME);
-#endif                                     //SOUND_DEBUG
+    SerialPort.print("ToneHal Volume Sound : ");
+    SerialPort.println(toneHAL.getVolume()); //GnuSettings.VARIOMETER_BEEP_VOLUME);
+#endif                                       //SOUND_DEBUG
 
 #ifdef SCREEN_DEBUG
-  SerialPort.println("update screen");
+    SerialPort.println("update screen");
 #endif //SCREEN_DEBUG
 
-  screen.clearScreen();
-  screen.schedulerScreen->enableShow();
+    screen.clearScreen();
+    screen.schedulerScreen->enableShow();
 #endif //HAVE_SCREEN
 
-  //***********************************************
-  // Initialisation BT
-  //***********************************************
+    //***********************************************
+    // Initialisation BT
+    //***********************************************
 
 #if defined(HAVE_BLUETOOTH)
-  if (varioHardwareManager.initBt())
-  {
-    TRACE();
-    screen.btinfo->setBT();
-  }
-  else
-  {
-    TRACE();
-    screen.btinfo->unsetBT();
-  }
+    if (varioHardwareManager.initBt())
+    {
+      TRACE();
+      screen.btinfo->setBT();
+    }
+    else
+    {
+      TRACE();
+      screen.btinfo->unsetBT();
+    }
 #endif //HAVE_BLUETOOTH
 
-  ButtonScheduleur.Set_StatePage(STATE_PAGE_VARIO);
+    ButtonScheduleur.Set_StatePage(STATE_PAGE_VARIO);
 
-  //***********************************************
-  // Initialisation Time
-  //***********************************************
+    //***********************************************
+    // Initialisation Time
+    //***********************************************
 
-  varioData.initTime();
+    varioData.initTime();
+  }
 }
 
-double temprature = 0;
+// double temprature = 0;
 
 //*****************************
 //*****************************
 void loop()
 {
+  if (wifiIsRunning)
+  {
+    vTaskDelete(NULL);
+  }
+
   //****************************
   //****************************
 

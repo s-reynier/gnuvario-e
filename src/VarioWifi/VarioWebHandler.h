@@ -27,6 +27,7 @@
 #include <VarioSqlFlight.h>
 #include <VarioSqlFlightHelper.h>
 #include <sdcardHAL.h>
+#include <esp32fota2.h>
 
 class VarioWebHandler
 {
@@ -76,6 +77,27 @@ public:
     // téléchargements de "mes vols" en BDD
     AsyncWebServerResponse *handleGetFlights(AsyncWebServerRequest *request);
 
+    // enregistrement un vol en BDD
+    static void handleSetFlight(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
+    // suppression d'un vol en BDD
+    AsyncWebServerResponse *handleDelFlight(AsyncWebServerRequest *request);
+
+    //recuperation des versions de firmware
+    AsyncWebServerResponse *handleFirmwareVersion(AsyncWebServerRequest *request);
+
+    //Mise à jour via internet
+    AsyncWebServerResponse *handleUpgradeWeb(AsyncWebServerRequest *request);
+
+    // récupération de la liste des sites
+    AsyncWebServerResponse *handleGetSites(AsyncWebServerRequest *request);
+
+    // sauvegarde d'un site
+    static void handleSetSite(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
+
+    // suppression d'un site
+    AsyncWebServerResponse *handleDelSite(AsyncWebServerRequest *request);
+
 private:
     String getFileSizeStringFromBytes(int bytes);
     void printDirectoryRecurse(AsyncResponseStream *response, String path, boolean isRecursive);
@@ -83,5 +105,7 @@ private:
     static void backupFile(String pathOrig, String pathBack);
     int readFlightsData(uint8_t *buffer, size_t maxLength);
 };
+
+extern esp32FOTA2 esp32FOTA;
 
 #endif //VARIO_WEBHANDLER_H

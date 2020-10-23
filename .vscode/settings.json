@@ -19,6 +19,7 @@
         "utility": "cpp",
         "random": "cpp",
         "istream": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "new": "cpp"
     }
 }

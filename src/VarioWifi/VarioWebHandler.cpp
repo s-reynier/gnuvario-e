@@ -246,10 +246,16 @@ AsyncWebServerResponse *VarioWebHandler::handleParams(AsyncWebServerRequest *req
 #ifdef WIFI_DEBUG
     SerialPort.println("handleParams");
 #endif
-
+    AsyncWebServerResponse *response;
     String path = "/params.jso";
-
-    AsyncWebServerResponse *response = request->beginResponse(SD, "/params.jso", "application/json");
+    if (!SDHAL_SD.exists(path))
+    {
+        response = request->beginResponse(404);
+    }
+    else
+    {
+        response = request->beginResponse(SD, "/params.jso", "application/json");
+    }
 
     return response;
 }
@@ -730,4 +736,210 @@ void VarioWebHandler::backupFile(String pathOrig, String pathBack)
 
         SDHAL_SD.remove((char *)pathOrig.c_str());
     }
+}
+
+void VarioWebHandler::handleSetFlight(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+#ifdef WIFI_DEBUG
+    SerialPort.println("handleSetFlight");
+#endif
+
+    VarioSqlFlight varioSqlFlight;
+    char content[len];
+    strncpy(content, (char *)data, len);
+    content[len] = '\0';
+    if (request->hasParam("id", false))
+    {
+        AsyncWebParameter *p = request->getParam("id");
+        uint8_t id = p->value().toInt();
+
+#ifdef WIFI_DEBUG
+        SerialPort.println(id);
+        SerialPort.println(content);
+#endif
+        varioSqlFlight.updateFlight(id, content);
+    }
+    else
+    {
+
+#ifdef WIFI_DEBUG
+        SerialPort.println(content);
+#endif
+
+        varioSqlFlight.insertFlight(content);
+    }
+
+    request->send(200);
+
+    return;
+}
+
+AsyncWebServerResponse *VarioWebHandler::handleDelFlight(AsyncWebServerRequest *request)
+{
+    AsyncWebServerResponse *response;
+
+    if (request->hasParam("filename"))
+    {
+        AsyncWebParameter *p = request->getParam("filename");
+        String filename = p->value().c_str();
+
+        File dataFile;
+        if (dataFile = SDHAL_SD.open("/vols/parsed/" + filename, FILE_READ))
+        {
+            dataFile.close();
+            SDHAL_SD.rename("/vols/parsed/" + filename, "/vols/" + filename);
+        }
+    }
+
+    VarioSqlFlight varioSqlFlight;
+
+    if (request->hasParam("id"))
+    {
+        AsyncWebParameter *p = request->getParam("id");
+        uint8_t id = p->value().toInt();
+
+#ifdef WIFI_DEBUG
+        SerialPort.println(id);
+
+#endif
+
+        varioSqlFlight.delFlight(id);
+    }
+
+    response = request->beginResponse(200, "text/plain", "OK");
+    return response;
+}
+
+AsyncWebServerResponse *VarioWebHandler::handleFirmwareVersion(AsyncWebServerRequest *request)
+{
+    //recuperation des versions de firmware
+
+#ifdef WIFI_DEBUG
+    SerialPort.println("handleFirmwareVersion");
+#endif
+
+#ifdef WIFI_DEBUG
+    SerialPort.println(output);
+#endif
+
+    AsyncWebServerResponse *response = request->beginChunkedResponse("application/json", [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        //Write up to "maxLen" bytes into "buffer" and return the amount written.
+        //index equals the amount of bytes that have been already sent
+        //You will be asked for more data until 0 is returned
+        //Keep in mind that you can not delay or yield waiting for more data!
+        if (!index)
+        {
+            String output = esp32FOTA.getHTTPVersion();
+            memcpy(buffer, (char *)output.c_str(), output.length());
+            return output.length();
+        }
+        return 0;
+    });
+
+    return response;
+}
+
+AsyncWebServerResponse *VarioWebHandler::handleUpgradeWeb(AsyncWebServerRequest *request)
+{
+
+    AsyncWebServerResponse *response;
+
+    bool betaversion;
+    if (request->hasParam("beta"))
+    {
+        AsyncWebParameter *p = request->getParam("beta");
+        betaversion = p->value().toInt();
+    }
+    else
+    {
+        response = request->beginResponse(500, "text/plain", "BAD ARGS");
+        return response;
+    }
+
+    int8_t updatedNeeded = esp32FOTA.execHTTPcheck(betaversion);
+    if (updatedNeeded == 1)
+    {
+#ifdef WIFI_DEBUG
+        SerialPort.println("############Update firmware########");
+#endif
+
+        response = request->beginResponse(200);
+        esp32FOTA.execOTA();
+        return response;
+    }
+    else
+    {
+        response = request->beginResponse(500, "text/plain", "could not update");
+        return response;
+    }
+}
+
+AsyncWebServerResponse *VarioWebHandler::handleGetSites(AsyncWebServerRequest *request)
+{
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    VarioSqlFlight varioSqlFlight;
+
+    response->print(varioSqlFlight.getSites());
+
+    return response;
+}
+
+void VarioWebHandler::handleSetSite(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+#ifdef WIFI_DEBUG
+    SerialPort.println("handleSetSite");
+#endif
+
+    VarioSqlFlight varioSqlFlight;
+    char content[len];
+    strncpy(content, (char *)data, len);
+    content[len] = '\0';
+    if (request->hasParam("id", false))
+    {
+        AsyncWebParameter *p = request->getParam("id");
+        uint8_t id = p->value().toInt();
+
+#ifdef WIFI_DEBUG
+        SerialPort.println(id);
+        SerialPort.println(content);
+#endif
+        varioSqlFlight.updateSite(id, content);
+    }
+    else
+    {
+
+#ifdef WIFI_DEBUG
+        SerialPort.println(content);
+#endif
+
+        varioSqlFlight.insertSite(content);
+    }
+
+    request->send(200);
+
+    return;
+}
+
+AsyncWebServerResponse *VarioWebHandler::handleDelSite(AsyncWebServerRequest *request)
+{
+    AsyncWebServerResponse *response;
+
+    VarioSqlFlight varioSqlFlight;
+
+    if (request->hasParam("id"))
+    {
+        AsyncWebParameter *p = request->getParam("id");
+        uint8_t id = p->value().toInt();
+
+#ifdef WIFI_DEBUG
+        SerialPort.println(id);
+
+#endif
+
+        varioSqlFlight.deleteSite(id);
+    }
+
+    response = request->beginResponse(200, "text/plain", "OK");
+
+    return response;
 }

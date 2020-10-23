@@ -113,6 +113,7 @@ private:
 
 #ifdef HAVE_WIFI
 	void WifiServeur(void);
+	static void startWifi(void * pvParameters);
 #endif //HAVE_WIFI
 
 #ifdef HAVE_SDCARD

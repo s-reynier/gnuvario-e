@@ -7,6 +7,7 @@
 #include <sdcardHAL.h>
 #endif
 
+#include <RingBuf.h>
 #include <sqlite3.h>
 
 class VarioSqlFlight
@@ -36,8 +37,10 @@ public:
     bool insertSite(String data);
     bool updateSite(uint8_t id, String data);
     bool deleteSite(uint8_t id);
-    bool initGetFlightsQuery(uint8_t limit, uint8_t offset);
-    String getNextFlight();
+    bool initGetFlightsQuery(uint16_t limit, uint16_t offset);
+    //String getNextFlight();
+    bool getNextFlight(bool &firstline, RingBuf<char, 2048> &buffer);
     void executeMigration(String version, String sql);
+    String escapeJson(const String &s);
 };
 #endif

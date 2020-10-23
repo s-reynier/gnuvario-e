@@ -494,7 +494,9 @@ void VARIOButtonScheduleur::WifiServeur(void)
 #endif //BUTTON_DEBUG
 
 	/*START SERVEUR WEB */
-	wf.begin();
+	TaskHandle_t taskWF;
+	xTaskCreatePinnedToCore(startWifi, "VWF", 10000, NULL, 1, &taskWF, 0);
+
 	// varioWifiServer.connect();
 
 	// varioWifiServer.start();
@@ -603,6 +605,20 @@ void VARIOButtonScheduleur::treatmentBtnB3S(bool Debounce)
 		StatePage = STATE_PAGE_VARIO;
 		screen.ScreenViewPage(screen.schedulerScreen->getPage(), true);
 		screen.updateScreen();
+	}
+}
+
+void VARIOButtonScheduleur::startWifi(void *pvParameters)
+{
+	Serial.println("Free heap BEFORE wifi start");
+	Serial.println(ESP.getFreeHeap());
+	wf.begin();
+	Serial.println("Free heap AFTER wifi start");
+	Serial.println(ESP.getFreeHeap());
+	for (;;)
+	{
+		const TickType_t delay = (10000) / portTICK_PERIOD_MS;
+		vTaskDelay(delay);
 	}
 }
 

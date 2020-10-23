@@ -4,3 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 logFile.txt
+stackTrace.txt
+decoder.py
