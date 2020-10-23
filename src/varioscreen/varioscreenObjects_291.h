@@ -66,6 +66,8 @@
  *    1.2.0  29/04/20   Modification font screedigit                             *
  *    1.2.1  15/05/20   Modification screentime                                  *
  *    1.2.2  17/05/20   Ajout setPositionTitle                                   *
+ *    1.2.3  25/05/20   Modification screendigit.setvalue                        *
+ *    1.2.4  15/10/20   Correction bug affichage heure / duree                   *
  *                                                                               *
  *********************************************************************************/
 #ifndef VARIOSCREENOBJECTS_291_H
@@ -101,13 +103,13 @@
 //#include <Fonts/MONOFONT22pt7b.h>
 //#include <Fonts/Audimat24pt7b.h>
 //#include <Fonts/Audimat26pt7b.h>
-#include <Fonts/FreeSansBold8pt7b.h>
+#include <FreeSansBold8pt7b.h>
 //#include <Fonts/jersey18pt7b.h>
-#include <Fonts/gnuvarioe14pt7b.h>
-#include <Fonts/gnuvarioe18pt7b.h>
-#include <Fonts/gnuvarioe23pt7b.h>
-#include <Fonts/NotoSans6pt7b.h> //Picopixel.h>
-#include <Fonts/gnuvarioe12pt7b.h>
+#include <gnuvarioe14pt7b.h>
+#include <gnuvarioe18pt7b.h>
+#include <gnuvarioe23pt7b.h>
+#include <NotoSans6pt7b.h> //Picopixel.h>
+#include <gnuvarioe12pt7b.h>
 
 /* minimum drift to update digit */
 #define VARIOSCREEN_DIGIT_DISPLAY_THRESHOLD 0.65

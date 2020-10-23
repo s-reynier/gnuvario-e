@@ -2,7 +2,6 @@
 
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
-#include <VarioSettings.h>
 
 #ifdef WIFI_DEBUG
 #define ARDUINOTRACE_ENABLE 1
@@ -99,22 +98,7 @@ boolean VarioIgcParser::parseFile(String path)
             // B 12 43 31 4503488N 00351234E A 00884 00927
             //lat lon DDMMmmmN  DDDMMmmmE
             String hms = buffer.substring(1, 7);
-
-            //il s'agit de l'heure UTC, il faut corriger avec le fuseau horaire des params
-            int hour = hms.substring(0, 2).toInt() + GnuSettings.VARIOMETER_TIME_ZONE;
-            if (hour > 24)
-            {
-                hour -= 24;
-            }
-
-            String hourStr = String(hour);
-            if (hour < 10)
-            {
-                hourStr = "0" + hourStr;
-            }
-
-            hms = hourStr + ":" + hms.substring(2, 4) + ":" + hms.substring(4, 6);
-
+            hms = hms.substring(0, 2) + ":" + hms.substring(2, 4) + ":" + hms.substring(4, 6);
             int16_t nPos = buffer.indexOf("N");
             int16_t ePos = buffer.indexOf("E");
             uint8_t aPos = buffer.indexOf("A");

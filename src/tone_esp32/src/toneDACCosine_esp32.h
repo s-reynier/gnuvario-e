@@ -1,5 +1,5 @@
-#ifndef toneDAC_ESP32_h
-#define toneDAC_ESP32_h
+#ifndef toneDACCosine_ESP32_h
+#define toneDACCosine_ESP32_h
 
 /*****************************************************************************/
 /*                                                                           */
@@ -11,10 +11,12 @@
 /*    1.1.1    10/06/19    Ajout gestion ampli class D externe               */
 /*    1.1.2    20/08/19    Reecriture AUDIO_AMP_ENABLE et AUDIO_AMP_DISABLE  */
 /*    1.1.3    10/01/20		 ajout defined(TONEDAC)														 */
+/*    1.1.4    12/01/20    ajout trace																			 */
+/*    1.1.5    26/07/20    Renomage TONEDAC en TONEDACCOSINE                 */
 /*                                                                           */
 /*****************************************************************************/
 
-#if defined(ESP32) && defined(TONEDAC)
+#if defined(ESP32) && defined(TONEDACCOSINE)
 
 #include <Arduino.h>
 

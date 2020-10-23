@@ -21,10 +21,11 @@
 /* 
  *********************************************************************************
  *                                                                               *
- *                           VarioLanguage                                           *
+ *                           VarioLanguage                                       *
  *                                                                               *
  *  version    Date     Description                                              *
  *    1.0    11/04/20                                                            *
+ *    1.1    22/10/20   Ajout titre pour ecran batterie                          *
  *                                                                               *
  *********************************************************************************
  */
@@ -61,6 +62,9 @@
 #define TITRE_ENCOURS 21
 #define TITRE_CALIBR 22
 #define TITRE_VEILLE 23
+#define TITRE_CHARGE 24
+#define TITRE_CHARGER 25
+#define TITRE_BATTERIE 26
 
 class VarioLanguage
 {

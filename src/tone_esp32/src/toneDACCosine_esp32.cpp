@@ -9,6 +9,7 @@
 /*    1.1.2    20/08/19    Reecriture AUDIO_AMP_ENABLE et AUDIO_AMP_DISABLE  */
 /*    1.1.3    10/01/20		 ajout defined(TONEDAC)														 */
 /*    1.1.4    12/01/20    ajout trace																			 */
+/*    1.1.5    26/07/20    Renomage TONEDAC en TONEDACCOSINE                 */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -16,9 +17,9 @@
 #include "DebugConfig.h"
 #include "HardwareConfig.h"
 
-#if defined(ESP32) && defined(TONEDAC)
+#if defined(ESP32) && defined(TONEDACCOSINE)
 
-#include "toneDAC_esp32.h"
+#include "toneDACCosine_esp32.h"
 //#include "utility\DebugConfig.h"
 //#include "utility\Config.h"
 

@@ -49,6 +49,7 @@
  *    1.0.15 09/03/20   Modification ScreenViewSound                             	*
  *    1.0.16 10/03/20   Ajout Bouton A 2sec calibration via AGL         					*
  *                      Ajout déclenchement debut du vol (appuie sur bouton A     *
+ *    1.0.17 18/10/20   Ajout Page charge batterie sur bouton central (init)      *
  *                                                                               	*
  ************************************************************************************/
 
@@ -408,6 +409,16 @@ void VARIOButtonScheduleur::treatmentBtnB(bool Debounce)
 		screen.ScreenViewMessage(varioLanguage.getText(TITRE_ENCOURS), 0); //"en cours", 0);
 		Calibration.Begin();
 	}
+	else if (StatePage == STATE_PAGE_INIT)
+	{
+		StatePage = STATE_PAGE_CHARGE;
+		varioHardwareManager.varioPower.ScreenCharge();
+		StatePage == STATE_PAGE_INIT;
+	}
+	else if (StatePage == STATE_PAGE_CHARGE)
+	{
+		varioHardwareManager.varioPower.setRefVoltage(varioHardwareManager.varioPower.getVoltage());
+	}	
 }
 
 /************************************************************/
@@ -473,7 +484,7 @@ void VARIOButtonScheduleur::WifiServeur(void)
 	root = SDHAL_SD.open("/");
 	if (root)
 	{
-#endif //SDFAT_LIB \
+#endif //SDFAT_LIB 
 	//printDirectory(root, 0);
 		root.close();
 	}
