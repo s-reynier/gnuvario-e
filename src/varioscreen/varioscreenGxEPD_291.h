@@ -49,6 +49,12 @@
  *    1.1.1  10/05/20   Correction affichage screenTime (:/h)                    *
  *    1.1.2  11/05/20   Effacement zones multi                                   *
  *    1.1.3  14/05/20   Raffraichissement de l'écran toutes les 15min            *
+ *    1.1.4  17/05/20   Ajout position titre avac setPositionTitle               *
+ *		1.1.5  23/05/20   Passage vario en -XX.X								  								 *
+ *    1.1.6  27/07/20   Affichage de la batterie au démarrage                    *
+ *    1.1.7  04/10/20   Modification position finesse                            *
+ *                      Modification position titre finesse                      *
+ *    1.1.8  19/10/20   Ajout ScreenViewBattery(boolean clear)                   *
  *                                                                               *
  *********************************************************************************/
 
@@ -96,6 +102,9 @@
 #define MAX_CAR_TITRE_ENCOURS 			8				
 #define MAX_CAR_TITRE_CALIBR   			12
 #define MAX_CAR_TITRE_VEILLE				14			
+#define MAX_CAR_TITRE_CHARGE 				10
+#define MAX_CAR_TITRE_CHARGER 			7
+#define MAX_CAR_TITRE_BATTERIE 			8
 
 /******************************/
 /* The screen zone multi      */ 
@@ -299,6 +308,7 @@ class VarioScreen {
 	void SetViewSound(int volume);	
 	void ScreenViewMessage(String message, int delai);
 	void ScreenBackground(int8_t page);
+	void ScreenViewBattery(boolean clear);
 		
 	void CreateObjectDisplay(int8_t ObjectDisplayTypeID, VarioScreenObject* object, int8_t page, int8_t multiDisplayID, boolean actif); 
 	void updateData(int8_t ObjectDisplayTypeID, double data);

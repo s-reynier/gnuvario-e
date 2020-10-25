@@ -69,6 +69,7 @@
  *    1.2.1  15/05/20   Modification screentime                                  *
  *    1.2.2  17/05/20   Ajout setPositionTitle                                   *
  *    1.2.3  25/05/20   Modification screendigit.setvalue                        *
+ *    1.2.4  15/10/20   Correction bug affichage heure / duree                   *
  *                                                                               *
  *********************************************************************************/
  
@@ -397,10 +398,10 @@ ScreenDigit::ScreenDigit(uint16_t anchorX, uint16_t anchorY, uint16_t width, uin
   SerialPort.println("Constructeur ScreenDigit : ");
   SerialPort.print("Type :  ");
   SerialPort.println(displayTypeID);
-  SerialPort.print("X : ");
+/*  SerialPort.print("X : ");
   SerialPort.print(box_x);
   SerialPort.print("    Y: ");
-  SerialPort.println(box_y);
+  SerialPort.println(box_y);*/
   SerialPort.print("width : ");
   SerialPort.print(width);
   SerialPort.print("    precision :  ");
@@ -1259,12 +1260,12 @@ ScreenText::ScreenText(uint16_t anchorX, uint16_t anchorY, uint16_t width, int8_
    : VarioScreenObject(0), anchorX(anchorX), anchorY(anchorY), width(width), large(large), Align(Align), showtitle(showtitle), displayTypeID(displayTypeID), nbCarTitle(nbCarTitle) { 
 //****************************************************************************************************************************
 
-  int16_t box_x = anchorX;
-  int16_t box_y = anchorY;
+  //int16_t box_x = anchorX;
+  //int16_t box_y = anchorY;
   uint16_t w, h;
   int16_t box_w; 
   int16_t box_h; 
-	int tmpWidth;
+//	int tmpWidth;
 
   lastDisplayWidth = 0; 
 
@@ -2114,7 +2115,7 @@ if    X< 1700 = deep sleep (comme ça si la sécu batterie ne fonctionne pas ou 
 	DUMP(Voltage);
 	DUMPLOG(LOG_TYPE_DEBUG, VOLTAGE_DEBUG_LOG,Voltage);
 	
-  display.fillRect(posX, posY, 32, 32, GxEPD_WHITE);
+  display.fillRect(posX, posY, 17, 8, GxEPD_WHITE);
 
   if (Voltage >= 2160)
     display.drawInvertedBitmap(110, 8, bat4icons, 17, 8, GxEPD_BLACK);   //GxEPD_BLACK);
@@ -2626,25 +2627,6 @@ void ScreenTime::show(void) {
   SerialPort.println("Show : ScreenTime");
 #endif //SCREEN_DEBUG
 
-//  display.fillRect(posX-70, posY-32, 65, 34, GxEPD_WHITE);
-  display.fillRect(posX-70, posY-32, 16, 34, GxEPD_WHITE);
-// 	display.drawRect(posX-70, posY-32, 16, 34, GxEPD_BLACK);
-
-
-  if (dot_or_h == false) {
-#ifdef SCREEN_DEBUG
-		SerialPort.println("dot_or_h  : H");
-#endif //SCREEN_DEBUG
-
-    display.drawBitmap(posX-70, posY-24,hicons,  16, 24, GxEPD_BLACK);   //GxEPD_BLACK);
-	}
-  else {	
-#ifdef SCREEN_DEBUG
-		SerialPort.println("dot_or_h  : DOT");
-#endif //SCREEN_DEBUG
-  
-    display.drawBitmap(posX-70, posY-26, doticons, 16, 24, GxEPD_BLACK);   //GxEPD_BLACK);
-	}
 #ifdef SCREEN_DEBUG2
   SerialPort.print("time : ");
   SerialPort.print(time[2]);
@@ -2658,6 +2640,28 @@ void ScreenTime::show(void) {
 
   minute.setValue(time[1]);
   minute.show();
+
+//  display.fillRect(posX-70, posY-32, 65, 34, GxEPD_WHITE);
+//  display.fillRect(posX-54, posY-32, 16, 34, GxEPD_WHITE);
+// 	display.drawRect(posX-70, posY-32, 16, 34, GxEPD_BLACK);
+
+
+  if (!dot_or_h) {
+#ifdef SCREEN_DEBUG
+		SerialPort.println("dot_or_h  : H");
+#endif //SCREEN_DEBUG
+
+    display.fillRect(posX-70, posY-32, 16, 34, GxEPD_WHITE);
+    display.drawBitmap(posX-70, posY-24,hicons,  16, 24, GxEPD_BLACK);   //GxEPD_BLACK);
+	}
+  else {	
+#ifdef SCREEN_DEBUG
+		SerialPort.println("dot_or_h  : DOT");
+#endif //SCREEN_DEBUG
+  
+    display.fillRect(posX-54, posY-32, 16, 34, GxEPD_WHITE);
+    display.drawBitmap(posX-54, posY-26, doticons, 16, 24, GxEPD_BLACK);   //GxEPD_BLACK);
+	}
 
 /*  if (!dot_or_h) {	
 #ifdef SCREEN_DEBUG2
@@ -2849,11 +2853,11 @@ void INFOLevel::show() {
   // 24 x 24 
 const unsigned char bticons []  = {
 	// 'BT icone 24x24, 20x24px
-	0xff, 0xff, 0xf0, 0xff, 0xff, 0xf0, 0xff, 0xff, 0xf0, 0xff, 0xef, 0xf0, 0xff, 0xe7, 0xf0, 0xff, 
-	0xeb, 0xf0, 0xff, 0xed, 0xf0, 0xfe, 0xee, 0xf0, 0xff, 0x6d, 0xf0, 0xff, 0xab, 0xf0, 0xff, 0xc7, 
-	0xf0, 0xff, 0xef, 0xf0, 0xff, 0xc7, 0xf0, 0xff, 0xab, 0xf0, 0xff, 0x6d, 0xf0, 0xfe, 0xee, 0xf0, 
-	0xff, 0xee, 0xf0, 0xff, 0xed, 0xf0, 0xff, 0xeb, 0xf0, 0xff, 0xe7, 0xf0, 0xff, 0xef, 0xf0, 0xff, 
-	0xff, 0xf0, 0xff, 0xff, 0xf0, 0xff, 0xff, 0xf0
+	0xff, 0xc3, 0xff, 0xff, 0x00, 0xff, 0xfe, 0x00, 0x7f, 0xfc, 0x10, 0x3f, 0xfc, 0x18, 0x3f, 0xfc, 
+0x1c, 0x3f, 0xfc, 0x1e, 0x3f, 0xfc, 0x1b, 0x3f, 0xfc, 0x9b, 0x3f, 0xfc, 0xde, 0x3f, 0xfc, 0x7c, 
+0x3f, 0xfc, 0x38, 0x3f, 0xfc, 0x38, 0x3f, 0xfc, 0x7c, 0x3f, 0xfc, 0xde, 0x3f, 0xfc, 0x9b, 0x3f, 
+0xfc, 0x1b, 0x3f, 0xfc, 0x1e, 0x3f, 0xfc, 0x1c, 0x3f, 0xfc, 0x18, 0x3f, 0xfc, 0x00, 0x3f, 0xfe, 
+0x00, 0x7f, 0xff, 0x00, 0xff, 0xff, 0xc3, 0xff
 };
 
 //****************************************************************************************************************************
@@ -2883,11 +2887,11 @@ void BTInfo::show() {
   SerialPort.println("Show : BTLevel");
 #endif //SCREEN_DEBUG
 
- display.fillRect(posX, posY, 19, 24, GxEPD_WHITE);
+ display.fillRect(posX, posY, 24, 24, GxEPD_WHITE);
 // display.drawRect(posX, posY, 24, 24, GxEPD_BLACK);
 
 // display.drawBitmap(msicons, posX, posY, 48, 48, GxEPD_WHITE,false);   //GxEPD_BLACK);
- if (bt == true) display.drawInvertedBitmap(posX, posY, bticons, 19, 24, GxEPD_BLACK);   //GxEPD_BLACK);
+ if (bt == true) display.drawInvertedBitmap(posX, posY, bticons, 24, 24, GxEPD_BLACK);   //GxEPD_BLACK);
 // else                display.fillRect(posX, posY, 24, 24, GxEPD_WHITE);
  //  display.drawBitmap(100, 10, gridicons_sync, 24, 24, GxEPD_BLACK);
 }

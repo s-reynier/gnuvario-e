@@ -48,6 +48,7 @@
  *    1.0.15 09/03/20   Modification ScreenViewSound                             	*
  *    1.0.16 10/03/20   Ajout Bouton A 2sec calibration via AGL         					*
  *                      Ajout déclenchement debut du vol (appuie sur bouton A     *
+ *    1.0.17 18/10/20   Ajout Page charge batterie sur bouton central (init)      *
  *                                                                               	*
  ************************************************************************************/
 
@@ -140,5 +141,4 @@ extern void createSDCardTrackFile(void);
 #error “This library only supports boards with ESP32 processor.”
 #endif
 
-extern bool wifiIsRunning;
 #endif

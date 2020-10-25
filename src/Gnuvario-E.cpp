@@ -1,8 +1,6 @@
-#define CONFIG_ASYNC_TCP_RUNNING_CORE 1
-#define CONFIG_ASYNC_TCP_USE_WDT 0
-
 #include <Arduino.h>
 #include <Adafruit_I2CDevice.h>
+
 /*******************/
 /* Version         */
 /*******************/
@@ -262,6 +260,28 @@
 *                                    Ajout paramètre calibrated_gps pour IGC et BT                    *
 *                                    Correction paramètre trame BT                                    *
 *                                    Ajout fichier langue "anglais"                                   *
+*                23/06/20            Amélioration bluetooth                                           *
+*                28/06/20            Ajout VarioXBeeper                                               *
+*                26/07/20            Renomage TONEDAC en TONEDACCOSINE                                *
+*                                    Ajout affichage tension                                          *
+* 0.8 Beta 4     11/09/20            Nouvelle bibliothèque toneHalI2S                                 *                                   
+*                                    Nouvelle bibliothèque de gestion des paramètres du son           *
+*                13/09/20            Modifie beeper pour utiliser varioXBeeper                        *                    
+*                26/09/20            Modifier Tonehal32 PWM pour accepter toutes les Pins dans        *
+*                                    HarwareConfig SPEAKER_PIN                                        *
+*                27/09/20            Ajout DISPLAY_LIGHT sur l'écran 1.54''                           *
+*                04/10/20            Correction beeper                                                *
+*                                    Correction affichage radio / trend                               *
+*                05/10/20            Ajout gestion PCB 3                                              *
+*                09/10/20            Correction deep-sleep pour V3                                    *
+*                                    Mise à jour GpxEpd2                                              *
+*                15/10/20            Correction bug affichage heure / duree sur ecran 2.91            *
+*                17/10/20            Ajout Gestion de la version                                      *
+* 0.8 beta 5     18/10/20            Ajout écran de charge                                            *
+*                22/10/20            Moidification calcul % charge                                    *
+*                                    Interdit les altitudes negatives                                 *
+*                                    Mise à jour GxEpd2                                               *
+*                                    Ajout compensation tension                                       *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -277,28 +297,28 @@
 * BUG   - download à verifier                                                                         *
 *                                                                                                     *        
 * v0.8                                                                                                *       
-* AJOUT - Espaces aeriens                                                                             *
 * BUG   - Grésillement Buzzer                                                                         * 
-* AJOUT - Indication niveau de batterie                                                               *
-* Ajout - Indication charge batterie                                                                  *
 * BUG   - altitude enregistré non compensé                                                            *
-* AJOUT - écran charge batterie au démarrage                                                          *
 * AJOUT - alti GPS                                                                                    *
-* BUG   - derive alti                                                                                 *                                                                                
-* BUG   - trame BT                                                                                    *
+* BUG   - derive alti                                                                                 *
+* BUG   - sensibilité vario                                                                           *
+* BUG   - compas GPS à verifier / problème compas magnétique                                          *
+* AJOUT - Deep-Sleep charge batterie                                                                  *
+* AJOUT - Langue sur écran charge batterie                                                            *
+* BUG   - % batterie au démmarage                                                                     *
+* BUG   - intergration - bip continu                                                                  *
+* BUG   - Altitude negative                                                                           *
 *                                                                                                     *
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
 * Gérer le son via le DAC                                                                             *
 * revoir volume du son ToneESP32                                                                      *
-* Refaire gestion du son (parametrage via xctracer)                                                   *
 * Boussole graphique                                                                                  *                                                                       
 * Création dynamique des objets screen                                                                *
 * Sens et vitesse du vent                                                                             *
-* verifier fonctionnement BT - trame non complete                                                     *
 * Espace aérien                                                                                       *
 * 2 Altitudes                                                                                         *
-* Recupération vol via USB                                                                            *                                                                                        
+* Recupération vol via USB                                                                            *  
 *******************************************************************************************************/
 
 /************************************************************************
@@ -367,6 +387,13 @@
  *  - Compas Magnétique + compas GPS                                    *
  *  - Raffraichissement écran toutes les 15min                          *
  *  - Carnet de vol                                                     *
+ *  - BlueTooth trame xctracer                                          *
+ *  - Ajout indication niveau de batterie dans la page de demarrage     *
+ *  - Correction BUG d'affichage                                        *
+ *  - Ajout gestion du paramètrage du son                               *
+ *  - Ajout de la gestion du PCB V3                                     *
+ *  - Gestion du GPS L86                                                *
+ *  - Ajout écran de charge                                             *
  *                                                                      *
  ************************************************************************/
 
@@ -403,6 +430,7 @@
 * wifi.cfg                 paramètres de configuration du wifi          *
 * log.cfg                  paramètres de configuration du fichier de log*
 * variocal.cfg             paramètres de calibration du MPU             *
+* variosound.cfg           paramètrage du son                           *
 * record00cal.igc          fichier contenant les mesures utiles au      *
 *                          calcul de la calibration                     *
 * HardwareConfig.h         parametres matériels communs                 *
@@ -427,10 +455,15 @@
 *                       INDEX.HTM                                      *
 *                       INDEXB.JS                                      *
 *                       INDEXB~1.MAP                                   *
+*               DB/                     - repertoire de base de donnees*        
+*                       VOL.DB          - carnet de vol                *
+*               GNUVARIOEN.jso          - fichier de langue            *                        
+*               GNUVARIOFR.JSO          - fichier de langue            *
 *               RECORD00.CAL            - fichier de calibration       *
 *               PARAMS.JSO              - fichier de configuration     *
 *               LOG.CFG                 - Paramètres de debug          *
 *               VARIOCAL.CFG            - Paramètres de calibration    *
+*               SOUNDCAL.CFG            - Paramètrage du son           *
 *               WIFI.CFG                - Paramètres Wifi              *
 *                                                                      *
 ************************************************************************/
@@ -444,55 +477,86 @@
 *                                                                      *
 ************************************************************************/
 
+/*************************************************************************************************************
+*                                                                                                            *
+*                                            UTILISATION DES TOUCHES                                         *                                                                                       
+*   Ecran         Touche      Fonction                                                                       *
+*                                                                                                            *
+*   Init          Gauche      passage en mode Wifi                                                           *                                                                                                              
+*   Init          Centre      Ecran de charge                                                                *
+*   Init          Droite      Calibration                                                                    * 
+*                                                                                                            *
+*   Vario         Centre      Coupe et remet le son (Mute)                                                   *
+*   Vario         Centre 3s   Mode veille                                                                    *
+*   Vario         Gauche      écran précédent                                                                *
+*   Vario         Droite      écran suivant                                                                  *
+*   Vario         Gauche 2s   Calibrarion manuel du baro via l'AGL                                           *
+*   Vario         Gauche 0    Déclenchement de l'enregistrement du vol si en attente                         *
+*                                                                                                            *
+*   Wifi          Gauche      Sort du mode Wifi                                                              *
+*                                                                                                            *
+*   Sound         Gauche      baisse le volume                                                               *
+*   Sound         Droit       Monte le volume                                                                *
+*   Sound         Centre      Entre dans la configuration / Valide la configuration                          *
+*                                                                                                            *
+*   Sleep         Gauche      Valide la mise en veille                                                       * 
+*                                                                                                            *
+*   Calibration   Centre      Démarre la calibration                                                         *                                                                                                        
+*   Calibration   Gauche      Sort du mode calibration (reboot)                                              *
+*                                                                                                            *
+**************************************************************************************************************
+*                                                                                                            *
+* Debbug                                                                                                     *
+*                                                                                                            *
+* TRACE();                  Affiche sur le moniteur serie le numero de ligne, le nom du fichier              *
+* DUMP(someValue);          Affcihe sur le moniteur serie la variable ainsi que le fichier et la ligne       *
+* SDUMP(someText);          Affiche sur le moniteur serie le texte ainsi que le fichier et la ligne          *
+*                                                                                                            *
+* TRACELOG(type, module)           Enregistre dans le fichier de log le fichier et la ligne                  *
+* DUMPLOG(type, module, variable)  Enregistre dans le fichier de log la variable, le fichier et la ligne     * 
+* MESSLOG(type, module, Text)      Enregistre dans le fichier de log un message avac la fichier et la ligne  *
+* INFOLOG(Text)                    Enregistre dans le fichier de log un texte                                *                                                                                                     
+**************************************************************************************************************
+*                                                                                                            *
+* Téléchargement AGL : https://vps.skybean.eu/agl/                                                           *                                                                                                          
+*                                                                                                            * 
+**************************************************************************************************************
+*                                                                                                            *
+* Timer                                                                                                      *
+*          0 :                                                                                               *
+*          1 : screen                                                                                        *
+*          2 : XT_DAC_Audio / ToneDACTimer / I2S                                                             *
+*          3 : TwoWireScheduler                                                                              *
+*                                                                                                            *
+**************************************************************************************************************/
+
 /**************************************************************************************************************
- *              Liens utiles                                                                                  *
  *                                                                                                            *
- * https://learn.sparkfun.com/tutorials/9dof-razor-imu-m0-hookup-guide/all#libraries-and-example-firmware     *        
+ * Flash Tool                                                                                                 *               
+ * https://www.espressif.com/en/support/download/other-tools?keys=&field_type_tid%5B%5D=13                    *                                                                                        
  *                                                                                                            *
- * AGL : https://vps.skybean.eu/agl/                                                                          *
+ *************************************************************************************************************/
+
+/**************************************************************************************************************
  *                                                                                                            *
+ *       Librairie et code                                                                                    *
+ *                                                                                                            *
+ *  xt_dac_audio                                                                                              *
+ *     https://www.xtronical.com/the-dacaudio-library-download-and-installation/                              *                                                                            
+ *                                                                                                            *    
  **************************************************************************************************************/
 
-/*************************************************************************************************************
+ /*************************************************************************************************************
+  *      Literature                                                                                           *
   *                                                                                                           *
-  *                                            UTILISATION DES TOUCHES                                        *                                                                                       
-  *   Ecran         Touche      Fonction                                                                      *
+  *      MPU9250                                                                                              *                                                                                                     
+  *    https://learn.sparkfun.com/tutorials/9dof-razor-imu-m0-hookup-guide/all#libraries-and-example-firmware *        
+  *    https://www.enib.fr/~kerhoas/rescapt_cours_mpu9250.html                                                *
+  *    https://fr.wikiversity.org/wiki/Micro_contr%C3%B4leurs_AVR/Travail_pratique/Utilisation_du_MPU9250     *
+  *    https://www.instructables.com/id/Tilt-Compensated-Compass/                                             *
   *                                                                                                           *
-  *   Init          Gauche      passage en mode Wifi                                                          *                                                                                                              
-  *   Init          Droite      Calibration                                                                   *
-  *                                                                                                           *
-  *   Vario         Centre      Coupe et remet le son (Mute)                                                  *
-  *   Vario         Centre 3s   Mode veille                                                                   *
-  *   Vario         Gauche      écran précédent                                                               *
-  *   Vario         Droite      écran suivant                                                                 *
-  *   Vario         Gauche 2s   Calibrarion manuel du baro via l'AGL                                          *
-  *   Vario         Gauche 0    Déclenchement de l'enregistrement du vol si en attente                        *
-  *                                                                                                           *
-  *   Wifi          Gauche      Sort du mode Wifi                                                             *
-  *                                                                                                           *
-  *   Sound         Gauche      baisse le volume                                                              *
-  *   Sound         Droit       Monte le volume                                                               *
-  *   Sound         Centre      Entre dans la configuration / Valide la configuration                         *
-  *                                                                                                           *
-  *   Sleep         Gauche      Valide la mise en veille                                                      * 
-  *                                                                                                           *
-  *   Calibration   Centre      Démarre la calibration                                                        *                                                                                                        
-  *   Calibration   Gauche      Sort du mode calibration (reboot)                                             *
-  *                                                                                                           *
-  *************************************************************************************************************
-  *                                                                                                           *
-  * Debbug                                                                                                    *
-  *                                                                                                           *
-  * TRACE();                  Affiche sur le moniteur serie le numero de ligne, le nom du fichier             *
-  * DUMP(someValue);          Affcihe sur le moniteur serie la variable ainsi que le fichier et la ligne      *
-  * SDUMP(someText);          Affiche sur le moniteur serie le texte ainsi que le fichier et la ligne         *
-  *                                                                                                           *
-  * TRACELOG(type, module)           Enregistre dans le fichier de log le fichier et la ligne                 *
-  * DUMPLOG(type, module, variable)  Enregistre dans le fichier de log la variable, le fichier et la ligne    * 
-  * MESSLOG(type, module, Text)      Enregistre dans le fichier de log un message avac la fichier et la ligne *
-  * INFOLOG(Text)                    Enregistre dans le fichier de log un texte                               *                                                                                                     
   *************************************************************************************************************/
-
+ 
 //*****************************
 // DEBBUGAGE                  *
 //*****************************
@@ -527,11 +591,11 @@
 
 #include <HardwareConfig.h>
 
-// #ifdef HAVE_SDCARD
-// #include <sdcardHAL.h>
-// #endif //HAVE_SDCARD
+//#ifdef HAVE_SDCARD
+//#include <sdcardHAL.h>
+//#endif //HAVE_SDCARD
 
-// #include <Update.h>
+//#include <Update.h>
 #include <SD_Update.h>
 
 #include <VarioHardwareManager.h>
@@ -543,7 +607,19 @@
 
 #include <GPSSentence.h>
 
+/*#ifdef HAVE_GPS
+#include <SerialNmea.h>
+#include <LxnavSentence.h>
+#include <LK8Sentence.h>
+#include <IGCSentence.h>
+#include <NmeaParser.h>
+#endif //HAVE_GPS*/
+
 #include <VarioButton.h>
+
+//#include <Utility.h>
+
+//#include <driver/adc.h>
 
 /*****************/
 /* screen        */
@@ -561,10 +637,12 @@ VarioData varioData;
 #include <VarioSettings.h>
 #include <VarioLanguage.h>
 
+#include <VarioXBeeper.h>
+
 //*******************************
 // GESTION WIFI                 *
 //*******************************
-bool wifiIsRunning = false;
+
 #ifdef HAVE_WIFI
 #include <VarioWifi.h>
 // #include <esp32fota2.h>
@@ -574,29 +652,30 @@ bool wifiIsRunning = false;
  Serveur Web
  *************************************************/
 #ifdef HAVE_WIFI
+//String webpage = "";
+//
+//#ifdef ESP8266
+//ESP8266WiFiMulti wifiMulti;
+//ESP8266WebServer server(80);
+//#else
+//WiFiMulti wifiMulti;
+//#ifdef ESP32WEBSERVEUR
+//VarioESP32WebServer server(80);
+//#elif defined(ESPASYNCWEBSERVER)
+//#include <WiFi.h>
+//#include <AsyncTCP.h>
+//#include <ESPAsyncWebServer.h>
+//AsyncWebServer server(80);
+//#elif defined(ETHERNETWEBSERVER)
+//EthernetServer server(80);
+//#elif defined(ESPRESSIFWEBSERVEUR)
+//WebServer server(80);
+//#else  //ESP32WEBSERVEUR
+//VarioWebServer server(80);
+//#endif //ESP32WEBSERVEUR
+//#endif
 
-// #ifdef ESP8266
-// ESP8266WiFiMulti wifiMulti;
-// ESP8266WebServer server(80);
-// #else
-// WiFiMulti wifiMulti;
-// #ifdef ESP32WEBSERVEUR
-// VarioESP32WebServer server(80);
-// #elif defined(ESPASYNCWEBSERVER)
-// #include <WiFi.h>
-// #include <AsyncTCP.h>
-// #include <ESPAsyncWebServer.h>
-// AsyncWebServer server(80);
-// #elif defined(ETHERNETWEBSERVER)
-// EthernetServer server(80);
-// #elif defined(ESPRESSIFWEBSERVEUR)
-// WebServer server(80);
-// #else  //ESP32WEBSERVEUR
-// VarioWebServer server(80);
-// #endif //ESP32WEBSERVEUR
-// #endif
-
-// esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE); //esp32-fota-http", 0,6,0);
+//esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE); //esp32-fota-http", 0,6,0);
 
 #endif //HAVE_WIFI
 
@@ -625,26 +704,64 @@ void setup()
   TestSDCARD(true);
 #endif
 
-  /*****************************************/
-  /* Initialisation en deux parties        */
-  /* - ce qui est névessaire au wifi       */
-  /* - si le wifi ne démarre pas, le reste */
-  /*****************************************/
-
-  /*****************************/
-  /* wait for devices power on */
-  /*****************************/
-#ifdef PROG_DEBUG
-  delay(1000);
-#else
-  delay(VARIOMETER_POWER_ON_DELAY);
-#endif
-
   /*****************************/
   /*  Init Alimentation        */
   /*****************************/
   varioHardwareManager.initAlim();
 
+  /*****************************/
+  /* wait for devices power on */
+  /*****************************/
+#ifdef PROG_DEBUG
+  delay(5000);
+#else
+  delay(VARIOMETER_POWER_ON_DELAY);
+#endif
+
+  /************************/
+  /*  VERSION / HARDWARE  */
+  /************************/
+
+  SerialPort.print("VERSION : ");
+  SerialPort.println(VARIOVERSION);
+
+#if (VARIOVERSION == 154) 
+  SerialPort.println("VERSION : 1");
+#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291)) 
+  SerialPort.println("VERSION : 2");
+#elif ((VARIOVERSION == 390) || (VARIOVERSION == 391)) 
+  SerialPort.println("VERSION : 3");
+#else
+  SerialPort.println("VERSION : XXX");
+#endif
+
+  SerialPort.print("PCB VERSION : ");
+  SerialPort.println(PCB_VERSION);
+
+#if (VARIOSCREEN_SIZE == 154)
+  SerialPort.println("ECRAN : 1.54");
+#elif (VARIOSCREEN_SIZE == 290)
+  SerialPort.println("ECRAN : 2.90 PAYSAGE");
+#elif (VARIOSCREEN_SIZE == 291)
+  SerialPort.println("ECRAN : 2.90 PORTRAIT");
+#endif
+
+#if defined (L86)
+  SerialPort.println("GPS : L86");
+#elif defined (ATGM336H)
+  SerialPort.println("GPS : ATGM336H");
+#elif defined (NEO_6M)
+  SerialPort.println("GPS : NEO_6M");
+#else
+  SerialPort.println("GPS : XXXXX");
+#endif
+
+#if defined (HAVE_BLUETOOTH)
+  SerialPort.println("BLUETOOTH : Enable");
+#elif defined (HAVE_BLE)
+  SerialPort.println("BLE : Enable");
+#endif
+  
   /************************/
   /*    BOOT SEQUENCE     */
   /************************/
@@ -691,6 +808,12 @@ void setup()
   /*********************/
 
   varioData.initLog();
+
+  //***********************************************
+  // INIT AGL
+  //***********************************************
+
+  varioData.initAGL();
 
   /***************/
   /* init screen */
@@ -760,172 +883,152 @@ void setup()
   varioHardwareManager.initSound();
 
   //***********************************************
+  // INIT MPU / MS5611
+  //***********************************************
+
+  varioHardwareManager.initImu();
+
+  //***********************************************
+  // Première mesure d'altitude
+  //***********************************************
+
+  double firstAlti = varioHardwareManager.firstAlti();
+#ifdef DATA_DEBUG
+  SerialPort.print("first alti : ");
+  SerialPort.println(firstAlti);
+#endif //KALMAN_DEBUG
+
+  //***********************************************
   // Calibration
   //***********************************************
 
   if (ButtonScheduleur.Get_StatePage() == STATE_PAGE_CALIBRATION)
     screen.ScreenViewMessage("Calibration", 5);
 
-  // On attend pour voir si calibration ou wifi, sinon on continue
-  const TickType_t delay = (5000) / portTICK_PERIOD_MS;
-  vTaskDelay(delay);
-
-  if (!wifiIsRunning)
-  {
-
-    //***********************************************
-    // INIT AGL
-    //***********************************************
-
-    varioData.initAGL();
-
-    //***********************************************
-    // INIT MPU / MS5611
-    //***********************************************
-
-    varioHardwareManager.initImu();
-
-    //***********************************************
-    // Première mesure d'altitude
-    //***********************************************
-
-    double firstAlti = varioHardwareManager.firstAlti();
-#ifdef DATA_DEBUG
-    SerialPort.print("first alti : ");
-    SerialPort.println(firstAlti);
-#endif //KALMAN_DEBUG
-
     //***********************************************
     // Affiche l'écran de statistique
     //***********************************************
 
 #ifdef HAVE_SCREEN
-    // Affichage Statistique
-    varioData.flystat.Display();
-    screen.ScreenViewStat();
+  // Affichage Statistique
+  varioData.flystat.Display();
+  screen.ScreenViewStat();
 
-    unsigned long TmplastDisplayTimestamp = millis();
-    int compteur = 0;
-    while (compteur < GnuSettings.DISPLAY_STAT_DURATION)
+  unsigned long TmplastDisplayTimestamp = millis();
+  int compteur = 0;
+  while (compteur < GnuSettings.DISPLAY_STAT_DURATION)
+  {
+
+    if (millis() - TmplastDisplayTimestamp > 1000)
     {
 
-      if (millis() - TmplastDisplayTimestamp > 1000)
-      {
+      TmplastDisplayTimestamp = millis();
+      compteur++;
 
-        TmplastDisplayTimestamp = millis();
-        compteur++;
-
-        //    Messure d'altitude
-        firstAlti = varioHardwareManager.getAlti();
-      }
+      //    Messure d'altitude
+      firstAlti = varioHardwareManager.getAlti();
     }
+  }
 
 #endif //HAVE_SCREEN
 
-    //***********************************************
-    // Initialise le filtre de Kalman
-    //***********************************************
+  //***********************************************
+  // Initialise le filtre de Kalman
+  //***********************************************
 
-    varioData.initKalman(firstAlti);
+  varioData.initKalman(firstAlti);
 
-    varioData.compteurGpsFix = 0;
+  varioData.compteurGpsFix = 0;
 
-    //***********************************************
-    // Initialise l'integration (climb rate)
-    //***********************************************
+  //***********************************************
+  // Initialise l'integration (climb rate)
+  //***********************************************
 
-    if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
-      varioData.history.init(firstAlti, millis());
+  if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
+    varioData.history.init(firstAlti, millis());
 
-    //***********************************************
-    // Initialise GPS
-    //***********************************************
+  //***********************************************
+  // Initialise GPS
+  //***********************************************
 
-    varioHardwareManager.initGps();
+  varioHardwareManager.initGps();
 
-    //***********************************************
-    // Affiche la première page
-    //***********************************************
+  //***********************************************
+  // Affiche la première page
+  //***********************************************
 
 #ifdef HAVE_SCREEN
 
-    screen.ScreenViewPage(0, true);
-    screen.volLevel->setVolume(toneHAL.getVolume());
-    screen.updateScreen();
+  screen.ScreenViewPage(0, true);
+  screen.volLevel->setVolume(toneHAL.getVolume());
+  screen.updateScreen();
 
 #ifdef SOUND_DEBUG
-    SerialPort.print("ToneHal Volume Sound : ");
-    SerialPort.println(toneHAL.getVolume()); //GnuSettings.VARIOMETER_BEEP_VOLUME);
-#endif                                       //SOUND_DEBUG
+  SerialPort.print("ToneHal Volume Sound : ");
+  SerialPort.println(toneHAL.getVolume()); //GnuSettings.VARIOMETER_BEEP_VOLUME);
+#endif                                     //SOUND_DEBUG
 
 #ifdef SCREEN_DEBUG
-    SerialPort.println("update screen");
+  SerialPort.println("update screen");
 #endif //SCREEN_DEBUG
 
-    screen.clearScreen();
-    screen.schedulerScreen->enableShow();
+  screen.clearScreen();
+  screen.schedulerScreen->enableShow();
 #endif //HAVE_SCREEN
 
-    //***********************************************
-    // Initialisation BT
-    //***********************************************
+  //***********************************************
+  // Initialisation BT
+  //***********************************************
 
 #if defined(HAVE_BLUETOOTH)
-    if (varioHardwareManager.initBt())
-    {
-      TRACE();
-      screen.btinfo->setBT();
-    }
-    else
-    {
-      TRACE();
-      screen.btinfo->unsetBT();
-    }
+  if (varioHardwareManager.initBt())
+  {
+    TRACE();
+    screen.btinfo->setBT();
+  }
+  else
+  {
+    TRACE();
+    screen.btinfo->unsetBT();
+  }
 #endif //HAVE_BLUETOOTH
 
-    ButtonScheduleur.Set_StatePage(STATE_PAGE_VARIO);
+  ButtonScheduleur.Set_StatePage(STATE_PAGE_VARIO);
 
-    //***********************************************
-    // Initialisation Time
-    //***********************************************
+  //***********************************************
+  // Initialisation Time
+  //***********************************************
 
-    varioData.initTime();
-  }
+  varioData.initTime();
 }
 
-// double temprature = 0;
+double temprature = 0;
 
 //*****************************
 //*****************************
 void loop()
 {
-  if (wifiIsRunning)
-  {
-    vTaskDelete(NULL);
-  }
-
   //****************************
   //****************************
 
   //****************************
   // Gestion Des chrono
   //***************************
-  if (!wifiIsRunning)
-  {
-    /*  LOW UPDATE DISPLAY */
-    if (millis() - varioData.lastDisplayTimestamp > DISPLAY_LOW_UPDATE)
-    {
-      varioData.lastDisplayTimestamp = millis();
-      varioData.displayLowUpdateState = true;
-    }
 
-    // DISPLAY
-    if (millis() - varioData.lastDisplayTimestamp2 > DISPLAY_UPDATE)
-    {
-      varioData.lastDisplayTimestamp2 = millis();
-      varioData.displayUpdateState = true;
-    }
+  /*  LOW UPDATE DISPLAY */
+  if (millis() - varioData.lastDisplayTimestamp > DISPLAY_LOW_UPDATE)
+  {
+    varioData.lastDisplayTimestamp = millis();
+    varioData.displayLowUpdateState = true;
   }
+
+  // DISPLAY
+  if (millis() - varioData.lastDisplayTimestamp2 > DISPLAY_UPDATE)
+  {
+    varioData.lastDisplayTimestamp2 = millis();
+    varioData.displayUpdateState = true;
+  }
+
   //**********************************************************
   //  TRAITEMENT DU SON
   //**********************************************************
@@ -941,61 +1044,36 @@ void loop()
   //**********************************************************
   //  ACQUISITION DES DONNEES
   //**********************************************************
-  if (!wifiIsRunning)
-  {
-    varioData.update();
-  }
+
+  varioData.update();
+
   //**********************************************************
   //  TEST INNACTIVITE
   //**********************************************************
-  if (!wifiIsRunning)
-  {
-    varioHardwareManager.testInactivity(varioData.getVelocity());
-  }
+  varioHardwareManager.testInactivity(varioData.getVelocity());
 
   //**********************************************************
   //  MISE A JOUR DE L'ECRAN
   //**********************************************************
-  if (!wifiIsRunning)
+
+  if (varioData.displayLowUpdateState)
   {
-    if (varioData.displayLowUpdateState)
+
+    //**********************************************************
+    //  DISPLAY ALTI
+    //**********************************************************
+
+    screen.altiDigit->setValue(varioData.getCalibratedAlti());
+
+    //**********************************************************
+    //  DISPLAY VARIO
+    //**********************************************************
+
+    if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
     {
-
-      //**********************************************************
-      //  DISPLAY ALTI
-      //**********************************************************
-
-      screen.altiDigit->setValue(varioData.getCalibratedAlti());
-
-      //**********************************************************
-      //  DISPLAY VARIO
-      //**********************************************************
-
-      if (GnuSettings.VARIOMETER_DISPLAY_INTEGRATED_CLIMB_RATE)
+      if (varioData.haveNewClimbRate())
       {
-        if (varioData.haveNewClimbRate())
-        {
-          double tmpvalue = varioData.getClimbRate();
-#if (VARIOSCREEN_SIZE == 154)
-          if (tmpvalue > 9.9)
-            tmpvalue = 9.9;
-          if (tmpvalue < -9.9)
-            tmpvalue = -9.9;
-#else
-          if (tmpvalue > 99.9)
-            tmpvalue = 99.9;
-          if (tmpvalue < -99.9)
-            tmpvalue = -99.9;
-#endif
-          screen.varioDigit->setValue(tmpvalue);
-
-          //       screen.varioDigit->setValue(varioData.getClimbRate());
-        }
-      }
-      else
-      {
-
-        double tmpvalue = varioData.getVelocity();
+/*        double tmpvalue = varioData.getClimbRate();
 #if (VARIOSCREEN_SIZE == 154)
         if (tmpvalue > 9.9)
           tmpvalue = 9.9;
@@ -1007,40 +1085,73 @@ void loop()
         if (tmpvalue < -99.9)
           tmpvalue = -99.9;
 #endif
-        screen.varioDigit->setValue(tmpvalue);
+        screen.varioDigit->setValue(tmpvalue);*/
 
-        //      screen.varioDigit->setValue(varioData.getVelocity());
-      }
-
-      //**********************************************************
-      //  DISPLAY FINESSE / TAUX DE CHUTE MOYEN
-      //**********************************************************
-
-      if (varioData.haveNewClimbRate())
-      {
-        if (GnuSettings.RATIO_CLIMB_RATE > 1)
-          screen.trendDigit->setValue(varioData.getTrend());
-        else
-          screen.trendDigit->setValue(0);
-        screen.trendLevel->stateTREND(varioData.getStateTrend());
+        screen.varioDigit->setValue(varioData.getClimbRate());
       }
     }
+    else
+    {
+
+/*      double tmpvalue = varioData.getVelocity();
+#if (VARIOSCREEN_SIZE == 154)
+      if (tmpvalue > 9.9)
+        tmpvalue = 9.9;
+      if (tmpvalue < -9.9)
+        tmpvalue = -9.9;
+#else
+      if (tmpvalue > 99.9)
+        tmpvalue = 99.9;
+      if (tmpvalue < -99.9)
+        tmpvalue = -99.9;
+#endif
+      screen.varioDigit->setValue(tmpvalue);*/
+
+      screen.varioDigit->setValue(varioData.getVelocity());
+    }
+
+    //**********************************************************
+    //  DISPLAY FINESSE / TAUX DE CHUTE MOYEN
+    //**********************************************************
+
+    if (varioData.haveNewClimbRate())
+    {
+      if (GnuSettings.RATIO_CLIMB_RATE > 1)
+        screen.trendDigit->setValue(varioData.getTrend());
+      else
+        screen.trendDigit->setValue(0);
+      screen.trendLevel->stateTREND(varioData.getStateTrend());
+    }
+    screen.trendDigit->reset();
   }
+
   //**********************************************************
   //  EMISSION DES BIPS
   //**********************************************************
-  if (!wifiIsRunning)
-  {
-    /*****************/
-    /* update beeper */
-    /*****************/
+
+  /*****************/
+  /* update beeper */
+  /*****************/
 #ifdef HAVE_SPEAKER
-    beeper.update();
+  beeper.update();
 #ifdef PROG_DEBUG
 //    SerialPort.println("beeper update");
 #endif //PROG_DEBUG
 #endif //HAVE_SPEAKER
-  }
+
+
+  //**********************************************************
+  //  TRAITEMENT DU SON
+  //**********************************************************
+
+  //***************************************
+  //  TEST
+  //***************************************
+#if defined(TONEXTDAC) || defined(TONEI2S) 
+  toneHAL.update();
+#endif
+
+
   //**********************************************************
   //  EMISSION TRAME BT
   //  ACQUISITION GPS
@@ -1051,117 +1162,109 @@ void loop()
   /**************/
   /* update GPS */
   /**************/
-  if (!wifiIsRunning)
-  {
-    varioData.updateGps();
-  }
+
+  varioData.updateGps();
+
   //**********************************************************
   //  DETECTION FIX GPS / DEBUT DU VOL
   //**********************************************************
-  if (!wifiIsRunning)
-  {
-    varioData.updateState();
-  }
+
+  varioData.updateState();
 #else //HAVE_GPS
-  if (!wifiIsRunning)
-  {
+
 //sans gps, le bluetooth doit etre mis a jour manuellement
 #ifdef VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE
-    varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getCalibratedPosition(), varioData.kalmanvert.getVelocity());
+  varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getCalibratedPosition(), varioData.kalmanvert.getVelocity());
 #else
-    varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getPosition(), varioData.kalmanvert.getVelocity());
+  varioHardwareManager.varioBle->bluetoothNMEA.begin(varioData.kalmanvert.getPosition(), varioData.kalmanvert.getVelocity());
 #endif
 
-    // * if no GPS, we can't calibrate, and we have juste to check flight start */
+  // * if no GPS, we can't calibrate, and we have juste to check flight start */
 
-    //**********************************************************
-    //  DETECTION FIX GPS / DEBUT DU VOL
-    //**********************************************************
+  //**********************************************************
+  //  DETECTION FIX GPS / DEBUT DU VOL
+  //**********************************************************
 
-    varioData.updateState();
-  }
+  varioData.updateState();
+
 #endif //HAVE_GPS
 
   /********************/
   /* update Bluetooth */
   /********************/
-  if (!wifiIsRunning)
-  {
+
 #if defined(HAVE_BLUETOOTH)
-    if (varioData.updateBluetooth())
-    {
-#ifdef GPS_DEBUG
-      SerialPort.println("Update BLE");
-#endif //GPS_DEBUG
-    }
-#endif // HAVE_BLUETOOTH
-  }
-  if (!wifiIsRunning)
+  if (varioData.updateBluetooth())
   {
+#ifdef GPS_DEBUG
+    SerialPort.println("Update BLE");
+#endif //GPS_DEBUG
+  }
+#endif // HAVE_BLUETOOTH 
+
 #ifdef HAVE_SCREEN
-    if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
-      screen.recordIndicator->setActifGPSFIX();
-    if (varioData.gpsFix == 2)
-      screen.fixgpsinfo->setFixGps();
+  if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
+    screen.recordIndicator->setActifGPSFIX();
+  if (varioData.gpsFix == 2)
+    screen.fixgpsinfo->setFixGps();
 
 #endif //HAVE_SCREEN
-  }
-  ////////////////////////////////////
 
-  /**********************************/
-  /* update low freq screen objects */
-  /**********************************/
+    ////////////////////////////////////
+
+    /**********************************/
+    /* update low freq screen objects */
+    /**********************************/
 #ifdef HAVE_SCREEN
 
-  //**********************************************************
-  //  DISPLAY TIME / DUREE DU VOL
-  //**********************************************************
+    //**********************************************************
+    //  DISPLAY TIME / DUREE DU VOL
+    //**********************************************************
 
-  /************************************/
-  /* Update Time, duration            */
-  /* Voltage, SatLevel                */
-  /************************************/
+    /************************************/
+    /* Update Time, duration            */
+    /* Voltage, SatLevel                */
+    /************************************/
 
 #ifdef HAVE_GPS
-  if (!wifiIsRunning)
-  {
-    if (varioData.displayLowUpdateState)
-    {
-      if (nmeaParser.haveDate())
-      {
 
-        /* set time */
+  if (varioData.displayLowUpdateState)
+  {
+    if (nmeaParser.haveDate())
+    {
+
+      /* set time */
 #if defined(GPS_DEBUG) || defined(DATA_DEBUG)
-        SerialPort.print("Time : ");
-        SerialPort.println(nmeaParser.time);
+      SerialPort.print("Time : ");
+      SerialPort.println(nmeaParser.time);
 #endif //GPS_DEBUG
 
-        //      DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.time);
+      //      DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.time);
 
-        screen.screenTime->setTime(nmeaParser.time);
-        screen.screenTime->correctTimeZone(GnuSettings.VARIOMETER_TIME_ZONE);
-        if (varioData.getVariometerState() == VARIOMETER_STATE_FLIGHT_STARTED)
-        {
-          screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
-          varioData.flystat.SetTime(screen.screenTime->getTime());
-          varioData.flystat.SetDuration(screen.screenElapsedTime->getTime());
-        }
-        else
-        {
-          screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
-        }
+      screen.screenTime->setTime(nmeaParser.time);
+      screen.screenTime->correctTimeZone(GnuSettings.VARIOMETER_TIME_ZONE);
+      if (varioData.getVariometerState() == VARIOMETER_STATE_FLIGHT_STARTED)
+      {
+        screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
+        varioData.flystat.SetTime(screen.screenTime->getTime());
+        varioData.flystat.SetDuration(screen.screenElapsedTime->getTime());
       }
-
-      /* update satelite count */
-      screen.satLevel->setSatelliteCount(nmeaParser.satelliteCount);
-#ifdef GPS_DEBUG
-      SerialPort.print("Sat : ");
-      SerialPort.println(nmeaParser.satelliteCount);
-#endif //GPS_DEBUG \
-       //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
+      else
+      {
+        screen.screenElapsedTime->setCurrentTime(screen.screenTime->getTime());
+      }
     }
-#endif //HAVE_GPS
+
+    /* update satelite count */
+    screen.satLevel->setSatelliteCount(nmeaParser.satelliteCount);
+#ifdef GPS_DEBUG
+    SerialPort.print("Sat : ");
+    SerialPort.println(nmeaParser.satelliteCount);
+#endif //GPS_DEBUG 
+       //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
   }
+#endif //HAVE_GPS
+
   /*****************/
   /* update screen */
   /*****************/
@@ -1169,52 +1272,52 @@ void loop()
   //**********************************************************
   //  DISPLAY SPEED
   //**********************************************************
-  if (!wifiIsRunning)
-  {
+
 #ifdef HAVE_GPS
 
-    if (varioData.updateSpeed())
-    {
-      screen.speedDigit->setValue(varioData.currentSpeed);
-      screen.ratioDigit->setValue(varioData.ratio);
-    }
-    else
-    {
-      screen.ratioDigit->setValue(0);
-    }
+  if (varioData.updateSpeed())
+  {
+    screen.speedDigit->setValue(varioData.getSpeed()); //currentSpeed);
+    screen.ratioDigit->setValue(varioData.ratio);
+  }
+  else
+  {
+    screen.ratioDigit->setValue(0);
+  }
+
+  screen.ratioDigit->reset();
 
 #endif //HAVE_GPS
-  }
+
   //**********************************************************
   //   DISPLAY LOW FRECQUENCE OBJECT
   //**********************************************************
-  if (!wifiIsRunning)
-  {
-    if (varioData.displayLowUpdateState)
-    {
 
-      //**********************************************************
-      //  ACQUISITION / DISPLAY TENSION BATTERIE
-      //**********************************************************
+  if (varioData.displayLowUpdateState)
+  {
+
+    //**********************************************************
+    //  ACQUISITION / DISPLAY TENSION BATTERIE
+    //**********************************************************
 
 #if defined(HAVE_SCREEN) && defined(HAVE_VOLTAGE_DIVISOR)
-      varioData.updateVoltage();
-      screen.batLevel->setVoltage(varioData.voltage);
+    varioData.updateVoltage();
+    screen.batLevel->setVoltage(varioData.voltage);
 
 #endif //HAVE_VOLTAGE_DIVISOR
 
-      //**********************************************************
-      //  DISPLAY STATE RECORD
-      //**********************************************************
+    //**********************************************************
+    //  DISPLAY STATE RECORD
+    //**********************************************************
 
-      screen.recordIndicator->stateRECORD();
+    screen.recordIndicator->stateRECORD();
 #ifdef PROG_DEBUG
-      //    SerialPort.println("Record Indicator : staterecord ");
-      SerialPort.print("VarioState : ");
-      SerialPort.println(varioData.getVariometerState());
+    //    SerialPort.println("Record Indicator : staterecord ");
+    SerialPort.print("VarioState : ");
+    SerialPort.println(varioData.getVariometerState());
 #endif //PROG_DEBUG
-    }
   }
+
   //**********************************************************
   //  DISPLAY TEMPERATURE ESP32
   //**********************************************************
@@ -1232,82 +1335,81 @@ void loop()
   //**********************************************************
   //  DISPLAY BEARING
   //**********************************************************
-  if (!wifiIsRunning)
+
+  if (varioData.displayLowUpdateState)
   {
-    if (varioData.displayLowUpdateState)
+
+    int tmpcap = varioData.getCap();
+    if (tmpcap > 0)
     {
-
-      int tmpcap = varioData.getCap();
-      if (tmpcap > 0)
-      {
-        String bearingStr = nmeaParser.Bearing_to_Ordinal(tmpcap);
+      String bearingStr = nmeaParser.Bearing_to_Ordinal(tmpcap);
 #ifdef DATA_DEBUG
-        SerialPort.print("Compas : ");
-        SerialPort.print(tmpcap);
-        SerialPort.print(" - ");
-        SerialPort.println(bearingStr);
+      SerialPort.print("Compas : ");
+      SerialPort.print(tmpcap);
+      SerialPort.print(" - ");
+      SerialPort.println(bearingStr);
 #endif //DATA_DEBUG
-        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, tmpcap);
-        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearingStr);
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, tmpcap);
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearingStr);
 
-        screen.gpsBearing->setValue(tmpcap);
-        screen.gpsBearingText->setValue(bearingStr);
+      screen.gpsBearing->setValue(tmpcap);
+      screen.gpsBearingText->setValue(bearingStr);
 #if (VARIOSCREEN_SIZE == 291)
-        screen.bearing->setValue(tmpcap);
-        screen.bearingText->setValue(bearingStr);
+      screen.bearing->setValue(tmpcap);
+      screen.bearingText->setValue(bearingStr);
 #endif
-      }
-
-      if (nmeaParser.haveLongitude())
-      {
-        String longitude = nmeaParser.getLongitude();
-#ifdef DATA_DEBUG
-        SerialPort.print("Longitude : ");
-        SerialPort.println(longitude);
-#endif //DATA_DEBUG
-        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, longitude);
-#ifdef AGL_MANAGER_H
-        varioData.aglManager.setLongitude(nmeaParser.getLong());
-#endif
-        //      screen.gpsLongDir->setValue(String(nmeaParser.getLongDir()));
-        //      screen.gpsLong->setValue(nmeaParser.getLong());
-        screen.gpsLong->setValue(nmeaParser.getLongDegree());
-      }
-
-      if (nmeaParser.haveLatitude())
-      {
-        String latitude = nmeaParser.getLatitude();
-#ifdef DATA_DEBUG
-        SerialPort.print("Latitude : ");
-        SerialPort.println(latitude);
-#endif //DATA_DEBUG
-        DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, latitude);
-#ifdef AGL_MANAGER_H
-        varioData.aglManager.setLatitude(nmeaParser.getLat());
-#endif
-        //      screen.gpsLatDir->setValue(String(nmeaParser.getLatDir()));
-        //      screen.gpsLat->setValue(nmeaParser.getLat());
-        screen.gpsLat->setValue(nmeaParser.getLatDegree());
-      }
-
-#ifdef AGL_MANAGER_H
-      varioData.currentHeight = varioData.aglManager.getHeight();
-#ifdef PROG_DEBUG
-      SerialPort.print("Height : ");
-      SerialPort.println(varioData.currentHeight);
-#endif //PROG_DEBUG
-      screen.heightDigit->setValue(varioData.currentHeight);
-#endif
-
-      if (nmeaParser.haveNewAltiValue())
-      {
-        varioData.gpsAlti = nmeaParser.getAlti();
-        varioData.aglManager.setAltiGps(varioData.gpsAlti);
-      }
     }
 
-    varioData.displayLowUpdateState = false;
+    if (nmeaParser.haveLongitude())
+    {
+      String longitude = nmeaParser.getLongitude();
+#ifdef DATA_DEBUG
+      SerialPort.print("Longitude : ");
+      SerialPort.println(longitude);
+#endif //DATA_DEBUG
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, longitude);
+#ifdef AGL_MANAGER_H
+      varioData.aglManager.setLongitude(nmeaParser.getLong());
+#endif
+      //      screen.gpsLongDir->setValue(String(nmeaParser.getLongDir()));
+      //      screen.gpsLong->setValue(nmeaParser.getLong());
+      screen.gpsLong->setValue(nmeaParser.getLongDegree());
+    }
+
+    if (nmeaParser.haveLatitude())
+    {
+      String latitude = nmeaParser.getLatitude();
+#ifdef DATA_DEBUG
+      SerialPort.print("Latitude : ");
+      SerialPort.println(latitude);
+#endif //DATA_DEBUG
+      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, latitude);
+#ifdef AGL_MANAGER_H
+      varioData.aglManager.setLatitude(nmeaParser.getLat());
+#endif
+      //      screen.gpsLatDir->setValue(String(nmeaParser.getLatDir()));
+      //      screen.gpsLat->setValue(nmeaParser.getLat());
+      screen.gpsLat->setValue(nmeaParser.getLatDegree());
+    }
+
+#ifdef AGL_MANAGER_H
+    varioData.setCurrentHeight(varioData.aglManager.getHeight());
+#ifdef PROG_DEBUG
+    SerialPort.print("Height : ");
+    SerialPort.println(varioData.getCurrentHeight());
+#endif //PROG_DEBUG
+    screen.heightDigit->setValue(varioData.getCurrentHeight());
+#endif
+
+    if (nmeaParser.haveNewAltiValue())
+    {
+      varioData.setGpsAlti(nmeaParser.getAlti());
+      varioData.aglManager.setAltiGps(varioData.getGpsAlti());
+    }
   }
+
+  varioData.displayLowUpdateState = false;
+
   // Passes control to other tasks when called
   //  SysCall::yield();
 
@@ -1315,30 +1417,46 @@ void loop()
   //  UPDATE DISPLAY
   //**********************************************************
 
+  if (varioData.displayUpdateState)
+  {
+
 #ifdef PROG_DEBUG
-  //SerialPort.println("Update Screen");
+    //SerialPort.println("Update Screen");
 #endif //PROG_DEBUG
 
-  if (screen.schedulerScreen->displayStep())
-  {
-    screen.updateScreen();
+    if (screen.schedulerScreen->displayStep())
+    {
+      screen.updateScreen();
+    }
   }
 
+  varioData.displayUpdateState = false;
+  
 #endif //HAVE_SCREEN
 
   //**********************************************************
   //  UPDATE STATISTIQUE
   //**********************************************************
-  if (!wifiIsRunning)
-  {
-    varioData.flystat.Handle();
-  }
+
+  varioData.flystat.Handle();
+
   //*****************************************
   //      FORCE L'ACTIVATION DE L'AMPLI
   //*****************************************
 
 #ifdef HAVE_AUDIO_AMPLI
 //  toneHAL.enableAmpli();
+#endif
+
+  //**********************************************************
+  //  TRAITEMENT DU SON
+  //**********************************************************
+
+  //***************************************
+  //  TEST
+  //***************************************
+#if defined(TONEXTDAC) || defined(TONEI2S)
+  toneHAL.update();
 #endif
 
   /*******************************/

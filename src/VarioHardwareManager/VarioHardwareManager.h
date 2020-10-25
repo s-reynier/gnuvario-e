@@ -33,7 +33,7 @@
 #define VARIO_HARDWARE_MANAGER_H
 
 #include <HardwareConfig.h>
-#include <VarioAlim.h>
+#include <VarioPower.h>
 #include <VarioSpeaker.h>
 #include <VarioImu.h>
 #include <VarioGps.h>
@@ -54,7 +54,6 @@
 class VarioHardwareManager
 {
 private:
-	VarioAlim varioAlim;
 	VarioSpeaker varioSpeaker;
 	VarioImu varioImu;
 	VarioGps varioGps;
@@ -64,6 +63,8 @@ private:
 
 
 public:
+	VarioPower varioPower;
+
 	VarioHardwareManager();
 	void init();
 	void initAlim();

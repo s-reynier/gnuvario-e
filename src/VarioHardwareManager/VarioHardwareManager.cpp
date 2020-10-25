@@ -81,7 +81,7 @@ void VarioHardwareManager::init()
 void VarioHardwareManager::initAlim()
 //**********************************
 {
-  varioAlim.init();
+  varioPower.init();
 }
 
 //**********************************
