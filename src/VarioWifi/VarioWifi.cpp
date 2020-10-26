@@ -50,27 +50,39 @@ bool VarioWifi::begin()
     {
         return false;
     }
+
+#ifdef WIFI_DEBUG
     Serial.println("Free heap connectToWifi");
     Serial.println(ESP.getFreeHeap());
+#endif //WIFI_DEBUG
+
     if (!connectToWifi())
     {
         return false;
     }
+
+#ifdef WIFI_DEBUG
     Serial.println("Free heap setClock");
     Serial.println(ESP.getFreeHeap());
+#endif //WIFI_DEBUG
 
     setClock();
 
+#ifdef WIFI_DEBUG
     Serial.println("Free heap setMDNS");
     Serial.println(ESP.getFreeHeap());
+#endif //WIFI_DEBUG
+
     setMDNS();
 
     checkDbVersion();
 
     esp32FOTA.checkURL = GnuSettings.URL_UPDATE; //"http://gnuvario-e.yj.fr/update/firmware.json";
 
+#ifdef WIFI_DEBUG
     Serial.println("Free heap startWebServer");
     Serial.println(ESP.getFreeHeap());
+#endif //WIFI_DEBUG
 
     startWebServer();
 
