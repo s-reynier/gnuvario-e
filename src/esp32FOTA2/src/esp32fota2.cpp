@@ -1104,10 +1104,10 @@ bool esp32FOTA2::UpdateWwwDirectory()
     // Directory file.
     File root;
 
-    String newPath = "/wwwnew";
+    String tmpPath = "/wwwnew";
     //		String oldPath = "";
-    DUMP(newPath.c_str());
-    if (SDHAL_SD.exists(newPath.c_str()))
+    DUMP(tmpPath.c_str());
+    if (SDHAL_SD.exists(tmpPath.c_str()))
     {
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] le dossier wwwnew existe");
@@ -1115,55 +1115,15 @@ bool esp32FOTA2::UpdateWwwDirectory()
 
         // Traitement du fichier wwwnew
 
-        newPath = "/wwwold";
-        if (SDHAL_SD.exists(newPath.c_str()))
+        tmpPath = "/wwwold";
+        if (SDHAL_SD.exists(tmpPath.c_str()))
         {
 #ifdef WIFI_DEBUG
             SerialPort.println("[HTTP] le dossier wwwold existe");
 #endif
 
-            File root;
-            File file;
-
-            if (!(root = SDHAL_SD.open("/wwwold")))
-            {
-#ifdef WIFI_DEBUG
-                SerialPort.println("[HTTP] impossible d'ouvrir le dossier wwwold");
-#endif
-                return false;
-            }
-            // Open next file in root.
-            // Warning, openNext starts at the current directory position
-            // so a rewind of the directory may be required.
-            while (file = root.openNextFile(FILE_READ))
-            {
-
-#ifdef WIFI_DEBUG
-
-                SerialPort.print("[HTTP] suppression du fichier : <");
-                SerialPort.print(file.name());
-                SerialPort.println(">");
-#endif
-                String tmpFilenameToDel = file.name();
-                file.close();
-
-                if (!SDHAL_SD.remove((char *)tmpFilenameToDel.c_str()))
-                {
-#ifdef WIFI_DEBUG
-                    SerialPort.println("[HTTP] le fichier n'a pas pu être supprimé");
-#endif
-                }
-            }
-
-            //Effacement du repertoire wwwold
-
-            if (!SDHAL_SD.rmdir(newPath.c_str()))
-            {
-#ifdef WIFI_DEBUG
-                SerialPort.println("[HTTP] le dossier wwwold n'a pas pu être supprimé");
-#endif
-                return false; //Pas de mise à jour
-            }
+            //suppression de wwwold si existe
+            SdCardHAL::deleteRecursive(tmpPath);
         }
 
         // rename "www" into "wwwold"
@@ -1214,8 +1174,10 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] Fichier www.gz introuvable");
 #endif
-        return false;
+        return true;
     }
+
+    screen.ScreenViewMessage("MAJ www", 0);
 
     //backup de l'ancien répertoire www
     String tmpPath = "/wwwold";
@@ -1234,7 +1196,7 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
     if (!SDHAL_SD.rename("/www", "/wwwold"))
     {
 #ifdef WIFI_DEBUG
-        SerialPort.println("[HTTP] le dossier www ne peut être renomé en wwwold");
+        SerialPort.println("[HTTP] le dossier www ne peut être renommé en wwwold");
 #endif
         return false; //Pas de mise à jour
     }
