@@ -847,6 +847,7 @@ void setup()
 
 #if defined(HAVE_SDCARD) && defined(HAVE_WIFI)
   esp32FOTA.UpdateWwwDirectory();
+  esp32FOTA.UpdateWwwDirectoryFromGz();
 #endif //HAVE_SDCARD
 
   /***************/

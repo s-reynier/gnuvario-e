@@ -101,7 +101,6 @@ public:
 private:
     String getFileSizeStringFromBytes(int bytes);
     void printDirectoryRecurse(AsyncResponseStream *response, String path, boolean isRecursive);
-    void deleteRecursive(String path);
     static void backupFile(String pathOrig, String pathBack);
     int readFlightsData(uint8_t *buffer, size_t maxLength);
 };

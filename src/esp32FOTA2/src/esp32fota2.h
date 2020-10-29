@@ -23,10 +23,12 @@
 #define esp32fota2_h
 
 #include "Arduino.h"
+#include <ESP32-targz.h>
+#include <sdcardHAL.h>
 
-#define MAJ_ERROR 			-1
-#define MAJ_AVAILABLE 		1
-#define MAJ_NOTAVAILABLE	0
+#define MAJ_ERROR -1
+#define MAJ_AVAILABLE 1
+#define MAJ_NOTAVAILABLE 0
 
 class esp32FOTA2
 {
@@ -40,29 +42,32 @@ public:
   uint8_t execHTTPScheck(bool betaVersion = false);
   bool useDeviceID;
   String checkURL;
-  int  UpdateVersion;
-  int	 UpdateSubVersion;
-	int  UpdateBetaVersion;	
-	String getHTTPVersion();
-	String getHTTPSVersion();
-	bool UpdateWwwDirectory(void);
+  int UpdateVersion;
+  int UpdateSubVersion;
+  int UpdateBetaVersion;
+  String getHTTPVersion();
+  String getHTTPSVersion();
+  bool UpdateWwwDirectory(void);
+  bool UpdateWwwDirectoryFromGz();
 
 private:
   String getHeaderValue(String header, String headerName);
   String getDeviceID();
   String _firwmareType;
   int _firwmareVersion;
-  int	_firwmareSubVersion;
-	int _firwmareBetaVersion;
+  int _firwmareSubVersion;
+  int _firwmareBetaVersion;
   String _host;
   String _bin;
   String _wwwfiles[10];
   uint8_t NB_WWW_FILES = 0;
+  String _gzwwwfile;
   int _port;
   void downloadWwwFiles();
+  void downloadGzwwwFile();
 };
 
-extern const char* rootCACertificate;
+extern const char *rootCACertificate;
 
 extern esp32FOTA2 esp32FOTA;
 #endif

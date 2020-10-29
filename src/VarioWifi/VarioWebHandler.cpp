@@ -384,7 +384,8 @@ AsyncWebServerResponse *VarioWebHandler::handleFileDelete(AsyncWebServerRequest 
         return response;
     }
 
-    deleteRecursive(path);
+    SdCardHAL::deleteRecursive(path);
+
     response = request->beginResponse(200, "text/plain", "OK");
     return response;
 }
@@ -669,47 +670,6 @@ String VarioWebHandler::getFileSizeStringFromBytes(int bytes)
     return fsize;
 }
 
-void VarioWebHandler::deleteRecursive(String path)
-{
-    /***********************************/
-
-    File fileSD;
-
-    fileSD = SDHAL_SD.open((char *)path.c_str(), FILE_READ);
-    if (!fileSD.isDirectory())
-    {
-        fileSD.close();
-        SDHAL_SD.remove((char *)path.c_str());
-        return;
-    }
-
-    fileSD.rewindDirectory();
-
-    while (true)
-    {
-        File entry;
-        if (!(entry = fileSD.openNextFile(FILE_READ)))
-
-        {
-            break;
-        }
-
-        String entryPath = entry.name();
-        if (entry.isDirectory())
-        {
-            entry.close();
-            deleteRecursive(entryPath);
-        }
-        else
-        {
-            entry.close();
-            SDHAL_SD.remove((char *)entryPath.c_str());
-        }
-    }
-
-    SDHAL_SD.rmdir((char *)path.c_str());
-    fileSD.close();
-}
 
 void VarioWebHandler::backupFile(String pathOrig, String pathBack)
 {

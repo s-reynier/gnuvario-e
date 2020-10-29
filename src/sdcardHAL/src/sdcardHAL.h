@@ -33,24 +33,22 @@
 #include <SPI.h>
 #include "SdFat.h"
 
-
-
 //#if ENABLE_SOFTWARE_SPI_CLASS  // Must be set in SdFat/SdFatConfig.h
 //
 // Pin numbers in templates must be constants.
 
-	const uint8_t SOFT_MISO_PIN = SDCARD_MISO_PIN;
-	const uint8_t SOFT_MOSI_PIN = SDCARD_MOSI_PIN;
-	const uint8_t SOFT_SCK_PIN  = SDCARD_SCK_PIN;
-	//
-	// Chip select may be constant or RAM variable.
-	const uint8_t SD_CHIP_SELECT_PIN = SDCARD_CS_PIN;
+const uint8_t SOFT_MISO_PIN = SDCARD_MISO_PIN;
+const uint8_t SOFT_MOSI_PIN = SDCARD_MOSI_PIN;
+const uint8_t SOFT_SCK_PIN = SDCARD_SCK_PIN;
+//
+// Chip select may be constant or RAM variable.
+const uint8_t SD_CHIP_SELECT_PIN = SDCARD_CS_PIN;
 
-class SdCardHAL {
+class SdCardHAL
+{
 
-  public:
-
-	  boolean begin(void);
+public:
+	boolean begin(void);
 };
 
 extern SdFatSoftSpi<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> SDHAL_SD;
@@ -61,11 +59,12 @@ extern SdFatSoftSpi<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> SDHAL_SD;
 #include "SD.h"
 #include "SPI.h"
 
-class SdCardHAL { //public SDClass {
+class SdCardHAL
+{ //public SDClass {
 
-  public:
-
-	  boolean begin(void);
+public:
+	boolean begin(void);
+	static void deleteRecursive(String path);
 };
 
 #define SDHAL_SD SD
@@ -84,11 +83,11 @@ class SdCardHAL { //public SDClass {
 #include <SPI.h>
 #include <SdFat.h>
 
-class SdCardHAL : public SdFat {
+class SdCardHAL : public SdFat
+{
 
-  public:
-
-	  boolean begin(void);
+public:
+	boolean begin(void);
 };
 
 #endif
@@ -98,8 +97,7 @@ class SdCardHAL : public SdFat {
 #define SDCARD_STATE_READY 2
 #define SDCARD_STATE_ERROR -1
 
-extern SdCardHAL SDHAL; 
+extern SdCardHAL SDHAL;
 //#define _fs SDHAL
 
 #endif
-	
