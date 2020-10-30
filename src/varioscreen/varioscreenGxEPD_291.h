@@ -102,7 +102,7 @@
 #define MAX_CAR_TITRE_ENCOURS 			8				
 #define MAX_CAR_TITRE_CALIBR   			12
 #define MAX_CAR_TITRE_VEILLE				14			
-#define MAX_CAR_TITRE_CHARGE 				10
+#define MAX_CAR_TITRE_CHARGE 				9
 #define MAX_CAR_TITRE_CHARGER 			7
 #define MAX_CAR_TITRE_BATTERIE 			8
 

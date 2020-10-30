@@ -1430,6 +1430,89 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 	}
 }
 
+// ****************************************************************************************************************************
+void VarioScreen::ScreenViewBattery(boolean clear)
+// ****************************************************************************************************************************
+{
+	
+#ifdef SCREEN_DEBUG
+	SerialPort.println("Charge batterie");	
+#endif //SCREEN_DEBUG
+
+//setPage(int8_t page, boolean force = false);
+
+  if (clear) {
+	  display.setFullWindow();	
+		display.clearScreen(ColorScreen);
+		display.fillScreen(ColorScreen);
+	}
+	
+  display.setTextColor(GxEPD_BLACK);//display.setTextColor(GxEPD_BLACK);
+	display.setFont(&FreeSansBold12pt7b);
+	
+	display.setTextSize(1);
+	display.setCursor(55, 20);
+	display.print(varioLanguage.getText(TITRE_BATTERIE));
+		
+  display.setCursor(40, 40);
+	display.print(varioLanguage.getText(TITRE_CHARGE));
+	
+//	display.setFont(&FreeSansBold12pt7b);
+	char tmpbuffer[100];
+	sprintf(tmpbuffer,"%03d", varioHardwareManager.varioPower.getCapacite());
+	String tmpstr = String(tmpbuffer) +"%";
+	display.fillRect(0, 55, 190, 40, GxEPD_WHITE);
+	display.setCursor(40, 90);
+	display.setTextSize(2);
+	display.print(tmpstr);
+
+	display.setFont(&FreeSansBold12pt7b);
+	display.setTextSize(1);
+	tmpstr = "(";
+	sprintf(tmpbuffer,"%.2f", varioHardwareManager.varioPower.getTension());
+	tmpstr = tmpstr + String(tmpbuffer) + "v)";
+  display.fillRect(0, 110, 190, 30, GxEPD_WHITE);
+	display.setCursor(60, 130);
+	display.print(tmpstr);
+	sprintf(tmpbuffer,"%04d / %04d", varioHardwareManager.varioPower.getVoltage(), varioHardwareManager.varioPower.getRefVoltage());
+	tmpstr = String(tmpbuffer);
+  display.fillRect(0, 145, 190, 30, GxEPD_WHITE);
+	display.setCursor(30, 160);
+	display.setTextSize(1);
+	display.print(tmpstr);
+
+/*	
+	
+	display.setCursor(30, 50);
+	display.print(varioLanguage.getText(TITRE_BATTERIE));
+	
+	display.setCursor(20, 100);
+	display.print(varioLanguage.getText(TITRE_CHARGE));
+	
+	char tmpbuffer[100];
+	display.setTextSize(2);
+	sprintf(tmpbuffer,"%03d", varioHardwareManager.varioPower.getCapacite());
+	String tmpstr = String(tmpbuffer) +"%";
+  display.fillRect(0, 150, 190, 50, GxEPD_WHITE);
+	display.setCursor(20, 180);
+	display.print(tmpstr);
+	tmpstr = "(";
+	sprintf(tmpbuffer,"%.2f", varioHardwareManager.varioPower.getTension());
+	tmpstr = tmpstr + String(tmpbuffer) + "v)";
+  display.fillRect(0, 210, 190, 50, GxEPD_WHITE);
+	display.setCursor(5, 240);
+	display.print(tmpstr);
+	sprintf(tmpbuffer,"%04d / %04d", varioHardwareManager.varioPower.getVoltage(), varioHardwareManager.varioPower.getRefVoltage());
+	tmpstr = String(tmpbuffer);
+  display.fillRect(0, 260, 190, 50, GxEPD_WHITE);
+	display.setCursor(15, 280);
+	display.setTextSize(1);
+	display.print(tmpstr);
+*/
+	
+	updateScreen ();
+}	
+
 const unsigned char volume75_1_icons[] = { 
 // '750px-Speaker_Icon_1', 75x75px
 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xe0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,

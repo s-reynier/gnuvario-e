@@ -111,7 +111,26 @@ float VarioPower::getTension()
 void VarioPower::setRefVoltage(uint16_t refVoltage)
 /*****************************/
 {
+	
+#ifdef POWER_DEBUG
+  SerialPort.print("RefVoltage : ");
+	SerialPort.println(refVoltage);
+#endif //IMU_DEBUG
+
 	REF_VOLTAGE = refVoltage;
+	GnuSettings.REF_VOLTAGE = REF_VOLTAGE;
+	
+	char tmpchar[20] = "/params.jso";
+	GnuSettings.saveConfigurationVario(tmpchar);
+
+#ifdef POWER_DEBUG
+  SerialPort.print("REF_VOLTAGE : ");
+	SerialPort.println(REF_VOLTAGE);
+  SerialPort.print("GnuSettings.REF_VOLTAGE : ");
+	SerialPort.println(GnuSettings.REF_VOLTAGE);
+#endif //IMU_DEBUG
+
+	beeper.generateTone(800, 500);
 }
 
 /*****************************/
@@ -211,7 +230,7 @@ void VarioPower::disableAlim()
 void VarioPower::ScreenCharge() 
 {	
   // reset variables 
-#ifdef PRO_DEBUG
+#ifdef POWER_DEBUG
   SerialPort.println("Batterie en Charge");
 #endif //IMU_DEBUG
   

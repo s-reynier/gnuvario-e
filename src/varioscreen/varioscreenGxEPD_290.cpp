@@ -54,6 +54,7 @@
  *		1.1.4  23/05/20   Passage vario en -XX.X								  								 *
  *		1.1.5  23/05/20   Passage vario en -XX.X								  								 *
  *    1.1.6  27/07/20   Affichage de la batterie au démarrage                    *
+ *    1.1.7  19/10/20   Ajout ScreenViewBattery(boolean clear)                   *
  *																				                                       *
  *********************************************************************************/
  
@@ -1355,6 +1356,89 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 		}
 	}
 }
+
+// ****************************************************************************************************************************
+void VarioScreen::ScreenViewBattery(boolean clear)
+// ****************************************************************************************************************************
+{
+	
+#ifdef SCREEN_DEBUG
+	SerialPort.println("Charge batterie");	
+#endif //SCREEN_DEBUG
+
+//setPage(int8_t page, boolean force = false);
+
+  if (clear) {
+	  display.setFullWindow();	
+		display.clearScreen(ColorScreen);
+		display.fillScreen(ColorScreen);
+	}
+	
+  display.setTextColor(GxEPD_BLACK);//display.setTextColor(GxEPD_BLACK);
+	display.setFont(&FreeSansBold9pt7b);
+	display.setTextSize(1);
+	
+	display.drawInvertedBitmap(20, 26, logo_gnuvario, 94, 74, ColorText); //94
+
+	display.setCursor(170, 20);
+	display.print(varioLanguage.getText(TITRE_BATTERIE));
+		
+  display.setCursor(160, 40);
+	display.print(varioLanguage.getText(TITRE_CHARGE));
+	
+	char tmpbuffer[100];
+	sprintf(tmpbuffer,"%03d", varioHardwareManager.varioPower.getCapacite());
+	String tmpstr = String(tmpbuffer) +"%";
+	display.fillRect(150, 45, 120, 30, GxEPD_WHITE);
+	display.setCursor(160, 70);
+	display.setTextSize(2);
+	display.print(tmpstr);
+
+	display.setTextSize(1);
+	tmpstr = "(";
+	sprintf(tmpbuffer,"%.2f", varioHardwareManager.varioPower.getTension());
+	tmpstr = tmpstr + String(tmpbuffer) + "v)";
+  display.fillRect(150, 75, 110, 20, GxEPD_WHITE);
+	display.setCursor(180, 90);
+	display.print(tmpstr);
+	sprintf(tmpbuffer,"%04d / %04d", varioHardwareManager.varioPower.getVoltage(), varioHardwareManager.varioPower.getRefVoltage());
+	tmpstr = String(tmpbuffer);
+  display.fillRect(150, 96, 110, 20, GxEPD_WHITE);
+	display.setCursor(160, 110);
+	display.setTextSize(1);
+	display.print(tmpstr);
+
+/*	
+	
+	display.setCursor(30, 50);
+	display.print(varioLanguage.getText(TITRE_BATTERIE));
+	
+	display.setCursor(20, 100);
+	display.print(varioLanguage.getText(TITRE_CHARGE));
+	
+	char tmpbuffer[100];
+	display.setTextSize(2);
+	sprintf(tmpbuffer,"%03d", varioHardwareManager.varioPower.getCapacite());
+	String tmpstr = String(tmpbuffer) +"%";
+  display.fillRect(0, 150, 190, 50, GxEPD_WHITE);
+	display.setCursor(20, 180);
+	display.print(tmpstr);
+	tmpstr = "(";
+	sprintf(tmpbuffer,"%.2f", varioHardwareManager.varioPower.getTension());
+	tmpstr = tmpstr + String(tmpbuffer) + "v)";
+  display.fillRect(0, 210, 190, 50, GxEPD_WHITE);
+	display.setCursor(5, 240);
+	display.print(tmpstr);
+	sprintf(tmpbuffer,"%04d / %04d", varioHardwareManager.varioPower.getVoltage(), varioHardwareManager.varioPower.getRefVoltage());
+	tmpstr = String(tmpbuffer);
+  display.fillRect(0, 260, 190, 50, GxEPD_WHITE);
+	display.setCursor(15, 280);
+	display.setTextSize(1);
+	display.print(tmpstr);
+*/
+	
+	updateScreen ();
+}	
 
 const unsigned char volume75_1_icons[] = { 
 // '750px-Speaker_Icon_1', 75x75px

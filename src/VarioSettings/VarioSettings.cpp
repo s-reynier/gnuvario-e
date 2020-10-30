@@ -63,6 +63,8 @@
 /*                      Ajout VARIOMETER_INTEGRATED_CLIMB_RATE                   */
 /*    1.3.7 09/06/20    Ajout VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE      */
 /*                      Modification VARIOMETER_SENT_LXNAV_SENTENCE              */
+/*    1.3.8 24/10/20    Ajout REF_VOLTAGE                                        */
+/*    1.3.9 26/10/20    Correction Aleksandr Stroganov <a.stroganov@me.com>      */
 /*                                                                               */
 /*********************************************************************************/
 
@@ -1008,7 +1010,7 @@ void VarioSettings::loadConfigurationVario(char *filename) {
 
 //	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 790;
 //	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(13) + 1090;
-  const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(13) + JSON_OBJECT_SIZE(17) + 1090;
+  const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(14) + JSON_OBJECT_SIZE(17) + 1090;
   DynamicJsonDocument doc(capacity);
 
   SerialPort.println("deserialisation");
@@ -1210,6 +1212,18 @@ void VarioSettings::loadConfigurationVario(char *filename) {
   SerialPort.print("LANGUAGE : ");
   SerialPort.println(LANGUAGE);
 
+	if (Systeme.containsKey("REF_VOLTAGE")) {
+		     tmpValue = Systeme["REF_VOLTAGE"]; 
+		SerialPort.print("Json Recup - ");
+	} else {
+		tmpValue = DEFAULT_REF_VOLTAGE;
+		MajFileParams = true;																		
+		SerialPort.print("Defaut Recup - ");
+	}
+  REF_VOLTAGE = tmpValue;
+  SerialPort.print("REF_VOLTAGE : ");
+  SerialPort.println(REF_VOLTAGE);
+
 	//*****    GENERAL *****
 
   SerialPort.println("****** General *******");
@@ -1240,7 +1254,7 @@ void VarioSettings::loadConfigurationVario(char *filename) {
 		SerialPort.print("Defaut Recup - ");
 	}
   VARIOMETER_GLIDER_SELECT = tmpValue;
-  SerialPort.print("Time Zone : ");
+  SerialPort.print("Glider Select : ");
   SerialPort.println(VARIOMETER_GLIDER_SELECT);  
 	
 	if (General_GLIDER.containsKey("GLIDER_NAME1")) {
@@ -1678,7 +1692,7 @@ void VarioSettings::saveConfigurationVario(char *filename) {
   // Use arduinojson.org/assistant to compute the capacity.
 //	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 2*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(11) + JSON_OBJECT_SIZE(12) + 790;
 //	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(13) + 1090;
-  const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(13) + JSON_OBJECT_SIZE(17) + 1090;
+  const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(3) + 3*JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(14) + JSON_OBJECT_SIZE(17) + 1090;
 	DynamicJsonDocument doc(capacity);
 
   SerialPort.println("****** GnuvarioE *******");
@@ -1727,6 +1741,8 @@ void VarioSettings::saveConfigurationVario(char *filename) {
 	Systeme["URL_UPDATE"] = URL_UPDATE;
 
 	Systeme["LANGUAGE"] = LANGUAGE;
+
+	Systeme["REF_VOLTAGE"] = REF_VOLTAGE;
 		
 	//*****    GENERAL *****
 
@@ -1994,7 +2010,8 @@ double Statistic::getGain(void) {
 				"SLEEP_THRESHOLD_CPS": 50,
 				"ALTERNATE_DATA_DURATION": 2000,
 				"URL_UPDATE": "http://gnuvario-e.yj.fr/webupdate/checkversion",
-				"LANGUAGE": 0
+				"LANGUAGE": 0,
+				"REF_VOLTAGE": 2280
     },
     "General": {
         "PILOT_NAME": "MagaliXXXXXXXXXXXXXX",
@@ -2024,7 +2041,7 @@ double Statistic::getGain(void) {
 				"ACCELERATION_MEASURE_STANDARD_DEVIATION": 0.35,
 				"VARIOMETER_INTEGRATED_CLIMB_RATE": 0,
 				"SETTINGS_VARIO_PERIOD_COUNT":5,
-				"BLUETOOTH_SEND_CALIBRATED_ALTITUDE":0,
+				"BLUETOOTH_SEND_CALIBRATED_ALTITUDE":0
    },
     "Flight start": {
         "FLIGHT_START_MIN_TIMESTAMP": 15000,

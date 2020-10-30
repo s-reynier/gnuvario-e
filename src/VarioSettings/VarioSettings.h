@@ -61,6 +61,7 @@
 /*                      Ajout VARIOMETER_INTEGRATED_CLIMB_RATE                   */
 /*    1.3.7 09/06/20    Ajout VARIOMETER_BLUETOOTH_SEND_CALIBRATED_ALTITUDE      */
 /*                      Modification VARIOMETER_SENT_LXNAV_SENTENCE              */
+/*    1.3.8 24/10/20    Ajout REF_VOLTAGE                                        */
 /*                                                                               */
 /*********************************************************************************/
 
@@ -77,7 +78,7 @@
 #endif
 
 
-#define PARAMS_VERSION "1.5"
+#define PARAMS_VERSION "1.6"
 
 /*----------------------------*/
 /*          DEFAULT           */
@@ -188,6 +189,8 @@
 
 #define DEFAULT_VARIOMETER_INTEGRATED_CLIMB_RATE					false
 #define DEFAULT_SETTINGS_VARIO_PERIOD_COUNT  							5
+
+#define DEFAULT_REF_VOLTAGE       							          2280
   
 /*----------------------------*/
 /*          SOFTWARE          */
@@ -448,6 +451,8 @@ class VarioSettings {
 		boolean  VARIOMETER_INTEGRATED_CLIMB_RATE						= DEFAULT_VARIOMETER_INTEGRATED_CLIMB_RATE;
 		
 		uint8_t	 SETTINGS_VARIO_PERIOD_COUNT	 							= DEFAULT_SETTINGS_VARIO_PERIOD_COUNT;
+		
+		uint16_t REF_VOLTAGE																= DEFAULT_REF_VOLTAGE;
 		
  protected:
 #ifdef HAVE_SDCARD

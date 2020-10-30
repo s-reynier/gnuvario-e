@@ -49,6 +49,7 @@
  *		1.1.4  23/05/20   Passage vario en -XX.X								  								 *
  *    1.1.5  27/07/20   Affichage de la batterie au démarrage                    *
  *    1.1.6  27/09/20   Ajout DISPLAY_LIGHT                                      *
+ *    1.1.7  19/10/20   Ajout ScreenViewBattery(boolean clear)                   *
  *                                                                               *
  *********************************************************************************/
 
@@ -99,7 +100,7 @@
 #define MAX_CAR_TITRE_ENCOURS 			8				
 #define MAX_CAR_TITRE_CALIBR   			12
 #define MAX_CAR_TITRE_VEILLE				14			
-#define MAX_CAR_TITRE_CHARGE 				10
+#define MAX_CAR_TITRE_CHARGE 				9
 #define MAX_CAR_TITRE_CHARGER 			7
 #define MAX_CAR_TITRE_BATTERIE 			8
 
@@ -307,6 +308,7 @@ class VarioScreen {
 	void SetViewSound(int volume);	
 	void ScreenViewMessage(String message, int delai);
 	void ScreenBackground(int8_t page);
+	void ScreenViewBattery(boolean clear);
 		
 	void CreateObjectDisplay(int8_t ObjectDisplayTypeID, VarioScreenObject* object, int8_t page, int8_t multiDisplayID, boolean actif); 
 	void updateData(int8_t ObjectDisplayTypeID, double data);

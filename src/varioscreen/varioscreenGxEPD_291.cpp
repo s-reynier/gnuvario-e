@@ -57,6 +57,7 @@
  *    1.1.7  04/10/20   Modification position finesse                            *
  *                      Modification position titre finesse                      *
  *    1.1.8  19/10/20   Ajout ScreenViewBattery(boolean clear)                   *
+ *    1.1.9  26/10/20   Correction Aleksandr Stroganov <a.stroganov@me.com>      *    
  *                                                                               *
  *********************************************************************************/
  
@@ -1168,29 +1169,27 @@ void VarioScreen::ScreenViewStatPage(int PageStat)
 		display.print(tmpbuffer);
 	 
    double tmpVarioMin = varioData.flystat.GetVarioMin();
-	 sprintf(tmpbuffer,"Vario Min : %1.1f",tmpVarioMin); 
 	 if (tmpVarioMin > 10) tmpVarioMin = 9.9;
 	 if (tmpVarioMin < -10) tmpVarioMin = -9.9;
+	 sprintf(tmpbuffer,"Vario Min : %1.1f",tmpVarioMin); 
 	 display.setCursor(0, 140);
 	 display.print(tmpbuffer);
 
    double tmpVarioMax = varioData.flystat.GetVarioMax();
-	 sprintf(tmpbuffer,"Vario Max : %1.1f",tmpVarioMax); 
 	 if (tmpVarioMax > 10) tmpVarioMax = 9.9;
 	 if (tmpVarioMax < -10) tmpVarioMax = -9.9;
+	 sprintf(tmpbuffer,"Vario Max : %1.1f",tmpVarioMax); 
 	 display.setCursor(0, 165);
 	 display.print(tmpbuffer);
 	 
    double tmpSpeed = varioData.flystat.GetSpeed();
-	 sprintf(tmpbuffer,"Vitesse : %3.0f",tmpSpeed); //%02d.%02d.%02d", tmpDate[0],tmpDate[1],tmpDate[2]);
 	 if (tmpSpeed > 1000) tmpSpeed = 999;
+	 sprintf(tmpbuffer,"Vitesse : %3.0f",tmpSpeed); //%02d.%02d.%02d", tmpDate[0],tmpDate[1],tmpDate[2]);
 	 display.setCursor(0, 190);
 	 display.print(tmpbuffer);
 	 display.drawLine(0, 20, 128, 20, GxEPD_BLACK);
      //display.drawLine(145, 20, 145, 128, GxEPD_BLACK);
 	 //display.drawLine(146, 20, 146, 128, GxEPD_BLACK);
-	 
-	 
 }
 
 //****************************************************************************************************************************
@@ -1400,11 +1399,11 @@ void VarioScreen::ScreenViewBattery(boolean clear)
 	display.setFont(&FreeSansBold9pt7b);
 	display.setTextSize(1);
 	
-	display.setCursor(20, 50);
+	display.setCursor(30, 50);
 	display.print(varioLanguage.getText(TITRE_BATTERIE));
 	
 	display.setCursor(20, 100);
-	display.print(display.print(varioLanguage.getText(TITRE_CHARGE)));
+	display.print(varioLanguage.getText(TITRE_CHARGE));
 	
 	char tmpbuffer[100];
 	display.setTextSize(2);
@@ -1422,7 +1421,7 @@ void VarioScreen::ScreenViewBattery(boolean clear)
 	sprintf(tmpbuffer,"%04d / %04d", varioHardwareManager.varioPower.getVoltage(), varioHardwareManager.varioPower.getRefVoltage());
 	tmpstr = String(tmpbuffer);
   display.fillRect(0, 260, 190, 50, GxEPD_WHITE);
-	display.setCursor(10, 280);
+	display.setCursor(15, 280);
 	display.setTextSize(1);
 	display.print(tmpstr);
 	
