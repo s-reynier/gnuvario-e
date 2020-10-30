@@ -546,7 +546,7 @@
  *                                                                                                            *    
  **************************************************************************************************************/
 
- /*************************************************************************************************************
+/*************************************************************************************************************
   *      Literature                                                                                           *
   *                                                                                                           *
   *      MPU9250                                                                                              *                                                                                                     
@@ -556,7 +556,7 @@
   *    https://www.instructables.com/id/Tilt-Compensated-Compass/                                             *
   *                                                                                                           *
   *************************************************************************************************************/
- 
+
 //*****************************
 // DEBBUGAGE                  *
 //*****************************
@@ -725,11 +725,11 @@ void setup()
   SerialPort.print("VERSION : ");
   SerialPort.println(VARIOVERSION);
 
-#if (VARIOVERSION == 154) 
+#if (VARIOVERSION == 154)
   SerialPort.println("VERSION : 1");
-#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291)) 
+#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291))
   SerialPort.println("VERSION : 2");
-#elif ((VARIOVERSION == 390) || (VARIOVERSION == 391)) 
+#elif ((VARIOVERSION == 390) || (VARIOVERSION == 391))
   SerialPort.println("VERSION : 3");
 #else
   SerialPort.println("VERSION : XXX");
@@ -746,22 +746,22 @@ void setup()
   SerialPort.println("ECRAN : 2.90 PORTRAIT");
 #endif
 
-#if defined (L86)
+#if defined(L86)
   SerialPort.println("GPS : L86");
-#elif defined (ATGM336H)
+#elif defined(ATGM336H)
   SerialPort.println("GPS : ATGM336H");
-#elif defined (NEO_6M)
+#elif defined(NEO_6M)
   SerialPort.println("GPS : NEO_6M");
 #else
   SerialPort.println("GPS : XXXXX");
 #endif
 
-#if defined (HAVE_BLUETOOTH)
+#if defined(HAVE_BLUETOOTH)
   SerialPort.println("BLUETOOTH : Enable");
-#elif defined (HAVE_BLE)
+#elif defined(HAVE_BLE)
   SerialPort.println("BLE : Enable");
 #endif
-  
+
   /************************/
   /*    BOOT SEQUENCE     */
   /************************/
@@ -871,6 +871,9 @@ void setup()
   ESP_LOGI(TAG, "Display Boot");
 #endif //EPS32
 
+  beeper.generateTone(659, 150);
+  beeper.generateTone(1318, 150);
+  beeper.generateTone(2636, 150);
   screen.ScreenViewInit(VERSION, SUB_VERSION, AUTHOR, BETA_CODE);
 
 #endif //HAVE_SCREEN
@@ -1074,7 +1077,7 @@ void loop()
     {
       if (varioData.haveNewClimbRate())
       {
-/*        double tmpvalue = varioData.getClimbRate();
+        /*        double tmpvalue = varioData.getClimbRate();
 #if (VARIOSCREEN_SIZE == 154)
         if (tmpvalue > 9.9)
           tmpvalue = 9.9;
@@ -1094,7 +1097,7 @@ void loop()
     else
     {
 
-/*      double tmpvalue = varioData.getVelocity();
+      /*      double tmpvalue = varioData.getVelocity();
 #if (VARIOSCREEN_SIZE == 154)
       if (tmpvalue > 9.9)
         tmpvalue = 9.9;
@@ -1140,7 +1143,6 @@ void loop()
 #endif //PROG_DEBUG
 #endif //HAVE_SPEAKER
 
-
   //**********************************************************
   //  TRAITEMENT DU SON
   //**********************************************************
@@ -1148,10 +1150,9 @@ void loop()
   //***************************************
   //  TEST
   //***************************************
-#if defined(TONEXTDAC) || defined(TONEI2S) 
+#if defined(TONEXTDAC) || defined(TONEI2S)
   toneHAL.update();
 #endif
-
 
   //**********************************************************
   //  EMISSION TRAME BT
@@ -1201,7 +1202,7 @@ void loop()
     SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
   }
-#endif // HAVE_BLUETOOTH 
+#endif // HAVE_BLUETOOTH
 
 #ifdef HAVE_SCREEN
   if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
@@ -1261,7 +1262,7 @@ void loop()
 #ifdef GPS_DEBUG
     SerialPort.print("Sat : ");
     SerialPort.println(nmeaParser.satelliteCount);
-#endif //GPS_DEBUG 
+#endif //GPS_DEBUG \
        //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
   }
 #endif //HAVE_GPS
@@ -1432,7 +1433,7 @@ void loop()
   }
 
   varioData.displayUpdateState = false;
-  
+
 #endif //HAVE_SCREEN
 
   //**********************************************************

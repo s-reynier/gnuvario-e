@@ -1202,7 +1202,17 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
     }
 
     //decompression de l'archive dans /www
-    tarGzExpander(SD, (char *)myfilename.c_str(), SD, "/");
+    gzExpander(SD, (char *)myfilename.c_str(), SD, "/www.tar");
+    tarExpander(SD, "/www.tar", SD, "/");
+
+    //suppression de l'archive
+    if (!SDHAL_SD.remove("/www.tar"))
+    {
+#ifdef WIFI_DEBUG
+        SerialPort.println("[HTTP] le fichier n'a pas pu être supprimé");
+#endif
+        return false;
+    }
 
     //suppression de l'archive
     if (!SDHAL_SD.remove((char *)myfilename.c_str()))
