@@ -579,6 +579,7 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
         AsyncWebParameter *p = request->getParam("path");
         path = p->value().c_str();
     }
+
     else
     {
         response = request->beginResponse(500, "text/plain", "BAD ARGS");
@@ -587,30 +588,65 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
 
     File dataFile;
 
-    //test présence fichier
-    if (dataFile = SDHAL_SD.open(path, FILE_READ))
-    {
-        //parsage du fichier IGC
-        VarioIgcParser varioIgcParser;
-        varioIgcParser.parseFile(path);
+    TaskHandle_t taskParse;
+    xTaskCreate(
+        _doParseIgcAndInsert,   /* Task function. */
+        "doParseIgcAndInsert",  /* String with name of task. */
+        20000,                  /* Stack size in bytes. */
+        (void *)(path.c_str()), /* Parameter passed as input of the task */
+        1,                      /* Priority of the task. */
+        &taskParse);            /* Task handle. */
 
-        VarioSqlFlight varioSqlFlight;
-        varioSqlFlight.insertFlight(varioIgcParser.getJson());
+    response = request->beginChunkedResponse("text/plain", [taskParse](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+        //Write up to "maxLen" bytes into "buffer" and return the amount written.
+        //index equals the amount of bytes that have been already sent
+        //You will be asked for more data until 0 is returned
+        //Keep in mind that you can not delay or yield waiting for more data!
 
-        String tmpFullName = dataFile.name();
-        dataFile.close();
-
-        String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
-        if (!SDHAL_SD.exists("/vols/parsed"))
+        if (eTaskGetState(taskParse) == eDeleted)
         {
-            SDHAL_SD.mkdir("/vols/parsed");
+            return 0;
         }
-        SDHAL_SD.rename(path, "/vols/parsed/" + filename);
+        else
+        {
+            buffer[0] = 1;
+            return 1;
+        }
 
-        response = request->beginResponse(200, "text/plain", "OK");
-        return response;
-    }
-    response = request->beginResponse(500, "text/plain", "BAD ARGS");
+        return varioSqlFlightHelper.readData(buffer, maxLen);
+    });
+
+    // //test présence fichier
+    // if (dataFile = SDHAL_SD.open(path, FILE_READ))
+    // {
+    //     //parsage du fichier IGC
+    //     VarioIgcParser varioIgcParser;
+    //     varioIgcParser.parseFile(path);
+
+    //     VarioSqlFlight varioSqlFlight;
+    //     if (varioSqlFlight.insertFlight(varioIgcParser.getJson()))
+    //     {
+
+    //         String tmpFullName = dataFile.name();
+    //         dataFile.close();
+
+    //         String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
+    //         if (!SDHAL_SD.exists("/vols/parsed"))
+    //         {
+    //             SDHAL_SD.mkdir("/vols/parsed");
+    //         }
+    //         SDHAL_SD.rename(path, "/vols/parsed/" + filename);
+
+    //         response = request->beginResponse(200, "text/plain", "OK");
+    //         return response;
+    //     }
+    //     else
+    //     {
+    //         response = request->beginResponse(500, "text/plain", "CANNOT INSERT FLIGHT");
+    //         return response;
+    //     }
+    // }
+    // response = request->beginResponse(500, "text/plain", "BAD ARGS");
     return response;
 }
 
@@ -669,7 +705,6 @@ String VarioWebHandler::getFileSizeStringFromBytes(int bytes)
 
     return fsize;
 }
-
 
 void VarioWebHandler::backupFile(String pathOrig, String pathBack)
 {
@@ -778,10 +813,6 @@ AsyncWebServerResponse *VarioWebHandler::handleFirmwareVersion(AsyncWebServerReq
     SerialPort.println("handleFirmwareVersion");
 #endif
 
-#ifdef WIFI_DEBUG
-    SerialPort.println(output);
-#endif
-
     AsyncWebServerResponse *response = request->beginChunkedResponse("application/json", [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
         //Write up to "maxLen" bytes into "buffer" and return the amount written.
         //index equals the amount of bytes that have been already sent
@@ -872,7 +903,12 @@ void VarioWebHandler::handleSetSite(AsyncWebServerRequest *request, uint8_t *dat
         SerialPort.println(content);
 #endif
 
-        varioSqlFlight.insertSite(content);
+        if (!varioSqlFlight.insertSite(content))
+        {
+            request->send(500);
+
+            return;
+        };
     }
 
     request->send(200);
@@ -902,4 +938,56 @@ AsyncWebServerResponse *VarioWebHandler::handleDelSite(AsyncWebServerRequest *re
     response = request->beginResponse(200, "text/plain", "OK");
 
     return response;
+}
+
+void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
+{
+#ifdef WIFI_DEBUG
+    SerialPort.println("_doParseIgcAndInsert");
+#endif
+    String path = String((char *)parameter);
+    File dataFile;
+    //test présence fichier
+    if (dataFile = SDHAL_SD.open(path, FILE_READ))
+    {
+        String tmpFullName = dataFile.name();
+
+        //parsage du fichier IGC
+        VarioIgcParser varioIgcParser;
+        varioIgcParser.parseFile(path);
+
+        VarioSqlFlight varioSqlFlight;
+        if (varioSqlFlight.insertFlight(varioIgcParser.getJson()))
+        {
+            String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
+#ifdef WIFI_DEBUG
+            SerialPort.print("Path origine: ");
+            SerialPort.println(path);
+
+            SerialPort.print("Filename a deplacer: ");
+            SerialPort.println(filename);
+#endif
+            if (!SDHAL_SD.exists("/vols/parsed"))
+            {
+                SDHAL_SD.mkdir("/vols/parsed");
+            }
+            SDHAL_SD.rename(path, "/vols/parsed/" + filename);
+#ifdef WIFI_DEBUG
+            SerialPort.println("Deplacement du fichier termine");
+#endif
+            vTaskDelete(NULL);
+            // response = request->beginResponse(200, "text/plain", "OK");
+            // return response;
+        }
+        else
+        {
+#ifdef WIFI_DEBUG
+            SerialPort.println("ECHEC de l insertion");
+#endif
+            vTaskDelete(NULL);
+            // response = request->beginResponse(500, "text/plain", "CANNOT INSERT FLIGHT");
+            // return response;
+        }
+        return;
+    }
 }

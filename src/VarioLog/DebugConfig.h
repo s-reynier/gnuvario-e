@@ -92,9 +92,9 @@
 #define WIFI_DEBUG
 //#define SOUND_DEBUG
 //#define AGL_DEBUG
-//#define SQL_DEBUG
+#define SQL_DEBUG
 //#define BEARING_DEBUG
 //#define TWOWIRESCH_DEBUG
-#define POWER_DEBUG
+// #define POWER_DEBUG
 #endif //ENABLE_DEBUG
 #endif

@@ -39,7 +39,7 @@ public:
     bool deleteSite(uint8_t id);
     bool initGetFlightsQuery(uint16_t limit, uint16_t offset);
     //String getNextFlight();
-    bool getNextFlight(bool &firstline, RingBuf<char, 2048> &buffer);
+    bool getNextFlight(bool &firstline, RingBuf<char, 1024> &buffer);
     void executeMigration(String version, String sql);
     String escapeJson(const String &s);
 };

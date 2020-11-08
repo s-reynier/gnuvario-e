@@ -533,6 +533,7 @@ void VarioWifi::startWebServer()
 
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
     
     server.begin();
 }

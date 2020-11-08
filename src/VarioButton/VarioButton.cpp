@@ -504,7 +504,7 @@ void VARIOButtonScheduleur::WifiServeur(void)
 
 	/*START SERVEUR WEB */
 	TaskHandle_t taskWF;
-	xTaskCreatePinnedToCore(startWifi, "VWF", 10000, NULL, 1, &taskWF, 0);
+	xTaskCreatePinnedToCore(startWifi, "VWF", 10000, NULL, 2, &taskWF, 0);
 
 	// varioWifiServer.connect();
 

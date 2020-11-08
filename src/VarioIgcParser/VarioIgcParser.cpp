@@ -24,6 +24,8 @@ boolean VarioIgcParser::parseFile(String path)
 {
     File dataFile;
     String buffer;
+    char tmpBuffer[100];
+    uint8_t tmpBufferPos = 0;
     boolean startHeightSet = false;
     boolean startFlightTimeSet = false;
     minHeight = 9999;
@@ -46,94 +48,119 @@ boolean VarioIgcParser::parseFile(String path)
     SerialPort.println(md5);
 #endif //WIFI_DEBUG
 
+    //on ferme pour libérer la mémoire
+    dataFile.close();
+    if (!(dataFile = SDHAL_SD.open(path.c_str(), FILE_READ)))
+    {
+        return false;
+    }
+
     //retour au debut du fichier
     dataFile.seek(0);
 
     while (dataFile.available())
     {
-        buffer = dataFile.readStringUntil('\n');
+#ifdef WIFI_DEBUG
+        SerialPort.print("-");
+#endif //WIFI_DEBUG
+        tmpBufferPos = 0;
+        while (dataFile.available() && dataFile.peek() != '\n' && tmpBufferPos < 99) // note how this also prevents the buffer from overflowing (49 max to leave space for '\0'!)
+        {
+#ifdef WIFI_DEBUG
+            SerialPort.print("=");
+#endif //WIFI_DEBUG
+            tmpBuffer[tmpBufferPos] = dataFile.read();
+            tmpBufferPos++;
+        }
+        if (tmpBufferPos > 0)
+        {
+            //on lit aussi le \n qui traine
+            dataFile.read();
 
-        if (buffer.startsWith("HFDTE"))
-        {
-            // date de la trace
-            flightDate = buffer.substring(5);
-            flightDate.trim();
-            //inversion pour format americain
-            flightDate = "20" + flightDate.substring(4, 6) + "-" + flightDate.substring(2, 4) + "-" + flightDate.substring(0, 2);
+            tmpBuffer[tmpBufferPos + 1] = '\0';
+            buffer = String(tmpBuffer);
+            buffer.trim();
 #ifdef WIFI_DEBUG
-            SerialPort.print("buffer : ");
-            SerialPort.println(buffer);
-            SerialPort.print("flightDate : ");
-            SerialPort.println(flightDate);
+            SerialPort.print(".");
+            // SerialPort.print(" buffer : ");
+            // SerialPort.println(buffer);
 #endif //WIFI_DEBUG
-        }
-        else if (buffer.startsWith("HFPLTPILOTINCHARGE:"))
-        {
-            //nom du pilote
-            pilot = buffer.substring(19);
-            pilot.trim();
-#ifdef WIFI_DEBUG
-            SerialPort.print("buffer : ");
-            SerialPort.println(buffer);
-            SerialPort.print("pilot : ");
-            SerialPort.println(pilot);
-#endif //WIFI_DEBUG
-        }
-        else if (buffer.startsWith("HFGTYGLIDERTYPE:"))
-        {
-            //nom de la voile
-            wing = buffer.substring(16);
-            wing.trim();
-#ifdef WIFI_DEBUG
-            SerialPort.print("buffer : ");
-            SerialPort.println(buffer);
-            SerialPort.print("wing : ");
-            SerialPort.println(wing);
-#endif //WIFI_DEBUG
-        }
-        else if (buffer.startsWith("B"))
-        {
-            //trame trace
-            // B1243314503488N00351234EA0088400927
-            // B 12 43 31 4503488N 00351234E A 00884 00927
-            //lat lon DDMMmmmN  DDDMMmmmE
-            String hms = buffer.substring(1, 7);
-            hms = hms.substring(0, 2) + ":" + hms.substring(2, 4) + ":" + hms.substring(4, 6);
-            int16_t nPos = buffer.indexOf("N");
-            int16_t ePos = buffer.indexOf("E");
-            uint8_t aPos = buffer.indexOf("A");
-            String lat = "";
-            String lon = "";
-            if (nPos != -1 && ePos != -1)
+            if (buffer.startsWith("HFDTE"))
             {
-                lat = buffer.substring(7, nPos);
-                lon = buffer.substring(nPos + 1, ePos);
+                // date de la trace
+                flightDate = buffer.substring(5);
+                flightDate.trim();
+                //inversion pour format americain
+                flightDate = "20" + flightDate.substring(4, 6) + "-" + flightDate.substring(2, 4) + "-" + flightDate.substring(0, 2);
+#ifdef WIFI_DEBUG
+                SerialPort.print("flightDate : ");
+                SerialPort.println(flightDate);
+#endif //WIFI_DEBUG
             }
-            int16_t height = buffer.substring(aPos + 1, aPos + 6).toInt();
-
-            if (!startHeightSet)
+            else if (buffer.startsWith("HFPLTPILOTINCHARGE:"))
             {
-                startHeightSet = true;
-                startHeight = height;
+                //nom du pilote
+                pilot = buffer.substring(19);
+                pilot.trim();
+#ifdef WIFI_DEBUG
+                SerialPort.print("pilot : ");
+                SerialPort.println(pilot);
+#endif //WIFI_DEBUG
+            }
+            else if (buffer.startsWith("HFGTYGLIDERTYPE:"))
+            {
+                //nom de la voile
+                wing = buffer.substring(16);
+                wing.trim();
+#ifdef WIFI_DEBUG
+                SerialPort.print("wing : ");
+                SerialPort.println(wing);
+#endif //WIFI_DEBUG
+            }
+            else if (buffer.startsWith("B"))
+            {
+                //trame trace
+                // B1243314503488N00351234EA0088400927
+                // B 12 43 31 4503488N 00351234E A 00884 00927
+                //lat lon DDMMmmmN  DDDMMmmmE
+                String hms = buffer.substring(1, 7);
+                hms = hms.substring(0, 2) + ":" + hms.substring(2, 4) + ":" + hms.substring(4, 6);
+                int16_t nPos = buffer.indexOf("N");
+                int16_t ePos = buffer.indexOf("E");
+                uint8_t aPos = buffer.indexOf("A");
+                String lat = "";
+                String lon = "";
                 if (nPos != -1 && ePos != -1)
                 {
-                    startLat = lat.substring(0, 2).toDouble() + lat.substring(3, 8).toDouble() / 60000;
-                    startLon = lon.substring(0, 3).toDouble() + lon.substring(3, 8).toDouble() / 60000;
+                    lat = buffer.substring(7, nPos);
+                    lon = buffer.substring(nPos + 1, ePos);
                 }
-            }
-            if (!startFlightTimeSet)
-            {
-                startFlightTimeSet = true;
-                startFlightTime = hms;
-            }
-            endFlightTime = hms;
-            minHeight = min(height, minHeight);
-            maxHeight = max(height, maxHeight);
-            endHeight = height;
-            if (nPos != -1 && ePos != -1)
-            {
-                endLat = lat.substring(0, 2).toDouble() + lat.substring(3, 8).toDouble() / 60000;
-                endLon = lon.substring(0, 3).toDouble() + lon.substring(3, 8).toDouble() / 60000;
+                int16_t height = buffer.substring(aPos + 1, aPos + 6).toInt();
+
+                if (!startHeightSet)
+                {
+                    startHeightSet = true;
+                    startHeight = height;
+                    if (nPos != -1 && ePos != -1)
+                    {
+                        startLat = lat.substring(0, 2).toDouble() + lat.substring(3, 8).toDouble() / 60000;
+                        startLon = lon.substring(0, 3).toDouble() + lon.substring(3, 8).toDouble() / 60000;
+                    }
+                }
+                if (!startFlightTimeSet)
+                {
+                    startFlightTimeSet = true;
+                    startFlightTime = hms;
+                }
+                endFlightTime = hms;
+                minHeight = min(height, minHeight);
+                maxHeight = max(height, maxHeight);
+                endHeight = height;
+                if (nPos != -1 && ePos != -1)
+                {
+                    endLat = lat.substring(0, 2).toDouble() + lat.substring(3, 8).toDouble() / 60000;
+                    endLon = lon.substring(0, 3).toDouble() + lon.substring(3, 8).toDouble() / 60000;
+                }
             }
         }
     }

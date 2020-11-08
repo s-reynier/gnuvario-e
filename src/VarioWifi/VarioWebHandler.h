@@ -28,9 +28,13 @@
 #include <VarioSqlFlightHelper.h>
 #include <sdcardHAL.h>
 #include <esp32fota2.h>
+#include <DebugConfig.h>
 
 class VarioWebHandler
 {
+private:
+    static void _doParseIgcAndInsert(void *parameter);
+
 public:
     // Récupération de la liste des fichiers du répertoire vols au format json
     AsyncResponseStream *handleListFlights(AsyncWebServerRequest *request);

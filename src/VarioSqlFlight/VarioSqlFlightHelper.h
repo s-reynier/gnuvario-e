@@ -18,7 +18,7 @@ private:
     int16_t limitTemp;
     int16_t offsetTemp;
     int16_t limitMax = 10000;
-    RingBuf<char, 2048> myRingBuffer;
+    RingBuf<char, 1024> myRingBuffer;
     boolean firstLine;
     boolean isQueryInit;
     void feedBuffer();

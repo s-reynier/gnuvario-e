@@ -683,6 +683,7 @@ VarioData varioData;
 //****************************
 void setup()
 {
+
   //****************************
   //****************************
 
@@ -713,7 +714,7 @@ void setup()
   /* wait for devices power on */
   /*****************************/
 #ifdef PROG_DEBUG
-  delay(5000);
+  delay(2000);
 #else
   delay(VARIOMETER_POWER_ON_DELAY);
 #endif
@@ -766,15 +767,21 @@ void setup()
   /*    BOOT SEQUENCE     */
   /************************/
 
+  Serial.println("init");
+  Serial.println(ESP.getFreeHeap());
+
   varioData.init();
 
+  Serial.println("varioHardwareManager");
+  Serial.println(ESP.getFreeHeap());
   varioHardwareManager.init();
 
   /******************/
   /* Init Speaker   */
   /******************/
   varioHardwareManager.initSpeaker();
-
+  Serial.println("initSpeaker");
+  Serial.println(ESP.getFreeHeap());
   /******************/
   /* Init SDCARD    */
   /******************/
@@ -784,12 +791,14 @@ void setup()
 #else
   varioData.initSettings(true);
 #endif //TEST_SD
-
+  Serial.println("initSettings");
+  Serial.println(ESP.getFreeHeap());
   //**********************************************
   // Charge le fichier de langue
   //**********************************************
   varioLanguage.init(GnuSettings.LANGUAGE);
-
+  Serial.println("LANGUAGE");
+  Serial.println(ESP.getFreeHeap());
 #ifdef HAVE_SDCARD
   SerialPort.print("TITRE_TIME : ");
   SerialPort.println(varioLanguage.getText(TITRE_TIME));
@@ -823,6 +832,9 @@ void setup()
   SerialPort.println("initialization screen");
   SerialPort.flush();
 #endif //SCREEN_DEBUG
+
+  Serial.println("init before screen");
+  Serial.println(ESP.getFreeHeap());
 
 #if defined(ESP32)
   ESP_LOGI("SCREEN", "initialization screen");
@@ -870,12 +882,12 @@ void setup()
 #if defined(ESP32)
   ESP_LOGI(TAG, "Display Boot");
 #endif //EPS32
-
+  Serial.println("init before boot");
+  Serial.println(ESP.getFreeHeap());
   beeper.generateTone(659, 150);
   beeper.generateTone(1318, 150);
   beeper.generateTone(2636, 150);
   screen.ScreenViewInit(VERSION, SUB_VERSION, AUTHOR, BETA_CODE);
-
 #endif //HAVE_SCREEN
 
   //***********************************************
@@ -1012,6 +1024,7 @@ double temprature = 0;
 //*****************************
 void loop()
 {
+  SerialPort.println("loop");
   //****************************
   //****************************
 

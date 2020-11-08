@@ -117,11 +117,13 @@ int VarioSqlFlight::db_exec(sqlite3 *db, const char *sql)
 
 bool VarioSqlFlight::insertFlight(String data)
 {
+    Serial.println("debut insertFlight");
+    Serial.println(ESP.getFreeHeap());
 #ifdef SQL_DEBUG
     SerialPort.println(data);
 #endif //SQL_DEBUG
 
-    DynamicJsonDocument doc(4096);
+    DynamicJsonDocument doc(1024);
     DeserializationError err = deserializeJson(doc, data);
     if (err)
     {
@@ -186,8 +188,19 @@ bool VarioSqlFlight::insertFlight(String data)
             return false;
         }
 
-        sqlite3_finalize(res);
+        rc = sqlite3_finalize(res);
+        if (rc != SQLITE_OK)
+        {
+#ifdef SQL_DEBUG
+            SerialPort.println("cannot finalize");
+#endif //SQL_DEBUG
+            closeDb();
+            return false;
+        }
     }
+
+    Serial.println("fin delete insertFlight");
+    Serial.println(ESP.getFreeHeap());
 
     sql = "INSERT INTO flight (";
     sql = sql + "pilot, wing, flight_date, start_flight_time, end_flight_time, start_height, end_height, min_height, max_height, start_lat, start_lon, end_lat, end_lon";
@@ -977,7 +990,7 @@ bool VarioSqlFlight::initGetFlightsQuery(uint16_t limit, uint16_t offset)
 //     }
 // }
 
-bool VarioSqlFlight::getNextFlight(bool &firstline, RingBuf<char, 2048> &buffer)
+bool VarioSqlFlight::getNextFlight(bool &firstline, RingBuf<char, 1024> &buffer)
 {
 #ifdef SQL_DEBUG
     SerialPort.println("getNextFlight");
