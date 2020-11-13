@@ -78,7 +78,6 @@
 
 #include <VarioXBeeper.h>
 
-
 //******************************************
 //   Valeur maximum des données            *
 //******************************************
@@ -181,10 +180,8 @@ bool VarioData::initSettings(bool Test_SD)
 //*******************************************
 {
 #ifdef HAVE_SDCARD
-
   if (GnuSettings.initSettings(Test_SD))
   {
-
 #ifdef SDCARD_DEBUG
     SerialPort.println("initialization done.");
     SerialPort.flush();
@@ -203,7 +200,6 @@ bool VarioData::initSettings(bool Test_SD)
     SerialPort.println("Chargement des parametres depuis le fichier params.jso");
     char tmpchar[20] = "/params.jso";
     GnuSettings.loadConfigurationVario(tmpchar);
-
 #ifdef SDCARD_DEBUG
     //Debuuging Printing
     SerialPort.print("Pilot Name = ");
@@ -291,18 +287,19 @@ bool VarioData::initSettings(bool Test_SD)
 
     if (SDHAL_SD.exists(tmpFileName))
     {
-      if (!GnuSettings.readSDSettings(tmpFileName, &ModifValue)) return false;
+      if (!GnuSettings.readSDSettings(tmpFileName, &ModifValue))
+        return false;
     }
-		
-    //lecture parametre de configuration du son
 
+    //lecture parametre de configuration du son
     strcpy(tmpFileName, "/variosound.cfg");
 
     if (SDHAL_SD.exists(tmpFileName))
     {
-      if (!varioXBeeper.readSDSettings(tmpFileName)) return false;
-			varioXBeeper.majVarioSettings(&ModifValue);
-//			varioXBeeper.getFrequence(-1.5);
+      if (!varioXBeeper.readSDSettings(tmpFileName))
+        return false;
+      varioXBeeper.majVarioSettings(&ModifValue);
+      //			varioXBeeper.getFrequence(-1.5);
     }
     return true;
   }
@@ -849,39 +846,40 @@ void VarioData::updateBeeper(void)
 double VarioData::getVelocity()
 //*******************************************
 {
-	double tmpvalue = velocity;
-	if (tmpvalue > MAX_VELOCITY)
+  double tmpvalue = velocity;
+  if (tmpvalue > MAX_VELOCITY)
     tmpvalue = MAX_VELOCITY;
   if (tmpvalue < -MAX_VELOCITY)
     tmpvalue = -MAX_VELOCITY;
 
-	return tmpvalue;	
+  return tmpvalue;
 }
 
 //*******************************************
-double VarioData::getCalibratedAlti(){
-//*******************************************
-//	return calibratedAlti;
-	double tmpvalue = calibratedAlti;
-	if (tmpvalue > MAX_ALTI)
+double VarioData::getCalibratedAlti()
+{
+  //*******************************************
+  //	return calibratedAlti;
+  double tmpvalue = calibratedAlti;
+  if (tmpvalue > MAX_ALTI)
     tmpvalue = MAX_ALTI;
   if (tmpvalue < -MAX_ALTI)
     tmpvalue = -MAX_ALTI;
 
-	return tmpvalue;	
+  return tmpvalue;
 }
 
 //*******************************************
 double VarioData::getCurrentHeight()
 //*******************************************
 {
-	double tmpvalue = currentHeight;
-	if (tmpvalue > MAX_ALTI)
+  double tmpvalue = currentHeight;
+  if (tmpvalue > MAX_ALTI)
     tmpvalue = MAX_ALTI;
   if (tmpvalue < -MAX_ALTI)
     tmpvalue = -MAX_ALTI;
 
-	return tmpvalue;	
+  return tmpvalue;
 }
 
 //*******************************************
@@ -902,27 +900,27 @@ void VarioData::setGpsAlti(double gpsalti)
 double VarioData::getGpsAlti()
 //*******************************************
 {
-	double tmpvalue = gpsAlti;
-	if (tmpvalue > MAX_ALTI)
+  double tmpvalue = gpsAlti;
+  if (tmpvalue > MAX_ALTI)
     tmpvalue = MAX_ALTI;
   if (tmpvalue < -MAX_ALTI)
     tmpvalue = -MAX_ALTI;
 
-	return tmpvalue;	
+  return tmpvalue;
 }
 
-
 //*******************************************
-double VarioData::getClimbRate(){
-//*******************************************
+double VarioData::getClimbRate()
+{
+  //*******************************************
 
-	double tmpvalue = climbRate;
-	if (tmpvalue > MAX_CLIMRATE)
+  double tmpvalue = climbRate;
+  if (tmpvalue > MAX_CLIMRATE)
     tmpvalue = MAX_CLIMRATE;
   if (tmpvalue < -MAX_CLIMRATE)
     tmpvalue = -MAX_CLIMRATE;
 
-	return tmpvalue;
+  return tmpvalue;
 }
 
 //*******************************************
@@ -1375,16 +1373,17 @@ bool VarioData::updateSpeed(void)
 }
 
 //*******************************************
-double VarioData::getSpeed(){
-//*******************************************
-//	return calibratedAlti;
-	double tmpvalue = currentSpeed;
-	if (tmpvalue > MAX_SPEED)
+double VarioData::getSpeed()
+{
+  //*******************************************
+  //	return calibratedAlti;
+  double tmpvalue = currentSpeed;
+  if (tmpvalue > MAX_SPEED)
     tmpvalue = MAX_SPEED;
   if (tmpvalue < -MAX_SPEED)
     tmpvalue = -MAX_SPEED;
 
-	return tmpvalue;	
+  return tmpvalue;
 }
 
 /*******************************************/
@@ -1505,32 +1504,36 @@ int VarioData::getCap(void)
        //      DUMPLOG(LOG_TYPE_DEBUG, DATA_DEBUG_LOG, bearing);
       return bearing;
     }
-	}	
-	
-	TRACE();
-	
-	// desactive le baro GPS si pas de mesure durant 1,5sec - passe au baro magnetique
-	if ((GpsAvalable) && ((millis() - TimeCapMesure) < 1500)) {
-		return bearing;	 
-	} else {
-		GpsAvalable = false;
-	}
+  }
 
-	TRACE();
-	if (twScheduler.haveAccel() ) {
-		double vertVector[3];
-		double vertAccel = twScheduler.getAccel(vertVector);
-		
-/*  NEW */
+  TRACE();
 
-		// accelerometer and magnetometer data 
-		float a, ax, ay, az, h, hx, hy, hz;
+  // desactive le baro GPS si pas de mesure durant 1,5sec - passe au baro magnetique
+  if ((GpsAvalable) && ((millis() - TimeCapMesure) < 1500))
+  {
+    return bearing;
+  }
+  else
+  {
+    GpsAvalable = false;
+  }
+
+  TRACE();
+  if (twScheduler.haveAccel())
+  {
+    double vertVector[3];
+    double vertAccel = twScheduler.getAccel(vertVector);
+
+    /*  NEW */
+
+    // accelerometer and magnetometer data
+    float a, ax, ay, az, h, hx, hy, hz;
 
     ax = vertVector[0];
     ay = vertVector[1];
     az = vertVector[2];
 
-    // Normalize accelerometer and magnetometer data 
+    // Normalize accelerometer and magnetometer data
     a = sqrtf(ax * ax + ay * ay + az * az);
     ax /= a;
     ay /= a;
@@ -1545,7 +1548,7 @@ int VarioData::getCap(void)
     SerialPort.println(az);
 #endif //DATA_DEBUG
 
-/*
+    /*
 
   static void getRawAccel(int16_t* rawAccel, int32_t* quat);
   static double getAccel(double* vertVector); //vertVector = NULL if not needed
@@ -1604,10 +1607,11 @@ float constrainAngle360(float dta) {
     dta += 2.0 * PI;
   return dta;
 }
-*/		
-		
-		if (twScheduler.haveMag() ) {
-/*			double northVector[2];
+*/
+
+    if (twScheduler.haveMag())
+    {
+      /*			double northVector[2];
 			twScheduler.getNorthVector(vertVector,  northVector);
 			 
 			double norm = sqrt(northVector[0]*northVector[0]+northVector[1]*northVector[1]);
@@ -1622,22 +1626,22 @@ float constrainAngle360(float dta) {
 //			tmpcap = 360 - tmpcap;
 			
 			DUMP(tmpcap);*/
-			
-			int16_t magVector[3];
-			int tmpcap;
-			twScheduler.getRawMag(magVector);
 
-			// magnetometer calibration data 
-		//	float hxb, hxs, hyb, hys, hzb, hzs;
+      int16_t magVector[3];
+      int tmpcap;
+      twScheduler.getRawMag(magVector);
 
-			hx = magVector[0];
-			hy = magVector[1];
-			hz = magVector[2];
+      // magnetometer calibration data
+      //	float hxb, hxs, hyb, hys, hzb, hzs;
 
-			h = sqrtf(hx * hx + hy * hy + hz * hz);
-			hx /= h;
-			hy /= h;
-			hz /= h;
+      hx = magVector[0];
+      hy = magVector[1];
+      hz = magVector[2];
+
+      h = sqrtf(hx * hx + hy * hy + hz * hz);
+      hx /= h;
+      hy /= h;
+      hz /= h;
 
 #ifdef BEARING_DEBUG
       SerialPort.print("hx : ");
@@ -1648,13 +1652,13 @@ float constrainAngle360(float dta) {
       SerialPort.println(hz);
 #endif //DATA_DEBUG
 
-			// Compute euler angles 
-			float pitch_rad, roll_rad, yaw_rad, heading_rad;
+      // Compute euler angles
+      float pitch_rad, roll_rad, yaw_rad, heading_rad;
 
-			pitch_rad = asinf(ax);
-			roll_rad = asinf(-ay / cosf(pitch_rad));
-			yaw_rad = atan2f(hz * sinf(roll_rad) - hy * cosf(roll_rad), hx * cosf(pitch_rad) + hy * sinf(pitch_rad) * sinf(roll_rad) + hz * sinf(pitch_rad) * cosf(roll_rad));
-			heading_rad = constrainAngle360(yaw_rad);
+      pitch_rad = asinf(ax);
+      roll_rad = asinf(-ay / cosf(pitch_rad));
+      yaw_rad = atan2f(hz * sinf(roll_rad) - hy * cosf(roll_rad), hx * cosf(pitch_rad) + hy * sinf(pitch_rad) * sinf(roll_rad) + hz * sinf(pitch_rad) * cosf(roll_rad));
+      heading_rad = constrainAngle360(yaw_rad);
 
 #ifdef BEARING_DEBUG
       SerialPort.print("pitch_rad : ");
@@ -1666,17 +1670,17 @@ float constrainAngle360(float dta) {
       SerialPort.print("heading_rad : ");
       SerialPort.println(heading_rad);
 #endif //DATA_DEBUG
-			
-			tmpcap = heading_rad * R2D;
- 			
+
+      tmpcap = heading_rad * R2D;
+
 #ifdef BEARING_DEBUG
       SerialPort.print("Compas magnetique : ");
       SerialPort.println(tmpcap);
 #endif //DATA_DEBUG
-			
-//Moyenne
-			
-/*			if (nbMesureCap < 10) {
+
+      //Moyenne
+
+      /*			if (nbMesureCap < 10) {
 				if (moyCap == -1) moyCap = 0;
 				moyCap += tmpcap;
 				nbMesureCap++;
@@ -1689,35 +1693,40 @@ float constrainAngle360(float dta) {
 				moyCap = 0;
 				nbMesureCap = 0;				
 			}*/
-			
-			bearing = tmpcap;
-			 
-			DUMP(bearing); 
-//			return bearing;
-		}
-		else {
-			bearing = -1;
-			nbMesureCap = 0;
-			TRACE();
-			return 0;
-		}
-	} 
-	else {
-		bearing = -1;
-		nbMesureCap = 0;
-		TRACE();
-		return 0;
-	}
-	
-	if (bearing > 360) bearing = bearing - 360;
-	if (bearing < 0)   bearing = 360 + bearing;
-	return bearing;
+
+      bearing = tmpcap;
+
+      DUMP(bearing);
+      //			return bearing;
+    }
+    else
+    {
+      bearing = -1;
+      nbMesureCap = 0;
+      TRACE();
+      return 0;
+    }
+  }
+  else
+  {
+    bearing = -1;
+    nbMesureCap = 0;
+    TRACE();
+    return 0;
+  }
+
+  if (bearing > 360)
+    bearing = bearing - 360;
+  if (bearing < 0)
+    bearing = 360 + bearing;
+  return bearing;
 }
 
-// Bound angle between 0 and 360 
+// Bound angle between 0 and 360
 /*******************************************/
-float VarioData::constrainAngle360(float dta) {
-/*******************************************/
+float VarioData::constrainAngle360(float dta)
+{
+  /*******************************************/
   dta = fmod(dta, 2.0 * PI);
   if (dta < 0.0)
     dta += 2.0 * PI;

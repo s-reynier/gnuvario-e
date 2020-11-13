@@ -22,6 +22,7 @@ VarioIgcParser::VarioIgcParser()
 
 boolean VarioIgcParser::parseFile(String path)
 {
+    const TickType_t delay = (1) / portTICK_PERIOD_MS;
     File dataFile;
     String buffer;
     char tmpBuffer[100];
@@ -41,7 +42,18 @@ boolean VarioIgcParser::parseFile(String path)
 
     MD5Builder md5b;
     md5b.begin();
-    md5b.addStream(dataFile, dataFile.size());
+    uint16_t size = dataFile.size();
+    while (size > 0)
+    {
+        uint16_t curSize = min(size, (uint16_t)4096);
+        md5b.addStream(dataFile, curSize);
+        size -= curSize;
+        vTaskDelay(delay);
+#ifdef WIFI_DEBUG
+        SerialPort.print(".");
+#endif //WIFI_DEBUG
+    }
+
     md5b.calculate();
     md5 = md5b.toString();
 #ifdef WIFI_DEBUG
@@ -60,15 +72,15 @@ boolean VarioIgcParser::parseFile(String path)
 
     while (dataFile.available())
     {
+
+        vTaskDelay(delay);
+
 #ifdef WIFI_DEBUG
         SerialPort.print("-");
 #endif //WIFI_DEBUG
         tmpBufferPos = 0;
         while (dataFile.available() && dataFile.peek() != '\n' && tmpBufferPos < 99) // note how this also prevents the buffer from overflowing (49 max to leave space for '\0'!)
         {
-#ifdef WIFI_DEBUG
-            SerialPort.print("=");
-#endif //WIFI_DEBUG
             tmpBuffer[tmpBufferPos] = dataFile.read();
             tmpBufferPos++;
         }
@@ -366,7 +378,7 @@ double_t VarioIgcParser::getEndLon()
 String VarioIgcParser::getJson()
 {
     String output;
-    DynamicJsonDocument doc(4096);
+    DynamicJsonDocument doc(1024);
 
     if (isParsed)
     {

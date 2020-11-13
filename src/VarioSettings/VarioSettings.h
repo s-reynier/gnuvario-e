@@ -77,6 +77,7 @@
 #include <sdcardHAL.h>
 #endif
 
+#include <ArduinoJson.h>
 
 #define PARAMS_VERSION "1.6"
 
@@ -232,7 +233,6 @@ class VarioSettings {
   boolean initSettings(bool initSD);
 #ifdef HAVE_SDCARD
   boolean readSDSettings(char *FileName, boolean *ModifiedValue);
-  boolean readFlashSDSettings();
   void writeFlashSDSettings();
 	void loadConfigurationVario(char *filename);
 	void saveConfigurationVario(char *filename);
@@ -453,6 +453,7 @@ class VarioSettings {
 		uint8_t	 SETTINGS_VARIO_PERIOD_COUNT	 							= DEFAULT_SETTINGS_VARIO_PERIOD_COUNT;
 		
 		uint16_t REF_VOLTAGE																= DEFAULT_REF_VOLTAGE;
+	
 		
  protected:
 #ifdef HAVE_SDCARD

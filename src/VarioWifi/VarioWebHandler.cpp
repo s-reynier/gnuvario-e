@@ -25,25 +25,24 @@ AsyncResponseStream *VarioWebHandler::handleListFlights(AsyncWebServerRequest *r
     dir.rewindDirectory();
 
     response->print("[");
-    for (int cnt = 0; true; ++cnt)
+
+    bool first = true;
+    File entry;
+    while (entry = dir.openNextFile(FILE_READ))
     {
-        File entry;
-        entry = dir.openNextFile(FILE_READ);
-        if (!entry)
-        {
-            break;
-        }
-
         String output;
-        if (cnt > 0)
-        {
-            output = ',';
-        }
-
         String fsize = "";
 
         if (!entry.isDirectory())
         {
+            if (first)
+            {
+                first = false;
+            }
+            else
+            {
+                output = ',';
+            }
             int bytes = entry.size();
             fsize = getFileSizeStringFromBytes(bytes);
 
@@ -61,6 +60,7 @@ AsyncResponseStream *VarioWebHandler::handleListFlights(AsyncWebServerRequest *r
 
         entry.close();
     }
+
     response->print("]");
 
     //correction bug chunk transfer webserver
@@ -612,8 +612,6 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
             buffer[0] = 1;
             return 1;
         }
-
-        return varioSqlFlightHelper.readData(buffer, maxLen);
     });
 
     // //test présence fichier
@@ -951,6 +949,7 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
     if (dataFile = SDHAL_SD.open(path, FILE_READ))
     {
         String tmpFullName = dataFile.name();
+        dataFile.close();
 
         //parsage du fichier IGC
         VarioIgcParser varioIgcParser;
@@ -975,7 +974,6 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
 #ifdef WIFI_DEBUG
             SerialPort.println("Deplacement du fichier termine");
 #endif
-            vTaskDelete(NULL);
             // response = request->beginResponse(200, "text/plain", "OK");
             // return response;
         }
@@ -984,10 +982,12 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
 #ifdef WIFI_DEBUG
             SerialPort.println("ECHEC de l insertion");
 #endif
-            vTaskDelete(NULL);
+
             // response = request->beginResponse(500, "text/plain", "CANNOT INSERT FLIGHT");
             // return response;
         }
-        return;
     }
+    vTaskDelete(NULL);
+
+    return;
 }
