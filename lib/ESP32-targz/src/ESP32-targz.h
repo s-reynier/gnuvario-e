@@ -38,12 +38,14 @@
 
 #if defined( ESP32 )
   #include <SPIFFS.h>
-  #include <SD.h>
-  #include <SD_MMC.h>
+  //#include <SD.h>
+  //#include <SD_MMC.h>
   #include <Update.h>
 #elif defined( ESP8266 )
-  #include "spiffs/spiffs.h"
-  #include <LittleFS.h>
+  #ifdef USE_LittleFS
+    #define SPIFFS LittleFS
+    #include <LittleFS.h>
+  #endif
   #include <Updater.h>
   #define log_e tgzLogger
   #define log_w tgzLogger
@@ -61,18 +63,18 @@ int tarExpander( fs::FS &sourceFS, const char* fileName, fs::FS &destFS, const c
 // checks if gzFile is a valid gzip file
 bool readGzHeaders(fs::File &gzFile);
 // extract 4K of data from gzip
-int gzProcessBlock();
+int gzProcessBlock( bool isupdate = false );
 // uncompresses *gzipped* sourceFile to destFile, filesystems may differ
 void gzExpander( fs::FS sourceFS, const char* sourceFile, fs::FS destFS, const char* destFile );
 // flashes the ESP with the content of a *gzipped* file
 void gzUpdater( fs::FS &fs, const char* gz_filename );
 // naive ls
-void tarGzListDir( fs::FS &fs, const char * dirName, uint8_t levels=1 );
+void tarGzListDir( fs::FS &fs, const char * dirName, uint8_t levels=1, bool hexDump = false );
 // fs helper
 char *dirname(char *path);
 // useful to share the buffer so it's not totally wasted memory outside targz scope
 uint8_t *getGzBufferUint8();
-
+void hexDumpFile( fs::FS &fs, const char* filename);
 
 
 #endif // #ifdef _ESP_TGZ_H
