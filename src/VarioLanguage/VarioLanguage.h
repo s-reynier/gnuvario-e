@@ -26,6 +26,7 @@
  *  version    Date     Description                                              *
  *    1.0    11/04/20                                                            *
  *    1.1    22/10/20   Ajout titre pour ecran batterie                          *
+ *    1.1.1  24/10/20   Correction recup fichier de langue taille variable       *
  *                                                                               *
  *********************************************************************************
  */

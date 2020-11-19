@@ -1,11 +1,15 @@
-#include <Arduino.h>
+ #include <Arduino.h>
 #include <Adafruit_I2CDevice.h>
 
 /*******************/
 /* Version         */
 /*******************/
 
-#include "varioversion.h"
+#define VERSION 0
+#define SUB_VERSION 8
+#define BETA_CODE 5
+#define DEVNAME "JPG63/MICELPA/RATAMUSE"
+#define AUTHOR "J" //J=JPG63  P=PUNKDUMP  M=MICHELPA
 
 /******************************************************************************************************/
 /*                                              VERSION                                               */
@@ -277,11 +281,20 @@
 *                                    Mise à jour GpxEpd2                                              *
 *                15/10/20            Correction bug affichage heure / duree sur ecran 2.91            *
 *                17/10/20            Ajout Gestion de la version                                      *
-* 0.8 beta 5     18/10/20            Ajout écran de charge                                            *
+* 0.8 beta 5     18/10/20            Ajout écran de charge X91                                        *
 *                22/10/20            Moidification calcul % charge                                    *
 *                                    Interdit les altitudes negatives                                 *
 *                                    Mise à jour GxEpd2                                               *
 *                                    Ajout compensation tension                                       *
+*                                    Correction bug fichier de langue                                 *
+*                25/10/20            Ajout écran charge pour X54 et X90                               *           
+*                26/10/20            Correction Aleksandr Stroganov <a.stroganov@me.com>              *
+*                11/11/20            Correction varioSetting - json static                            *
+*                                    Reduction allocation memoire EepromHal                           * 
+*                14/11/20            Reduction allocation memoire variolanguage                       *                    
+*                                    Integration code Pierre - correction site web                    *
+*                                    Reduction allocation memoire varioigcparser                      *
+*                                    Reduction allocation memoire esp32fota2                          *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -304,10 +317,8 @@
 * BUG   - sensibilité vario                                                                           *
 * BUG   - compas GPS à verifier / problème compas magnétique                                          *
 * AJOUT - Deep-Sleep charge batterie                                                                  *
-* AJOUT - Langue sur écran charge batterie                                                            *
 * BUG   - % batterie au démmarage                                                                     *
 * BUG   - intergration - bip continu                                                                  *
-* BUG   - Altitude negative                                                                           *
 *                                                                                                     *
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
@@ -504,6 +515,8 @@
 *   Calibration   Centre      Démarre la calibration                                                         *                                                                                                        
 *   Calibration   Gauche      Sort du mode calibration (reboot)                                              *
 *                                                                                                            *
+*   Charge        Centre      Ajuste la reférence de tension                                                 *                                                                                                         
+*                                                                                                            *
 **************************************************************************************************************
 *                                                                                                            *
 * Debbug                                                                                                     *
@@ -546,7 +559,7 @@
  *                                                                                                            *    
  **************************************************************************************************************/
 
-/*************************************************************************************************************
+ /*************************************************************************************************************
   *      Literature                                                                                           *
   *                                                                                                           *
   *      MPU9250                                                                                              *                                                                                                     
@@ -556,7 +569,7 @@
   *    https://www.instructables.com/id/Tilt-Compensated-Compass/                                             *
   *                                                                                                           *
   *************************************************************************************************************/
-
+ 
 //*****************************
 // DEBBUGAGE                  *
 //*****************************
@@ -595,7 +608,7 @@
 //#include <sdcardHAL.h>
 //#endif //HAVE_SDCARD
 
-//#include <Update.h>
+#include <Update.h>
 #include <SD_Update.h>
 
 #include <VarioHardwareManager.h>
@@ -645,7 +658,7 @@ VarioData varioData;
 
 #ifdef HAVE_WIFI
 #include <VarioWifi.h>
-// #include <esp32fota2.h>
+//#include <esp32fota2.h>
 #endif //HAVE_WIFI
 
 /*************************************************
@@ -683,7 +696,6 @@ VarioData varioData;
 //****************************
 void setup()
 {
-
   //****************************
   //****************************
 
@@ -726,11 +738,11 @@ void setup()
   SerialPort.print("VERSION : ");
   SerialPort.println(VARIOVERSION);
 
-#if (VARIOVERSION == 154)
+#if (VARIOVERSION == 154) 
   SerialPort.println("VERSION : 1");
-#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291))
+#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291)) 
   SerialPort.println("VERSION : 2");
-#elif ((VARIOVERSION == 390) || (VARIOVERSION == 391))
+#elif ((VARIOVERSION == 390) || (VARIOVERSION == 391)) 
   SerialPort.println("VERSION : 3");
 #else
   SerialPort.println("VERSION : XXX");
@@ -762,26 +774,34 @@ void setup()
 #elif defined(HAVE_BLE)
   SerialPort.println("BLE : Enable");
 #endif
-
+  
   /************************/
   /*    BOOT SEQUENCE     */
   /************************/
 
-  Serial.println("init");
-  Serial.println(ESP.getFreeHeap());
+#ifdef MEMORY_DEBUG
+  SerialPort.println("init");
+  SerialPort.println(ESP.getFreeHeap());
+#endif
 
-  varioData.init();
+  varioData.init(VERSION, SUB_VERSION, BETA_CODE, String(DEVNAME));
 
-  Serial.println("varioHardwareManager");
-  Serial.println(ESP.getFreeHeap());
+#ifdef MEMORY_DEBUG
+  SerialPort.println("varioHardwareManager");
+  SerialPort.println(ESP.getFreeHeap());
+#endif
   varioHardwareManager.init();
 
   /******************/
   /* Init Speaker   */
   /******************/
   varioHardwareManager.initSpeaker();
-  Serial.println("initSpeaker");
-  Serial.println(ESP.getFreeHeap());
+
+#ifdef MEMORY_DEBUG
+  SerialPort.println("initSpeaker");
+  SerialPort.println(ESP.getFreeHeap());
+#endif
+
   /******************/
   /* Init SDCARD    */
   /******************/
@@ -791,15 +811,24 @@ void setup()
 #else
   varioData.initSettings(true);
 #endif //TEST_SD
-  Serial.println("initSettings");
-  Serial.println(ESP.getFreeHeap());
+
+#ifdef MEMORY_DEBUG
+  SerialPort.println("initSettings");
+  SerialPort.println(ESP.getFreeHeap());
+#endif
   //**********************************************
   // Charge le fichier de langue
   //**********************************************
+#ifdef SDCARD_DEBUG
+  SerialPort.println("*** Charge fichier de Langue ****");
+#endif
+
   varioLanguage.init(GnuSettings.LANGUAGE);
-  Serial.println("LANGUAGE");
-  Serial.println(ESP.getFreeHeap());
-#ifdef HAVE_SDCARD
+#ifdef MEMORY_DEBUG
+  SerialPort.println("LANGUAGE");
+  SerialPort.println(ESP.getFreeHeap());
+ #endif
+#ifdef SDCARD_DEBUG
   SerialPort.print("TITRE_TIME : ");
   SerialPort.println(varioLanguage.getText(TITRE_TIME));
 #endif
@@ -833,8 +862,10 @@ void setup()
   SerialPort.flush();
 #endif //SCREEN_DEBUG
 
-  Serial.println("init before screen");
-  Serial.println(ESP.getFreeHeap());
+#ifdef MEMORY_DEBUG
+  SerialPort.println("init before screen");
+  SerialPort.println(ESP.getFreeHeap());
+#endif
 
 #if defined(ESP32)
   ESP_LOGI("SCREEN", "initialization screen");
@@ -859,7 +890,14 @@ void setup()
 
 #if defined(HAVE_SDCARD) && defined(HAVE_WIFI)
   esp32FOTA.UpdateWwwDirectory();
-  esp32FOTA.UpdateWwwDirectoryFromGz();
+  if (esp32FOTA.UpdateWwwDirectoryFromGz() == 1) 
+  {
+    //Mise à jour
+    beeper.generateTone(659, 150);
+    beeper.generateTone(1318, 150);
+    beeper.generateTone(2636, 150);
+  } 
+  
 #endif //HAVE_SDCARD
 
   /***************/
@@ -882,11 +920,15 @@ void setup()
 #if defined(ESP32)
   ESP_LOGI(TAG, "Display Boot");
 #endif //EPS32
-  Serial.println("init before boot");
-  Serial.println(ESP.getFreeHeap());
+
+#ifdef MEMORY_DEBUG
+  SerialPort.println("init before boot");
+  SerialPort.println(ESP.getFreeHeap());
   beeper.generateTone(659, 150);
   beeper.generateTone(1318, 150);
   beeper.generateTone(2636, 150);
+#endif
+  
   screen.ScreenViewInit(VERSION, SUB_VERSION, AUTHOR, BETA_CODE);
 #endif //HAVE_SCREEN
 
@@ -1090,7 +1132,7 @@ void loop()
     {
       if (varioData.haveNewClimbRate())
       {
-        /*        double tmpvalue = varioData.getClimbRate();
+/*        double tmpvalue = varioData.getClimbRate();
 #if (VARIOSCREEN_SIZE == 154)
         if (tmpvalue > 9.9)
           tmpvalue = 9.9;
@@ -1110,7 +1152,7 @@ void loop()
     else
     {
 
-      /*      double tmpvalue = varioData.getVelocity();
+/*      double tmpvalue = varioData.getVelocity();
 #if (VARIOSCREEN_SIZE == 154)
       if (tmpvalue > 9.9)
         tmpvalue = 9.9;
@@ -1163,7 +1205,7 @@ void loop()
   //***************************************
   //  TEST
   //***************************************
-#if defined(TONEXTDAC) || defined(TONEI2S)
+#if defined(TONEXTDAC) || defined(TONEI2S) 
   toneHAL.update();
 #endif
 
@@ -1215,7 +1257,7 @@ void loop()
     SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
   }
-#endif // HAVE_BLUETOOTH
+#endif // HAVE_BLUETOOTH 
 
 #ifdef HAVE_SCREEN
   if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
@@ -1275,7 +1317,7 @@ void loop()
 #ifdef GPS_DEBUG
     SerialPort.print("Sat : ");
     SerialPort.println(nmeaParser.satelliteCount);
-#endif //GPS_DEBUG \
+#endif //GPS_DEBUG 
        //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
   }
 #endif //HAVE_GPS
@@ -1446,7 +1488,7 @@ void loop()
   }
 
   varioData.displayUpdateState = false;
-
+  
 #endif //HAVE_SCREEN
 
   //**********************************************************

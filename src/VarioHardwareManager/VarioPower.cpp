@@ -130,7 +130,7 @@ void VarioPower::setRefVoltage(uint16_t refVoltage)
 	SerialPort.println(GnuSettings.REF_VOLTAGE);
 #endif //IMU_DEBUG
 
-	beeper.generateTone(800, 500);
+//	beeper.generateTone(800, 500);
 }
 
 /*****************************/

@@ -38,7 +38,7 @@
  *                                                                               *
  *********************************************************************************
  */
-
+ 
 #ifndef VARIO_DATA_H
 #define VARIO_DATA_H
 
@@ -64,18 +64,16 @@
 #include <FlightHistory.h>
 #include <variostat.h>
 
-#include "varioversion.h"
-
 #ifdef HAVE_GPS
-constexpr double historyGPSPeriodCountF = (double)(GPS_PERIOD) / 500.0;
-constexpr int8_t historyGPSPeriodCount = (int8_t)(0.5 + historyGPSPeriodCountF);
+		constexpr double historyGPSPeriodCountF = (double)(GPS_PERIOD) / 500.0;
+		constexpr int8_t historyGPSPeriodCount = (int8_t)(0.5 + historyGPSPeriodCountF);
 #endif
 
-#define GPSFIX_NOGPS 0	  //no gps
-#define GPSFIX_INIT 1	  //time
-#define GPSFIX_FIX 2	  //gps fix
-#define GPSFIX_RECORD 3	  //record data
-#define GPSFIX_NORECORD 4 //no record file
+#define	GPSFIX_NOGPS		0				//no gps
+#define GPSFIX_INIT			1				//time
+#define GPSFIX_FIX			2				//gps fix
+#define GPSFIX_RECORD 	3				//record data
+#define GPSFIX_NORECORD	4				//no record file
 
 #define STATE_PAGE_INIT 0
 #define STATE_PAGE_VARIO 1
@@ -92,62 +90,67 @@ constexpr int8_t historyGPSPeriodCount = (int8_t)(0.5 + historyGPSPeriodCountF);
 class VarioData
 {
 public:
-	VarioData();
-	void init();
-	void initKalman(double firstAlti);
-	bool initSettings(bool Test_SD);
-	bool initLog(void);
-	bool initAGL(void);
-	void initTime(void);
+    VarioData();
+    void 		init(uint8_t version, uint8_t sub_version, uint8_t beta_code, String devname);
+		void 		initKalman(double firstAlti);
+		bool 		initSettings(bool Test_SD); 
+		bool 		initLog(void); 
+		bool 		initAGL(void);
+		void 		initTime(void);
 
-	void update();
-	bool updateBluetooth();
-	void updateGps();
-	void updateState();
-	bool updateSpeed(void);
-	void updateVoltage(void);
-	void updateBeeper(void);
+    void   	update();
+		bool   	updateBluetooth();
+		void   	updateGps();
+		void    updateState();
+		bool 		updateSpeed(void);
+		void 		updateVoltage(void);
+		void 		updateBeeper(void);
 
-	double getVelocity();
-	double getCalibratedAlti();
-	double getClimbRate();
-	double getTrend();
-	int getStateTrend();
-	uint8_t getVariometerState();
-	int getCap();
-	double getSpeed();
-	void setCurrentHeight(double height);
-	double getCurrentHeight();
-	void setGpsAlti(double gpsalti);
-	double getGpsAlti();
+    double 	getVelocity();
+    double 	getCalibratedAlti();
+		double 	getClimbRate();
+		double 	getTrend();
+		int    	getStateTrend();
+		uint8_t getVariometerState();
+		int 		getCap();
+		double  getSpeed();
+		void    setCurrentHeight(double height);
+		double  getCurrentHeight();
+		void    setGpsAlti(double gpsalti);
+		double  getGpsAlti();
+		
+		bool 	 	haveNewClimbRate();
+				
+		void 		createSDCardTrackFile(void);
+		void 		enableflightStartComponents(void);
+		
+		int 		compteurGpsFix = 0;
+		uint8_t gpsFix = 0;
 
-	bool haveNewClimbRate();
+		double  ratio = 0;
 
-	void createSDCardTrackFile(void);
-	void enableflightStartComponents(void);
+		long 		voltage = 0;
+		
+		unsigned long lastDisplayTimestamp, lastDisplayTimestamp2;
 
-	int compteurGpsFix = 0;
-	uint8_t gpsFix = 0;
+    boolean displayLowUpdateState = true;
+    boolean displayUpdateState = true;
 
-	double ratio = 0;
+    VarioStat flystat;
 
-	long voltage = 0;
+    Kalmanvert kalmanvert;
 
-	unsigned long lastDisplayTimestamp, lastDisplayTimestamp2;
+		uint8_t Version;
+		uint8_t Sub_Version;
+		uint8_t Beta_Code;
+		String  Devname;
 
-	boolean displayLowUpdateState = true;
-	boolean displayUpdateState = true;
-
-	VarioStat flystat;
-
-	Kalmanvert kalmanvert;
-
-	/*********************/
-	/*  AGL              */
-	/*********************/
+/*********************/
+/*  AGL              */
+/*********************/
 
 #ifdef AGL_MANAGER_H
-	AglManager aglManager;
+		AglManager aglManager;
 #endif
 
 /************************************/
@@ -156,47 +159,49 @@ public:
 
 /* two minutes history */
 #ifdef HAVE_GPS
-	SpeedFlightHistory<500, 120, historyGPSPeriodCount> history;
+		SpeedFlightHistory<500, 120, historyGPSPeriodCount> history;
 #else
-	FlightHistory<500, 120> history;
+		FlightHistory<500, 120> history;
 #endif
 
-	FlightHistory<50, 40> buzzerHistory;
+		FlightHistory<50, 40> buzzerHistory;
 
 private:
-	unsigned long compteurErrorMPU = 0;
-	int compteurBoucle = 0;
+		unsigned long compteurErrorMPU = 0;
+		int compteurBoucle = 0;
 
-	// DATA
 
-	double firstAlti;
-	double velocity;	   //KalmanVario
-	double alti;		   //Alti baro
-	double calibratedAlti; //KalmanAlti
-	double temperature;
-	double accel;
-	double climbRate;
-	bool haveNewClimbRateData = false;
-	double trend;
-	int stateTrend;
-	double climbRateBuzzer;
-	bool haveNewClimbRateDataBuzzer = false;
-	uint8_t variometerState;
-	double currentSpeed = 0;
-	double gpsAlti = 0;
-	double currentHeight = 0;
+// DATA
 
-	bool CompteurStartFlyEnable = false;
-	unsigned long TimeStartFly;
-	uint8_t CompteurStartFly = 0;
-	bool SpeedAvalable = false;
-	bool GpsAvalable = false;
-	unsigned long TimeCapMesure = 0;
-	int bearing = 0;
-	int moyCap = 0;
-	int nbMesureCap = 0;
-
-	float constrainAngle360(float dta);
+    double 	firstAlti; 
+		double 	velocity;				//KalmanVario
+		double 	alti;						//Alti baro
+		double 	calibratedAlti;	//KalmanAlti
+		double 	temperature;
+		double 	accel;
+		double 	climbRate;
+		bool   	haveNewClimbRateData = false;
+		double 	trend;
+		int 	 	stateTrend;		
+		double 	climbRateBuzzer;
+		bool   	haveNewClimbRateDataBuzzer = false;
+		uint8_t variometerState;
+		double 	currentSpeed  = 0;
+		double 	gpsAlti = 0;
+		double 	currentHeight = 0;
+		
+		bool 		CompteurStartFlyEnable 	= false;
+		unsigned long	TimeStartFly;
+		uint8_t	CompteurStartFly	= 0;
+		bool		SpeedAvalable = false;
+		bool    GpsAvalable   = false;
+		unsigned long	TimeCapMesure = 0;		
+		int 		bearing = 0;
+		int 		moyCap = 0;
+		int			nbMesureCap = 0;
+		bool		SD_present = false;
+		
+		float constrainAngle360(float dta);
 };
 
 extern VarioData varioData;

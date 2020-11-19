@@ -91,18 +91,77 @@ void performUpdate(Stream &updateSource, size_t updateSize)
    }
 }
 
+#if defined(SDFAT_LIB)
+
+void performUpdate(SdFile &updateFile, size_t updateSize)
+{
+   if (Update.begin(updateSize))
+   {
+
+      size_t written = 0;
+
+      while (updateFile.available())
+      {
+         uint8_t ibuffer[128];
+         updateFile.read((uint8_t *)ibuffer, 128);
+         //			SerialPort.println((char *)ibuffer);
+         Update.write(ibuffer, sizeof(ibuffer));
+         written += sizeof(ibuffer);
+      }
+
+      //		size_t written = Update.writeStream(updateSource);
+      if (written == updateSize)
+      {
+         SerialPort.println("Written : " + String(written) + " successfully");
+      }
+      else
+      {
+         SerialPort.println("Written only : " + String(written) + "/" + String(updateSize) + ". Retry?");
+      }
+      if (Update.end())
+      {
+         SerialPort.println("OTA done!");
+         if (Update.isFinished())
+         {
+            SerialPort.println("Update successfully completed. Rebooting.");
+         }
+         else
+         {
+            SerialPort.println("Update not finished? Something went wrong!");
+         }
+      }
+      else
+      {
+         SerialPort.println("Error Occurred. Error #: " + String(Update.getError()));
+      }
+   }
+   else
+   {
+      SerialPort.println("Not enough space to begin OTA");
+   }
+}
+#endif //SDFAT_LIB
+
 // check given FS for valid update.bin and perform update if available
 void updateFromSDCARD()
 {
 #ifdef HAVE_SDCARD
    if (SDHAL_SD.exists("/update.bin"))
    {
+#ifdef SDFAT_LIB
+      TRACE();
+      SdFile updateBin;
+      if (updateBin.open("update.bin", O_RDONLY))
+      {
+         if (updateBin.isDir())
+         {
+#else  //SDFAT_LIB
       File updateBin = SDHAL_SD.open("/update.bin");
       if (updateBin)
       {
          if (updateBin.isDirectory())
          {
-
+#endif //SDFAT_LIB
             SerialPort.println("Error, update.bin is not a file");
             updateBin.close();
             return;
@@ -110,15 +169,21 @@ void updateFromSDCARD()
 
          screen.ScreenViewReboot("Upgrade");
 
+#ifdef SDFAT_LIB
+         size_t updateSize = updateBin.fileSize();
+#else  //SDFAT_LIB
          size_t updateSize = updateBin.size();
-
+#endif //SDFAT_LIB
          DUMP(updateSize);
 
          if (updateSize > 0)
          {
             SerialPort.println("Try to start update");
-
+#ifdef SDFAT_LIB
             performUpdate(updateBin, updateSize);
+#else  //SDFAT_LIB*/
+            performUpdate(updateBin, updateSize);
+#endif //SDFAT_LIB
          }
          else
          {
@@ -130,7 +195,11 @@ void updateFromSDCARD()
          updateBin.close();
 
          // whe finished remove the binary from sd card to indicate end of the process
+#ifdef SDFAT_LIB
+         SDHAL_SD.remove("update.bin");
+#else  //SDFAT_LIB*/
          SDHAL_SD.remove("/update.bin");
+#endif //SDFAT_LIB
 
          SerialPort.println("RESTART ESP32");
          SerialPort.flush();

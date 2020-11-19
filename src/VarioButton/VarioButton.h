@@ -46,9 +46,11 @@
  *    1.0.14 29/11/19   Ajout arduinotrace                                       	*
  *                      Modif sdfat                                              	*
  *    1.0.15 09/03/20   Modification ScreenViewSound                             	*
- *    1.0.16 10/03/20   Ajout Bouton A 2sec calibration via AGL         					*
- *                      Ajout déclenchement debut du vol (appuie sur bouton A     *
- *    1.0.17 18/10/20   Ajout Page charge batterie sur bouton central (init)      *
+ *    1.0.16 10/03/20   Ajout Bouton A 2sec calibration via AGL         			*
+ *                      Ajout déclenchement debut du vol (appuie sur bouton A       *
+ *    1.0.17 18/10/20   Ajout Page charge batterie sur bouton central (init)        *
+ *    1.0.18 10/11/20   Correction bug                                              *
+ *    1.0.19 14/11/20   Ajout code Pierre startWifi                                 *  
  *                                                                               	*
  ************************************************************************************/
 

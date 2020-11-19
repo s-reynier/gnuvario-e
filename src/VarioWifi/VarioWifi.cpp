@@ -35,13 +35,13 @@
 #include <varioscreenGxEPD.h>
 #endif
 
-#include <varioversion.h>
+#include <VarioData.h>
 
 WiFiMulti wifiMulti;
 AsyncWebServer server(80);
 
 VarioWebHandler varioWebHandler;
-esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE);
+esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), varioData.Version, varioData.Sub_Version, varioData.Beta_Code);
 
 bool VarioWifi::begin()
 {
@@ -51,27 +51,27 @@ bool VarioWifi::begin()
         return false;
     }
 
-#ifdef WIFI_DEBUG
+#ifdef MEMORY_DEBUG
     Serial.println("Free heap connectToWifi");
     Serial.println(ESP.getFreeHeap());
-#endif //WIFI_DEBUG
+#endif //MEMORY_DEBUG
 
     if (!connectToWifi())
     {
         return false;
     }
 
-#ifdef WIFI_DEBUG
+#ifdef MEMORY_DEBUG
     Serial.println("Free heap setClock");
     Serial.println(ESP.getFreeHeap());
-#endif //WIFI_DEBUG
+#endif //MEMORY_DEBUG
 
     setClock();
 
-#ifdef WIFI_DEBUG
+#ifdef MEMORY_DEBUG
     Serial.println("Free heap setMDNS");
     Serial.println(ESP.getFreeHeap());
-#endif //WIFI_DEBUG
+#endif //MEMORY_DEBUG
 
     setMDNS();
 
@@ -79,10 +79,10 @@ bool VarioWifi::begin()
 
     esp32FOTA.checkURL = GnuSettings.URL_UPDATE; //"http://gnuvario-e.yj.fr/update/firmware.json";
 
-#ifdef WIFI_DEBUG
+#ifdef MEMORY_DEBUG
     Serial.println("Free heap startWebServer");
     Serial.println(ESP.getFreeHeap());
-#endif //WIFI_DEBUG
+#endif //MEMORY_DEBUG
 
     startWebServer();
 

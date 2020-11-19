@@ -26,12 +26,20 @@
  *  version    Date     Description                                              *
  *    1.0    11/04/20                                                            *
  *    1.1    22/10/20   Ajout titre pour ecran batterie                          *
+ *    1.1.1  24/10/20   Correction recup fichier de langue taille variable       *
+ *    1.1.2  14/11/20   json doc externe                                         *
  *                                                                               *
  *********************************************************************************
  */
 
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
+
+// #define JSONDOCEXTERN
+
+// #ifdef JSONDOCEXTERN
+// #include <VarioSettings.h>
+// #endif
 
 #ifdef DATA_DEBUG
 #define ARDUINOTRACE_ENABLE 1
@@ -67,7 +75,7 @@ VarioLanguage varioLanguage;
 #define DEFAULT_TITRE_LAT "Lat"
 #define DEFAULT_TITRE_LONG "Long"
 #define DEFAULT_TITRE_COMPAS "Compas"
-#define DEFAULT_TITRE_STAT "Statistiques"
+#define DEFAULT_TITRE_STAT "Statistique"
 #define DEFAULT_TITRE_DATE "Date"
 #define DEFAULT_TITRE_HEURE "Heure"
 #define DEFAULT_TITRE_DUREE "Duree"
@@ -79,8 +87,8 @@ VarioLanguage varioLanguage;
 #define DEFAULT_TITRE_ENCOURS "en cours"
 #define DEFAULT_TITRE_CALIBR "Calibration"
 #define DEFAULT_TITRE_VEILLE "En veille"
-#define DEFAULT_TITRE_CHARGE "En Charge"
-#define DEFAULT_TITRE_CHARGER "Chargée"
+#define DEFAULT_TITRE_CHARGE "en charge"
+#define DEFAULT_TITRE_CHARGER "chargee"
 #define DEFAULT_TITRE_BATTERIE "Batterie"
 
 //****************************************************************************************************************************
@@ -152,17 +160,26 @@ void VarioLanguage::loadConfigurationLangue(char *filename)
 		return;
 	}
 
-	const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(15) + 200;
+// #ifndef JSONDOCEXTERN
+	const size_t capacity = 1003; //JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(12) + JSON_OBJECT_SIZE(15) + 300;
 	//JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + 2 * JSON_OBJECT_SIZE(12) + 460;
 	//JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(10) + JSON_OBJECT_SIZE(12)+100;
+
 	DynamicJsonDocument doc(capacity);
+	#define JSONDOC doc
+// #else
+// 	#define JSONDOC GnuSettings.doc	
+// // Clearing Buffer
+// 	JSONDOC.clear();
+// #endif
 
 #ifdef SDCARD_DEBUG
 	SerialPort.println("deserialisation");
 #endif
 
 	// Deserialize the JSON document
-	DeserializationError error = deserializeJson(doc, file);
+	DeserializationError error = deserializeJson(JSONDOC, file);
+
 	if (error)
 	{
 		SerialPort.println(F("Failed to read file, using default configuration"));
@@ -203,7 +220,7 @@ void VarioLanguage::loadConfigurationLangue(char *filename)
 	SerialPort.println("Systeme : ");
 #endif
 
-	const char *GnuvarioE_version_langue = doc["gnuvarioe"]["version"]; // "1.0"
+	const char *GnuvarioE_version_langue = JSONDOC["gnuvarioe"]["version"]; // "1.0"
 	if (strcmp(GnuvarioE_version_langue, PARAMS_VERSION_LANGUE) != 0)
 		MajFileParams = true;
 
@@ -213,7 +230,7 @@ void VarioLanguage::loadConfigurationLangue(char *filename)
 	SerialPort.println("****** Titre *******");
 #endif
 
-	JsonObject Titre = doc["titre"];
+	JsonObject Titre = JSONDOC["titre"];
 
 	if (Titre.containsKey("TIME"))
 	{
@@ -651,7 +668,7 @@ void VarioLanguage::loadConfigurationLangue(char *filename)
 	SerialPort.println("****** Message *******");
 #endif
 
-	JsonObject Message = doc["message"];
+	JsonObject Message = JSONDOC["message"];
 
 	if (Message.containsKey("STAT"))
 	{
@@ -1084,9 +1101,6 @@ void VarioLanguage::loadConfigurationLangue(char *filename)
 	SerialPort.print("TITRE_VEILLE : ");
 	SerialPort.println(TITRE_TAB[TITRE_VEILLE]);
 #endif
-
-
-
 
 	if (Message.containsKey("CHARGE"))
 	{

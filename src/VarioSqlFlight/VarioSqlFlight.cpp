@@ -115,25 +115,21 @@ int VarioSqlFlight::db_exec(sqlite3 *db, const char *sql)
     return rc;
 }
 
-bool VarioSqlFlight::insertFlight(String data)
+bool VarioSqlFlight::insertFlight(igcdata myIgcData)
 {
-    Serial.println("debut insertFlight");
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap debut insertFlight");
     Serial.println(ESP.getFreeHeap());
-#ifdef SQL_DEBUG
-    SerialPort.println(data);
-#endif //SQL_DEBUG
+#endif //MEMORY_DEBUG
 
-    DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, data);
-    if (err)
-    {
-#ifdef SQL_DEBUG
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(err.c_str());
-#endif //SQL_DEBUG
+    // #ifdef SQL_DEBUG
+    //     SerialPort.println(data);
+    // #endif //SQL_DEBUG
 
-        return false;
-    }
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap insertFlight fin deserialization");
+    Serial.println(ESP.getFreeHeap());
+#endif //MEMORY_DEBUG
 
     int rc;
     sqlite3_stmt *res;
@@ -150,9 +146,15 @@ bool VarioSqlFlight::insertFlight(String data)
             return false;
         }
     }
+
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap insertFlight fin opendb");
+    Serial.println(ESP.getFreeHeap());
+#endif //MEMORY_DEBUG
+
     String sql;
 
-    if (doc.containsKey("filename") && doc.containsKey("md5"))
+    if (myIgcData.filename != "" && myIgcData.md5 != "")
     {
         sql = "DELETE FROM flight WHERE filename = ? AND md5 = ?";
 
@@ -170,8 +172,8 @@ bool VarioSqlFlight::insertFlight(String data)
         SerialPort.println("Début binding");
 #endif //SQL_DEBUG
 
-        sqlite3_bind_text(res, 1, doc["filename"], strlen(doc["filename"]), SQLITE_STATIC);
-        sqlite3_bind_text(res, 2, doc["md5"], strlen(doc["md5"]), SQLITE_STATIC);
+        sqlite3_bind_text(res, 1, (char *)myIgcData.filename.c_str(), myIgcData.filename.length(), SQLITE_STATIC);
+        sqlite3_bind_text(res, 2, (char *)myIgcData.md5.c_str(), myIgcData.md5.length(), SQLITE_STATIC);
 
         if (sqlite3_step(res) != SQLITE_DONE)
         {
@@ -199,13 +201,15 @@ bool VarioSqlFlight::insertFlight(String data)
         }
     }
 
-    Serial.println("fin delete insertFlight");
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap fin delete  insertFlight");
     Serial.println(ESP.getFreeHeap());
+#endif //MEMORY_DEBUG
 
     sql = "INSERT INTO flight (";
     sql = sql + "pilot, wing, flight_date, start_flight_time, end_flight_time, start_height, end_height, min_height, max_height, start_lat, start_lon, end_lat, end_lon";
 
-    if (doc.containsKey("filename") && doc.containsKey("md5"))
+    if (myIgcData.filename != "" && myIgcData.md5 != "")
     {
         sql = sql + ", filename, md5";
     }
@@ -230,28 +234,28 @@ bool VarioSqlFlight::insertFlight(String data)
     SerialPort.println("Début binding");
 #endif //SQL_DEBUG
 
-    sqlite3_bind_text(res, 1, doc["pilot"], strlen(doc["pilot"]), SQLITE_STATIC);
-    sqlite3_bind_text(res, 2, doc["wing"], strlen(doc["wing"]), SQLITE_STATIC);
-    sqlite3_bind_text(res, 3, doc["flightDate"], strlen(doc["flightDate"]), SQLITE_STATIC);
-    sqlite3_bind_text(res, 4, doc["startFlightTime"], strlen(doc["startFlightTime"]), SQLITE_STATIC);
-    sqlite3_bind_text(res, 5, doc["endFlightTime"], strlen(doc["endFlightTime"]), SQLITE_STATIC);
-    sqlite3_bind_int(res, 6, doc["startHeight"]);
-    sqlite3_bind_int(res, 7, doc["endHeight"]);
-    sqlite3_bind_int(res, 8, doc["minHeight"]);
-    sqlite3_bind_int(res, 9, doc["maxHeight"]);
-    sqlite3_bind_double(res, 10, doc["startLat"]);
-    sqlite3_bind_double(res, 11, doc["startLon"]);
-    sqlite3_bind_double(res, 12, doc["endLat"]);
-    sqlite3_bind_double(res, 13, doc["endLon"]);
-    if (doc.containsKey("filename") && doc.containsKey("md5"))
+    sqlite3_bind_text(res, 1, (char *)myIgcData.pilot.c_str(), myIgcData.pilot.length(), SQLITE_STATIC);
+    sqlite3_bind_text(res, 2, (char *)myIgcData.wing.c_str(), myIgcData.wing.length(), SQLITE_STATIC);
+    sqlite3_bind_text(res, 3, (char *)myIgcData.flightDate.c_str(), myIgcData.flightDate.length(), SQLITE_STATIC);
+    sqlite3_bind_text(res, 4, (char *)myIgcData.startFlightTime.c_str(), myIgcData.startFlightTime.length(), SQLITE_STATIC);
+    sqlite3_bind_text(res, 5, (char *)myIgcData.endFlightTime.c_str(), myIgcData.endFlightTime.length(), SQLITE_STATIC);
+    sqlite3_bind_int(res, 6, myIgcData.startHeight);
+    sqlite3_bind_int(res, 7, myIgcData.endHeight);
+    sqlite3_bind_int(res, 8, myIgcData.minHeight);
+    sqlite3_bind_int(res, 9, myIgcData.maxHeight);
+    sqlite3_bind_double(res, 10, myIgcData.startLat);
+    sqlite3_bind_double(res, 11, myIgcData.startLon);
+    sqlite3_bind_double(res, 12, myIgcData.endLat);
+    sqlite3_bind_double(res, 13, myIgcData.endLon);
+    if (myIgcData.filename != "" && myIgcData.md5 != "")
     {
-        sqlite3_bind_text(res, 14, doc["filename"], strlen(doc["filename"]), SQLITE_STATIC);
-        sqlite3_bind_text(res, 15, doc["md5"], strlen(doc["md5"]), SQLITE_STATIC);
+        sqlite3_bind_text(res, 14, (char *)myIgcData.filename.c_str(), myIgcData.filename.length(), SQLITE_STATIC);
+        sqlite3_bind_text(res, 15, (char *)myIgcData.md5.c_str(), myIgcData.md5.length(), SQLITE_STATIC);
     }
     else
     {
-        sqlite3_bind_int(res, 14, doc["site_id"]);
-        sqlite3_bind_text(res, 15, doc["comment"], strlen(doc["comment"]), SQLITE_STATIC);
+        sqlite3_bind_int(res, 14, myIgcData.site_id);
+        sqlite3_bind_text(res, 15, (char *)myIgcData.comment.c_str(), myIgcData.comment.length(), SQLITE_STATIC);
     }
 
 #ifdef SQL_DEBUG
@@ -855,10 +859,11 @@ bool VarioSqlFlight::deleteSite(uint8_t id)
 
 bool VarioSqlFlight::initGetFlightsQuery(uint16_t limit, uint16_t offset)
 {
-#ifdef SQL_DEBUG
-    Serial.println("initGetFlightsQuery");
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap initGetFlightsQuery");
     Serial.println(ESP.getFreeHeap());
-#endif //SQL_DEBUG
+#endif //MEMORY_DEBUG
+
     haveNextFlight = false;
 
     int rc;
@@ -875,6 +880,11 @@ bool VarioSqlFlight::initGetFlightsQuery(uint16_t limit, uint16_t offset)
             return false;
         }
     }
+
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap initGetFlightsQuery after opendb");
+    Serial.println(ESP.getFreeHeap());
+#endif //MEMORY_DEBUG
 
     //String sql = F("SELECT f.id, f.site_id, f.filename, f.md5, f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, f.minimap, s.lib FROM flight f LEFT JOIN site s ON(s.id = f.site_id) ORDER BY f.flight_date DESC, f.start_flight_time ASC LIMIT ?  OFFSET ?");
     //String sql = F("SELECT f.id, f.site_id, f.filename, f.md5, f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, f.minimap, 'toto' AS lib FROM flight f");
@@ -899,10 +909,12 @@ bool VarioSqlFlight::initGetFlightsQuery(uint16_t limit, uint16_t offset)
     }
 
     haveNextFlight = true;
-#ifdef SQL_DEBUG
-    Serial.println("FIN initGetFlightsQuery");
+
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap FIN initGetFlightsQuery");
     Serial.println(ESP.getFreeHeap());
-#endif //SQL_DEBUG
+#endif //MEMORY_DEBUG
+
     return true;
 }
 
@@ -995,9 +1007,11 @@ bool VarioSqlFlight::getNextFlight(bool &firstline, RingBuf<char, 1024> &buffer)
 #ifdef SQL_DEBUG
     SerialPort.println("getNextFlight");
 #endif //SQL_DEBUG
-#ifdef SQL_DEBUG
+
+#ifdef MEMORY_DEBUG
+    Serial.println("Free heap getNextFlight");
     Serial.println(ESP.getFreeHeap());
-#endif //SQL_DEBUG
+#endif //MEMORY_DEBUG
 
     // DynamicJsonDocument doc(4096);
 

@@ -50,6 +50,7 @@
  *    1.0.16 10/03/20   Ajout Bouton A 2sec calibration via AGL         					*
  *                      Ajout déclenchement debut du vol (appuie sur bouton A     *
  *    1.0.17 18/10/20   Ajout Page charge batterie sur bouton central (init)      *
+ *    1.0.18 10/11/20   Correction bug                                            *
  *                                                                               	*
  ************************************************************************************/
 
@@ -98,7 +99,6 @@
 
 #include <VarioWifi.h>
 VarioWifi wf;
-
 uint8_t RegVolume;
 
 /*#define VARIOMETER_STATE_INITIAL 0
@@ -183,7 +183,7 @@ void VARIOButtonScheduleur::update()
 				int aglLevel = varioData.aglManager.getAgl();
 				GnuSettings.COMPENSATION_GPSALTI = aglLevel;
 
-				char tmpchar[20] = "params.jso";
+				char tmpchar[20] = "/params.jso";
 				GnuSettings.saveConfigurationVario(tmpchar);
 
 				beeper.generateTone(523, 250);
@@ -416,12 +416,12 @@ void VARIOButtonScheduleur::treatmentBtnB(bool Debounce)
 	{
 		StatePage = STATE_PAGE_CHARGE;
 		varioHardwareManager.varioPower.ScreenCharge();
-		StatePage == STATE_PAGE_INIT;
+		StatePage = STATE_PAGE_INIT;
 	}
 	else if (StatePage == STATE_PAGE_CHARGE)
 	{
 		varioHardwareManager.varioPower.setRefVoltage(varioHardwareManager.varioPower.getVoltage());
-	}	
+	}
 }
 
 /************************************************************/
@@ -472,7 +472,7 @@ void VARIOButtonScheduleur::treatmentBtnC(bool Debounce)
 /**********************************************************/
 void VARIOButtonScheduleur::WifiServeur(void)
 {
-	/**********************************************************/
+/**********************************************************/
 #ifdef BUTTON_DEBUG
 	SerialPort.println("liste des fichiers");
 #endif //BUTTON_DEBUG
@@ -487,8 +487,8 @@ void VARIOButtonScheduleur::WifiServeur(void)
 	root = SDHAL_SD.open("/");
 	if (root)
 	{
-#endif //SDFAT_LIB 
-	//printDirectory(root, 0);
+#endif	//SDFAT_LIB
+		//printDirectory(root, 0);
 		root.close();
 	}
 	else
@@ -506,15 +506,16 @@ void VARIOButtonScheduleur::WifiServeur(void)
 	TaskHandle_t taskWF;
 	xTaskCreatePinnedToCore(startWifi, "VWF", 10000, NULL, 2, &taskWF, 0);
 
-	// varioWifiServer.connect();
+	//	varioWifiServer.begin();
+	//	varioWifiServer.connect();
 
-	// varioWifiServer.start();
+	//	varioWifiServer.start();
 
 	Set_StatePage(STATE_PAGE_WEBSERV);
 
 	while (1)
 	{
-		// varioWifiServer.handleClient();
+		//		varioWifiServer.handleClient();
 		update();
 	}
 }
@@ -619,11 +620,18 @@ void VARIOButtonScheduleur::treatmentBtnB3S(bool Debounce)
 
 void VARIOButtonScheduleur::startWifi(void *pvParameters)
 {
+#ifdef MEMORY_DEBUG
 	Serial.println("Free heap BEFORE wifi start");
 	Serial.println(ESP.getFreeHeap());
+#endif //MEMORY_DEBUG
+
 	wf.begin();
+
+#ifdef MEMORY_DEBUG
 	Serial.println("Free heap AFTER wifi start");
 	Serial.println(ESP.getFreeHeap());
+#endif //MEMORY_DEBUG
+
 	for (;;)
 	{
 		const TickType_t delay = (10000) / portTICK_PERIOD_MS;

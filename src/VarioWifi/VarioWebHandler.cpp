@@ -588,11 +588,14 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
 
     File dataFile;
 
+    const TickType_t delay = (100) / portTICK_PERIOD_MS;
+    vTaskDelay(delay);
+
     TaskHandle_t taskParse;
     xTaskCreate(
         _doParseIgcAndInsert,   /* Task function. */
         "doParseIgcAndInsert",  /* String with name of task. */
-        20000,                  /* Stack size in bytes. */
+        18000,                  /* Stack size in bytes. */
         (void *)(path.c_str()), /* Parameter passed as input of the task */
         1,                      /* Priority of the task. */
         &taskParse);            /* Task handle. */
@@ -605,12 +608,16 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
 
         if (eTaskGetState(taskParse) == eDeleted)
         {
+#ifdef WIFI_DEBUG
+            SerialPort.println("handleParseIgc RETURN 0");
+#endif
             return 0;
         }
         else
         {
-            buffer[0] = 1;
-            return 1;
+            return snprintf((char *)buffer, maxLen, ".");
+            // buffer[0] = '.';
+            // return 1;
         }
     });
 
@@ -759,7 +766,7 @@ void VarioWebHandler::handleSetFlight(AsyncWebServerRequest *request, uint8_t *d
         SerialPort.println(content);
 #endif
 
-        varioSqlFlight.insertFlight(content);
+        varioSqlFlight.insertFlight(jsonToIgcdata(content));
     }
 
     request->send(200);
@@ -952,11 +959,11 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
         dataFile.close();
 
         //parsage du fichier IGC
-        VarioIgcParser varioIgcParser;
-        varioIgcParser.parseFile(path);
+        VarioIgcParser varioIgcParser(path);
+        varioIgcParser.parseFile();
 
         VarioSqlFlight varioSqlFlight;
-        if (varioSqlFlight.insertFlight(varioIgcParser.getJson()))
+        if (varioSqlFlight.insertFlight(varioIgcParser.getIgcdata()))
         {
             String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
 #ifdef WIFI_DEBUG
@@ -986,8 +993,100 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
             // response = request->beginResponse(500, "text/plain", "CANNOT INSERT FLIGHT");
             // return response;
         }
+
+        varioIgcParser.~VarioIgcParser();
+        varioSqlFlight.~VarioSqlFlight();
     }
     vTaskDelete(NULL);
-
+    const TickType_t delay = (100) / portTICK_PERIOD_MS;
+    vTaskDelay(delay);
     return;
+}
+
+igcdata VarioWebHandler::jsonToIgcdata(String data)
+{
+    igcdata myIgcData;
+
+    DynamicJsonDocument doc(1024);
+    DeserializationError err = deserializeJson(doc, data);
+    if (err)
+    {
+#ifdef SQL_DEBUG
+        Serial.print(F("deserializeJson() failed with code "));
+        Serial.println(err.c_str());
+#endif //SQL_DEBUG
+
+        return myIgcData;
+    }
+
+    if (doc.containsKey("pilot"))
+    {
+        myIgcData.pilot = doc["pilot"].as<String>();
+    }
+    if (doc.containsKey("wing"))
+    {
+        myIgcData.wing = doc["wing"].as<String>();
+    }
+    if (doc.containsKey("flightDate"))
+    {
+        myIgcData.flightDate = doc["flightDate"].as<String>();
+    }
+    if (doc.containsKey("startFlightTime"))
+    {
+        myIgcData.startFlightTime = doc["startFlightTime"].as<String>();
+    }
+    if (doc.containsKey("endFlightTime"))
+    {
+        myIgcData.endFlightTime = doc["endFlightTime"].as<String>();
+    }
+    if (doc.containsKey("startHeight"))
+    {
+        myIgcData.startHeight = doc["startHeight"];
+    }
+    if (doc.containsKey("endHeight"))
+    {
+        myIgcData.endHeight = doc["endHeight"];
+    }
+    if (doc.containsKey("minHeight"))
+    {
+        myIgcData.minHeight = doc["minHeight"];
+    }
+    if (doc.containsKey("maxHeight"))
+    {
+        myIgcData.maxHeight = doc["maxHeight"];
+    }
+    if (doc.containsKey("startLat"))
+    {
+        myIgcData.startLat = doc["startLat"];
+    }
+    if (doc.containsKey("startLon"))
+    {
+        myIgcData.startLon = doc["startLon"];
+    }
+    if (doc.containsKey("endLat"))
+    {
+        myIgcData.endLat = doc["endLat"];
+    }
+    if (doc.containsKey("endLon"))
+    {
+        myIgcData.endLon = doc["endLon"];
+    }
+    if (doc.containsKey("md5"))
+    {
+        myIgcData.md5 = doc["md5"].as<String>();
+    }
+    if (doc.containsKey("filename"))
+    {
+        myIgcData.filename = doc["filename"].as<String>();
+    }
+    if (doc.containsKey("site_id"))
+    {
+        myIgcData.site_id = doc["site_id"];
+    }
+    if (doc.containsKey("comment"))
+    {
+        myIgcData.comment = doc["comment"].as<String>();
+    }
+
+    return myIgcData;
 }

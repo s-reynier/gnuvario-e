@@ -26,9 +26,9 @@
 #include <ESP32-targz.h>
 #include <sdcardHAL.h>
 
-#define MAJ_ERROR -1
-#define MAJ_AVAILABLE 1
-#define MAJ_NOTAVAILABLE 0
+#define MAJ_ERROR 			-1
+#define MAJ_AVAILABLE 		1
+#define MAJ_NOTAVAILABLE	0
 
 class esp32FOTA2
 {
@@ -42,21 +42,21 @@ public:
   uint8_t execHTTPScheck(bool betaVersion = false);
   bool useDeviceID;
   String checkURL;
-  int UpdateVersion;
-  int UpdateSubVersion;
-  int UpdateBetaVersion;
-  String getHTTPVersion();
-  String getHTTPSVersion();
-  bool UpdateWwwDirectory(void);
-  bool UpdateWwwDirectoryFromGz();
+  int  UpdateVersion;
+  int	 UpdateSubVersion;
+	int  UpdateBetaVersion;	
+	String getHTTPVersion();
+	String getHTTPSVersion();
+	bool UpdateWwwDirectory(void);
+  int8_t UpdateWwwDirectoryFromGz();
 
 private:
   String getHeaderValue(String header, String headerName);
   String getDeviceID();
   String _firwmareType;
   int _firwmareVersion;
-  int _firwmareSubVersion;
-  int _firwmareBetaVersion;
+  int	_firwmareSubVersion;
+	int _firwmareBetaVersion;
   String _host;
   String _bin;
   String _wwwfiles[10];
@@ -67,7 +67,7 @@ private:
   void downloadGzwwwFile();
 };
 
-extern const char *rootCACertificate;
+extern const char* rootCACertificate;
 
 extern esp32FOTA2 esp32FOTA;
 #endif

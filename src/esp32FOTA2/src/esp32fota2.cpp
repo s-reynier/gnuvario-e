@@ -24,6 +24,12 @@
 
 #include <HardwareConfig.h>
 
+// #define JSONDOCEXTERN
+
+// #ifdef JSONDOCEXTERN
+// #include <VarioSettings.h>
+// #endif
+
 #ifdef WIFI_DEBUG
 #define ARDUINOTRACE_ENABLE 1
 #else
@@ -520,7 +526,14 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
             //SerialPort.println(JSONMessage);
 #endif
 
-            StaticJsonDocument<1300> JSONDocument; //Memory pool
+// #ifndef JSONDOCEXTERN
+            DynamicJsonDocument JSONDocument(1300); //Memory pool
+// 						#define JSONDOC JSONDocument
+// #else
+// 						#define JSONDOC GnuSettings.doc	
+// 						// Clearing Buffer
+// 						JSONDOC.clear();
+// #endif
             DeserializationError err = deserializeJson(JSONDocument, JSONMessage);
 
             if (err)
@@ -543,30 +556,30 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
 
             if (JSONDocument.containsKey(tmp))
             {
-                JsonObject JSONDocumentUpdate = JSONDocument[tmp];
+                JsonObject JSONDOCUpdate = JSONDocument[tmp];
 
-                //const char *pltype = JSONDocument["type"];
-                int plversion = JSONDocumentUpdate["version"];
+                //const char *pltype = JSONDOC["type"];
+                int plversion = JSONDOCUpdate["version"];
                 UpdateVersion = plversion;
 
-                int plsubversion = JSONDocumentUpdate["subversion"];
+                int plsubversion = JSONDOCUpdate["subversion"];
                 UpdateSubVersion = plsubversion;
 
-                int plbetaversion = JSONDocumentUpdate["betaversion"];
+                int plbetaversion = JSONDOCUpdate["betaversion"];
                 UpdateBetaVersion = plbetaversion;
 
-                const char *plhost = JSONDocumentUpdate["host"];
-                _port = JSONDocumentUpdate["port"];
+                const char *plhost = JSONDOCUpdate["host"];
+                _port = JSONDOCUpdate["port"];
 
                 NB_WWW_FILES = 0;
 
-                if (JSONDocumentUpdate.containsKey("www"))
+                if (JSONDOCUpdate.containsKey("www"))
                 {
 
 #ifdef WIFI_DEBUG
                     SerialPort.println("la section du fichier json contient la clé www");
 #endif
-                    JsonArray myArray = JSONDocumentUpdate["www"].as<JsonArray>();
+                    JsonArray myArray = JSONDOCUpdate["www"].as<JsonArray>();
 
                     for (JsonVariant myValue : myArray)
                     {
@@ -578,14 +591,14 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                     }
                 }
 
-                if (JSONDocumentUpdate.containsKey("gzwww"))
+                if (JSONDOCUpdate.containsKey("gzwww"))
                 {
 
 #ifdef WIFI_DEBUG
                     SerialPort.println("la section du fichier json contient la clé www");
 #endif
 
-                    const char *gzwww = JSONDocumentUpdate["gzwww"];
+                    const char *gzwww = JSONDOCUpdate["gzwww"];
                     _gzwwwfile = String(gzwww);
                 }
 
@@ -603,7 +616,7 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
                 SerialPort.println(_port);
 #endif
 
-                const char *plbin = JSONDocumentUpdate["bin"];
+                const char *plbin = JSONDOCUpdate["bin"];
 
                 String jshost(plhost);
                 String jsbin(plbin);
@@ -739,8 +752,16 @@ uint8_t esp32FOTA2::execHTTPScheck(bool betaVersion)
             char JSONMessage[str_len];
             payload.toCharArray(JSONMessage, str_len);
 
-            StaticJsonDocument<1300> JSONDocument; //Memory pool
-            DeserializationError err = deserializeJson(JSONDocument, JSONMessage);
+// #ifndef JSONDOCEXTERN
+//             StaticJsonDocument<1300> JSONDocument; //Memory pool
+// 						#define JSONDOC JSONDocument
+// #else
+// 						#define JSONDOC GnuSettings.doc	
+// 						// Clearing Buffer
+// 						JSONDOC.clear();
+// #endif
+DynamicJsonDocument JSONDOC(1300);
+            DeserializationError err = deserializeJson(JSONDOC, JSONMessage);
 
             if (err)
             { //Check for errors in parsing
@@ -751,11 +772,11 @@ uint8_t esp32FOTA2::execHTTPScheck(bool betaVersion)
                 return false;
             }
 
-            const char *pltype = JSONDocument["type"];
-            int plversion = JSONDocument["version"];
-            const char *plhost = JSONDocument["host"];
-            _port = JSONDocument["port"];
-            const char *plbin = JSONDocument["bin"];
+            const char *pltype = JSONDOC["type"];
+            int plversion = JSONDOC["version"];
+            const char *plhost = JSONDOC["host"];
+            _port = JSONDOC["port"];
+            const char *plbin = JSONDOC["bin"];
 
             String jshost(plhost);
             String jsbin(plbin);
@@ -1157,7 +1178,7 @@ bool esp32FOTA2::UpdateWwwDirectory()
 }
 
 //************************************
-bool esp32FOTA2::UpdateWwwDirectoryFromGz()
+int8_t esp32FOTA2::UpdateWwwDirectoryFromGz()
 //************************************
 {
 #ifdef WIFI_DEBUG
@@ -1174,7 +1195,7 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] Fichier www.gz introuvable");
 #endif
-        return true;
+        return 0;
     }
 
     screen.ScreenViewMessage("MAJ www", 0);
@@ -1198,7 +1219,7 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] le dossier www ne peut être renommé en wwwold");
 #endif
-        return false; //Pas de mise à jour
+        return -1; //Pas de mise à jour
     }
 
     //decompression de l'archive dans /www
@@ -1211,7 +1232,7 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] le fichier n'a pas pu être supprimé");
 #endif
-        return false;
+        return -1;
     }
 
     //suppression de l'archive
@@ -1220,10 +1241,10 @@ bool esp32FOTA2::UpdateWwwDirectoryFromGz()
 #ifdef WIFI_DEBUG
         SerialPort.println("[HTTP] le fichier n'a pas pu être supprimé");
 #endif
-        return false;
+        return -1;
     }
 
-    return true;
+    return 1;
 }
 
 /*{
