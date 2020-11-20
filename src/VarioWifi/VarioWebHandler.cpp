@@ -586,8 +586,6 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
         return response;
     }
 
-    File dataFile;
-
     const TickType_t delay = (100) / portTICK_PERIOD_MS;
     vTaskDelay(delay);
 
@@ -615,9 +613,9 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
         }
         else
         {
-            return snprintf((char *)buffer, maxLen, ".");
+            // return snprintf((char *)buffer, maxLen, ".");
             // buffer[0] = '.';
-            // return 1;
+            return 1;
         }
     });
 
@@ -947,6 +945,8 @@ AsyncWebServerResponse *VarioWebHandler::handleDelSite(AsyncWebServerRequest *re
 
 void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
 {
+    const String ParsedPath PROGMEM = "/vols/parsed";
+
 #ifdef WIFI_DEBUG
     SerialPort.println("_doParseIgcAndInsert");
 #endif
@@ -973,11 +973,17 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
             SerialPort.print("Filename a deplacer: ");
             SerialPort.println(filename);
 #endif
-            if (!SDHAL_SD.exists("/vols/parsed"))
+            if (!SDHAL_SD.exists(ParsedPath))
             {
-                SDHAL_SD.mkdir("/vols/parsed");
+                SDHAL_SD.mkdir(ParsedPath);
             }
-            SDHAL_SD.rename(path, "/vols/parsed/" + filename);
+
+            if (SDHAL_SD.exists(ParsedPath + "/" + filename))
+            {
+                SDHAL_SD.remove(ParsedPath + "/" + filename);
+            }
+
+            SDHAL_SD.rename(path, ParsedPath + "/" + filename);
 #ifdef WIFI_DEBUG
             SerialPort.println("Deplacement du fichier termine");
 #endif

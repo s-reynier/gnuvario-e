@@ -74,7 +74,11 @@ VarioIgcParser::~VarioIgcParser()
 
 boolean VarioIgcParser::parseFile()
 {
-    const TickType_t delay = (1) / portTICK_PERIOD_MS;
+    const char IGCHeaderDATE[] PROGMEM = "HFDTE";
+    const char IGCHeaderPILOT[] PROGMEM = "HFPLTPILOTINCHARGE:";
+    const char IGCHeaderGLIDER[] PROGMEM = "HFGTYGLIDERTYPE:";
+
+    TickType_t delay = (1) / portTICK_PERIOD_MS;
     File dataFile;
     String buffer;
     char tmpBuffer[100];
@@ -143,7 +147,7 @@ boolean VarioIgcParser::parseFile()
             //on lit aussi le \n qui traine
             dataFile.read();
 
-            tmpBuffer[tmpBufferPos + 1] = '\0';
+            tmpBuffer[tmpBufferPos] = '\0';
             buffer = String(tmpBuffer);
             buffer.trim();
 #ifdef WIFI_DEBUG
@@ -151,7 +155,7 @@ boolean VarioIgcParser::parseFile()
             // SerialPort.print(" buffer : ");
             // SerialPort.println(buffer);
 #endif //WIFI_DEBUG
-            if (buffer.startsWith("HFDTE"))
+            if (buffer.startsWith(IGCHeaderDATE))
             {
                 // date de la trace
                 myIgcData.flightDate = buffer.substring(5);
@@ -163,7 +167,7 @@ boolean VarioIgcParser::parseFile()
                 SerialPort.println(myIgcData.flightDate);
 #endif //WIFI_DEBUG
             }
-            else if (buffer.startsWith("HFPLTPILOTINCHARGE:"))
+            else if (buffer.startsWith(IGCHeaderPILOT))
             {
                 //nom du pilote
                 myIgcData.pilot = buffer.substring(19);
@@ -173,7 +177,7 @@ boolean VarioIgcParser::parseFile()
                 SerialPort.println(myIgcData.pilot);
 #endif //WIFI_DEBUG
             }
-            else if (buffer.startsWith("HFGTYGLIDERTYPE:"))
+            else if (buffer.startsWith(IGCHeaderGLIDER))
             {
                 //nom de la voile
                 myIgcData.wing = buffer.substring(16);
