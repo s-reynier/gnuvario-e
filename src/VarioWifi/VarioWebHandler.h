@@ -110,5 +110,6 @@ private:
 };
 
 extern esp32FOTA2 esp32FOTA;
+extern QueueHandle_t xQueueParse;
 
 #endif //VARIO_WEBHANDLER_H

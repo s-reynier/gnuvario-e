@@ -571,7 +571,7 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
     SerialPort.println("handleParseIgc");
 #endif
     AsyncWebServerResponse *response;
-
+    uint32_t dataToSend = 1;
     String path;
 
     if (request->hasParam("path"))
@@ -586,8 +586,24 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
         return response;
     }
 
-    const TickType_t delay = (100) / portTICK_PERIOD_MS;
-    vTaskDelay(delay);
+    if (!xQueueParse)
+    {
+        xQueueParse = xQueueCreate(5, sizeof(uint32_t));
+#ifdef WIFI_DEBUG
+        SerialPort.println("xQueueParse created");
+#endif
+        if (!xQueueParse)
+        {
+#ifdef WIFI_DEBUG
+            SerialPort.println("xQueueParse failed creation");
+#endif
+        }
+    }
+
+    xQueueSend(xQueueParse, &dataToSend, 0);
+
+    // const TickType_t delay = (100) / portTICK_PERIOD_MS;
+    // vTaskDelay(delay);
 
     TaskHandle_t taskParse;
     xTaskCreate(
@@ -598,58 +614,55 @@ AsyncWebServerResponse *VarioWebHandler::handleParseIgc(AsyncWebServerRequest *r
         1,                      /* Priority of the task. */
         &taskParse);            /* Task handle. */
 
-    response = request->beginChunkedResponse("text/plain", [taskParse](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
+    response = request->beginChunkedResponse("text/plain", [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
         //Write up to "maxLen" bytes into "buffer" and return the amount written.
         //index equals the amount of bytes that have been already sent
         //You will be asked for more data until 0 is returned
         //Keep in mind that you can not delay or yield waiting for more data!
 
-        if (eTaskGetState(taskParse) == eDeleted)
+        uint32_t element;
+        if (!(xQueueReceive(xQueueParse, &element, portMAX_DELAY) == pdTRUE))
         {
+#ifdef WIFI_DEBUG
+            SerialPort.println("RIEN DANS LA QUEUE");
+#endif
+            //on force le renvoi de la valeur  1
+            element = 1;
+        }
+        else
+        {
+#ifdef WIFI_DEBUG
+            SerialPort.print("VALEUR DE LA QUEUE");
+            SerialPort.println(element);
+#endif
+        };
+
+        if (element == 0)
+        {
+            // la queue contient l'element 0 qui signifie que le traitement est terminé
+            vQueueDelete(xQueueParse);
+            xQueueParse = NULL;
 #ifdef WIFI_DEBUG
             SerialPort.println("handleParseIgc RETURN 0");
 #endif
             return 0;
         }
+        else if (element == 2)
+        {
+            //la queue contient l'element 2 qui signifie que le traitement a échoué
+            // on met 0 dans la queue pour terminer la requete au prochain passage
+            uint32_t dataToSend = 0;
+            xQueueSend(xQueueParse, &dataToSend, 0);
+
+            return snprintf((char *)buffer, maxLen, "ERROR");
+        }
         else
         {
-            // return snprintf((char *)buffer, maxLen, ".");
-            // buffer[0] = '.';
-            return 1;
+            // la queue contient l'element 1 qui signifie que le traitement est en cours
+            return snprintf((char *)buffer, maxLen, ".");
         }
     });
 
-    // //test présence fichier
-    // if (dataFile = SDHAL_SD.open(path, FILE_READ))
-    // {
-    //     //parsage du fichier IGC
-    //     VarioIgcParser varioIgcParser;
-    //     varioIgcParser.parseFile(path);
-
-    //     VarioSqlFlight varioSqlFlight;
-    //     if (varioSqlFlight.insertFlight(varioIgcParser.getJson()))
-    //     {
-
-    //         String tmpFullName = dataFile.name();
-    //         dataFile.close();
-
-    //         String filename = tmpFullName.substring(tmpFullName.lastIndexOf("/") + 1);
-    //         if (!SDHAL_SD.exists("/vols/parsed"))
-    //         {
-    //             SDHAL_SD.mkdir("/vols/parsed");
-    //         }
-    //         SDHAL_SD.rename(path, "/vols/parsed/" + filename);
-
-    //         response = request->beginResponse(200, "text/plain", "OK");
-    //         return response;
-    //     }
-    //     else
-    //     {
-    //         response = request->beginResponse(500, "text/plain", "CANNOT INSERT FLIGHT");
-    //         return response;
-    //     }
-    // }
-    // response = request->beginResponse(500, "text/plain", "BAD ARGS");
     return response;
 }
 
@@ -946,6 +959,7 @@ AsyncWebServerResponse *VarioWebHandler::handleDelSite(AsyncWebServerRequest *re
 void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
 {
     const String ParsedPath PROGMEM = "/vols/parsed";
+    uint32_t dataToSend = 0;
 
 #ifdef WIFI_DEBUG
     SerialPort.println("_doParseIgcAndInsert");
@@ -995,6 +1009,7 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
 #ifdef WIFI_DEBUG
             SerialPort.println("ECHEC de l insertion");
 #endif
+            dataToSend = 2;
 
             // response = request->beginResponse(500, "text/plain", "CANNOT INSERT FLIGHT");
             // return response;
@@ -1003,9 +1018,10 @@ void VarioWebHandler::_doParseIgcAndInsert(void *parameter)
         varioIgcParser.~VarioIgcParser();
         varioSqlFlight.~VarioSqlFlight();
     }
+
+    xQueueSend(xQueueParse, &dataToSend, 0);
     vTaskDelete(NULL);
-    const TickType_t delay = (100) / portTICK_PERIOD_MS;
-    vTaskDelay(delay);
+
     return;
 }
 

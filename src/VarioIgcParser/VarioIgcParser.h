@@ -8,6 +8,7 @@
 #include <sdcardHAL.h>
 #endif
 
+
 class VarioIgcParser
 {
 

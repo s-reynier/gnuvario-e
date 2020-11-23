@@ -54,6 +54,8 @@
 #include <MD5Builder.h>
 #include <ArduinoJson.h>
 
+QueueHandle_t xQueueParse;
+
 VarioIgcParser::VarioIgcParser(String path)
 {
 #ifdef MEMORY_DEBUG
@@ -75,16 +77,19 @@ VarioIgcParser::~VarioIgcParser()
 boolean VarioIgcParser::parseFile()
 {
     const char IGCHeaderDATE[] PROGMEM = "HFDTE";
+    const char IGCHeaderDATENEW[] PROGMEM = "HFDTEDATE:";
     const char IGCHeaderPILOT[] PROGMEM = "HFPLTPILOTINCHARGE:";
     const char IGCHeaderGLIDER[] PROGMEM = "HFGTYGLIDERTYPE:";
 
-    TickType_t delay = (1) / portTICK_PERIOD_MS;
+    // TickType_t delay = (1) / portTICK_PERIOD_MS;
     File dataFile;
     String buffer;
     char tmpBuffer[100];
     uint8_t tmpBufferPos = 0;
     boolean startHeightSet = false;
     boolean startFlightTimeSet = false;
+
+    uint32_t dataToSend = 1;
 
     myIgcData.minHeight = 9999;
     myIgcData.maxHeight = -9999;
@@ -106,7 +111,9 @@ boolean VarioIgcParser::parseFile()
         uint16_t curSize = min(size, (uint16_t)4096);
         md5b.addStream(dataFile, curSize);
         size -= curSize;
-        vTaskDelay(delay);
+
+        xQueueSend(xQueueParse, &dataToSend, 0);
+        // vTaskDelay(delay);
 #ifdef WIFI_DEBUG
         SerialPort.print(".");
 #endif //WIFI_DEBUG
@@ -130,9 +137,7 @@ boolean VarioIgcParser::parseFile()
 
     while (dataFile.available())
     {
-
-        vTaskDelay(delay);
-
+        xQueueSend(xQueueParse, &dataToSend, 0);
 #ifdef WIFI_DEBUG
         SerialPort.print("-");
 #endif //WIFI_DEBUG
@@ -155,7 +160,19 @@ boolean VarioIgcParser::parseFile()
             // SerialPort.print(" buffer : ");
             // SerialPort.println(buffer);
 #endif //WIFI_DEBUG
-            if (buffer.startsWith(IGCHeaderDATE))
+            if (buffer.startsWith(IGCHeaderDATENEW))
+            {
+                // date de la trace
+                myIgcData.flightDate = buffer.substring(10);
+                myIgcData.flightDate.trim();
+                //inversion pour format americain
+                myIgcData.flightDate = "20" + myIgcData.flightDate.substring(4, 6) + "-" + myIgcData.flightDate.substring(2, 4) + "-" + myIgcData.flightDate.substring(0, 2);
+#ifdef WIFI_DEBUG
+                SerialPort.print("flightDate : ");
+                SerialPort.println(myIgcData.flightDate);
+#endif //WIFI_DEBUG
+            }
+            else if (buffer.startsWith(IGCHeaderDATE))
             {
                 // date de la trace
                 myIgcData.flightDate = buffer.substring(5);
