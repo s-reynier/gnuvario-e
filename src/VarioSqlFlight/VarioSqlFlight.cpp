@@ -365,24 +365,12 @@ bool VarioSqlFlight::delFlight(uint8_t id)
     return true;
 }
 
-bool VarioSqlFlight::updateFlight(uint8_t id, String data)
+bool VarioSqlFlight::updateFlight(uint8_t id, igcdata myIgcData)
 {
 #ifdef SQL_DEBUG
     SerialPort.println("updateFlight");
     SerialPort.println(data);
 #endif //SQL_DEBUG
-
-    DynamicJsonDocument doc(4096);
-    DeserializationError err = deserializeJson(doc, data);
-    if (err)
-    {
-#ifdef SQL_DEBUG
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(err.c_str());
-#endif //SQL_DEBUG
-
-        return false;
-    }
 
     int rc;
     sqlite3_stmt *res;
@@ -402,7 +390,7 @@ bool VarioSqlFlight::updateFlight(uint8_t id, String data)
 
     String sql = F("UPDATE flight SET site_id = ?, comment = ? ");
 
-    if (doc.containsKey("pilot"))
+    if (myIgcData.pilot != "")
     {
         sql = sql + ", pilot = ?, wing = ?, flight_date = ?, start_flight_time = ?, end_flight_time = ?, start_height = ?, end_height = ?, min_height = ?, max_height = ?, start_lat = ?, start_lon = ?, end_lat = ?, end_lon = ? ";
     }
@@ -423,24 +411,24 @@ bool VarioSqlFlight::updateFlight(uint8_t id, String data)
     SerialPort.println("Début binding");
 #endif //SQL_DEBUG
 
-    sqlite3_bind_int(res, 1, doc["site_id"]);
-    sqlite3_bind_text(res, 2, doc["comment"], strlen(doc["comment"]), SQLITE_STATIC);
+    sqlite3_bind_int(res, 1, myIgcData.site_id);
+    sqlite3_bind_text(res, 2, (char *)myIgcData.comment.c_str(), myIgcData.comment.length(), SQLITE_STATIC);
 
-    if (doc.containsKey("pilot"))
+    if (myIgcData.pilot != "")
     {
-        sqlite3_bind_text(res, 3, doc["pilot"], strlen(doc["pilot"]), SQLITE_STATIC);
-        sqlite3_bind_text(res, 4, doc["wing"], strlen(doc["wing"]), SQLITE_STATIC);
-        sqlite3_bind_text(res, 5, doc["flightDate"], strlen(doc["flightDate"]), SQLITE_STATIC);
-        sqlite3_bind_text(res, 6, doc["startFlightTime"], strlen(doc["startFlightTime"]), SQLITE_STATIC);
-        sqlite3_bind_text(res, 7, doc["endFlightTime"], strlen(doc["endFlightTime"]), SQLITE_STATIC);
-        sqlite3_bind_int(res, 8, doc["startHeight"]);
-        sqlite3_bind_int(res, 9, doc["endHeight"]);
-        sqlite3_bind_int(res, 10, doc["minHeight"]);
-        sqlite3_bind_int(res, 11, doc["maxHeight"]);
-        sqlite3_bind_double(res, 12, doc["startLat"]);
-        sqlite3_bind_double(res, 13, doc["startLon"]);
-        sqlite3_bind_double(res, 14, doc["endLat"]);
-        sqlite3_bind_double(res, 15, doc["endLon"]);
+        sqlite3_bind_text(res, 3, (char *)myIgcData.pilot.c_str(), myIgcData.pilot.length(), SQLITE_STATIC);
+        sqlite3_bind_text(res, 4, (char *)myIgcData.wing.c_str(), myIgcData.wing.length(), SQLITE_STATIC);
+        sqlite3_bind_text(res, 5, (char *)myIgcData.flightDate.c_str(), myIgcData.flightDate.length(), SQLITE_STATIC);
+        sqlite3_bind_text(res, 6, (char *)myIgcData.startFlightTime.c_str(), myIgcData.startFlightTime.length(), SQLITE_STATIC);
+        sqlite3_bind_text(res, 7, (char *)myIgcData.endFlightTime.c_str(), myIgcData.endFlightTime.length(), SQLITE_STATIC);
+        sqlite3_bind_int(res, 8, myIgcData.startHeight);
+        sqlite3_bind_int(res, 9, myIgcData.endHeight);
+        sqlite3_bind_int(res, 10, myIgcData.minHeight);
+        sqlite3_bind_int(res, 11, myIgcData.maxHeight);
+        sqlite3_bind_double(res, 12, myIgcData.startLat);
+        sqlite3_bind_double(res, 13, myIgcData.startLon);
+        sqlite3_bind_double(res, 14, myIgcData.endLat);
+        sqlite3_bind_double(res, 15, myIgcData.endLon);
         sqlite3_bind_int(res, 16, id);
     }
     else
@@ -888,7 +876,7 @@ bool VarioSqlFlight::initGetFlightsQuery(uint16_t limit, uint16_t offset)
 
     //String sql = F("SELECT f.id, f.site_id, f.filename, f.md5, f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, f.minimap, s.lib FROM flight f LEFT JOIN site s ON(s.id = f.site_id) ORDER BY f.flight_date DESC, f.start_flight_time ASC LIMIT ?  OFFSET ?");
     //String sql = F("SELECT f.id, f.site_id, f.filename, f.md5, f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, f.minimap, 'toto' AS lib FROM flight f");
-    String sql = F("SELECT f.id, f.site_id, f.filename, f.md5, f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, f.minimap, s.lib FROM flight f LEFT JOIN site s ON(s.id = f.site_id) LIMIT ?  OFFSET ?");
+    String sql = F("SELECT f.id, f.site_id, f.filename,  f.pilot, f.wing, f.flight_date, f.start_flight_time, f.end_flight_time, f.start_height, f.end_height, f.min_height, f.max_height, f.start_lat, f.start_lon, f.end_lat, f.end_lon, f.comment, s.lib FROM flight f LEFT JOIN site s ON(s.id = f.site_id) LIMIT ?  OFFSET ?");
 
 #ifdef SQL_DEBUG
     // SerialPort.println(sql);
@@ -1065,71 +1053,71 @@ bool VarioSqlFlight::getNextFlight(bool &firstline, RingBuf<char, 1024> &buffer)
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"md5\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 3)));
+            // tmp = "\"md5\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 3)));
+            // strcat(unvol, tmp.c_str());
+            // strcat(unvol, ", ");
+
+            tmp = "\"pilot\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 3)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"pilot\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 4)));
+            tmp = "\"wing\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 4)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"wing\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 5)));
+            tmp = "\"flight_date\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 5)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"flight_date\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 6)));
+            tmp = "\"start_flight_time\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 6)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"start_flight_time\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 7)));
+            tmp = "\"end_flight_time\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 7)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"end_flight_time\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 8)));
+            tmp = "\"start_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 8)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"start_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 9)));
+            tmp = "\"end_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 9)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"end_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 10)));
+            tmp = "\"min_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 10)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"min_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 11)));
+            tmp = "\"max_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 11)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"max_height\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 12)));
+            tmp = "\"start_lat\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 12)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"start_lat\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 13)));
+            tmp = "\"start_lon\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 13)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"start_lon\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 14)));
+            tmp = "\"end_lat\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 14)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"end_lat\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 15)));
+            tmp = "\"end_lon\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 15)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"end_lon\" : " + escapeJson(String(sqlite3_column_int(nextFlightRes, 16)));
+            tmp = "\"comment\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 16)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, ", ");
 
-            tmp = "\"comment\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 17)));
-            strcat(unvol, tmp.c_str());
-            strcat(unvol, ", ");
+            // tmp = "\"minimap\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 18)));
+            // strcat(unvol, tmp.c_str());
+            // strcat(unvol, ", ");
 
-            tmp = "\"minimap\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 18)));
-            strcat(unvol, tmp.c_str());
-            strcat(unvol, ", ");
-
-            tmp = "\"site_lib\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 19)));
+            tmp = "\"site_lib\" : " + escapeJson(String((char *)sqlite3_column_text(nextFlightRes, 17)));
             strcat(unvol, tmp.c_str());
             strcat(unvol, "}");
 

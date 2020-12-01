@@ -31,7 +31,7 @@ public:
     VarioSqlFlight();
     ~VarioSqlFlight();
     bool insertFlight(igcdata myIgcData);
-    bool updateFlight(uint8_t id, String data);
+    bool updateFlight(uint8_t id, igcdata myIgcData);
     bool delFlight(uint8_t id);
     bool updateFlightMap(uint8_t id, String data);
     String getSites();

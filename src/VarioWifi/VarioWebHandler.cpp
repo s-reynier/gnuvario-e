@@ -768,7 +768,7 @@ void VarioWebHandler::handleSetFlight(AsyncWebServerRequest *request, uint8_t *d
         SerialPort.println(id);
         SerialPort.println(content);
 #endif
-        varioSqlFlight.updateFlight(id, content);
+        varioSqlFlight.updateFlight(id, jsonToIgcdata(content));
     }
     else
     {
