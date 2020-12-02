@@ -3,6 +3,15 @@
 #include <Update.h>
 #include "VarioWebHandler.h"
 
+//************************************************************
+// DISPLAY SCREEN
+//************************************************************
+#define ENABLE_DISPLAY_WEBSERVER
+
+#ifdef ENABLE_DISPLAY_WEBSERVER
+#include <varioscreenGxEPD.h>
+#endif
+
 File uploadFile;
 File varioParamFile;
 File wifiParamFile;
@@ -295,19 +304,21 @@ void VarioWebHandler::handleOtaUpdate(AsyncWebServerRequest *request, String fil
     if (!index)
     {
         Serial.printf("UploadStart: %s\n", filename.c_str());
-        if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH))
         { //start with max available size
             Update.printError(Serial);
             request->send(500, "text/plain", "UPDATE FAIL");
             return;
         }
     }
-
-    if (Update.write(data, len) != len)
+    if (len)
     {
-        Update.printError(Serial);
-        request->send(500, "text/plain", "UPDATE FAIL");
-        return;
+        if (Update.write(data, len) != len)
+        {
+            Update.printError(Serial);
+            request->send(500, "text/plain", "UPDATE FAIL");
+            return;
+        }
     }
 
     if (final)
