@@ -43,7 +43,7 @@
 
 //VERSION
 //#define VARIOVERSION 154     //Version 1 avec ecran 1.54
-//#define VARIOVERSION 254     //Version 2 avec ecran 1.54
+// #define VARIOVERSION 254     //Version 2 avec ecran 1.54
 //#define VARIOVERSION 290     //Version 2 avec ecran 2.90 paysage
 #define VARIOVERSION 291     //Version 2 avec ecran 2.90 portrait
 //#define VARIOVERSION 390     //Version 3 avec ecran 2.90 paysage

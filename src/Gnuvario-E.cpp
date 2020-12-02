@@ -658,7 +658,7 @@ VarioData varioData;
 
 #ifdef HAVE_WIFI
 #include <VarioWifi.h>
-//#include <esp32fota2.h>
+#include <esp32fota2.h>
 #endif //HAVE_WIFI
 
 /*************************************************
@@ -689,6 +689,8 @@ VarioData varioData;
 //#endif
 
 //esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE); //esp32-fota-http", 0,6,0);
+
+esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), VERSION, SUB_VERSION, BETA_CODE);
 
 #endif //HAVE_WIFI
 

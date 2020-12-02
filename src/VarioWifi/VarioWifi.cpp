@@ -41,7 +41,6 @@ WiFiMulti wifiMulti;
 AsyncWebServer server(80);
 
 VarioWebHandler varioWebHandler;
-esp32FOTA2 esp32FOTA("Gnuvario" + String(VARIOSCREEN_SIZE), varioData.Version, varioData.Sub_Version, varioData.Beta_Code);
 
 bool VarioWifi::begin()
 {
@@ -534,6 +533,6 @@ void VarioWifi::startWebServer()
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "*");
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
-    
+
     server.begin();
 }
