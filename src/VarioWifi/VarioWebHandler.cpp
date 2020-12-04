@@ -497,7 +497,7 @@ void VarioWebHandler::handleSaveWifi(AsyncWebServerRequest *request, uint8_t *da
 {
 
 #ifdef WIFI_DEBUG
-    SerialPort.println("handleSaveParams");
+    SerialPort.println("handleSaveWifi");
 #endif
 
     String path = "/wifi.cfg";
@@ -512,8 +512,10 @@ void VarioWebHandler::handleSaveWifi(AsyncWebServerRequest *request, uint8_t *da
             return;
         }
     }
-
-    wifiParamFile.write(data, len);
+    if (len)
+    {
+        wifiParamFile.write(data, len);
+    }
 
     if (index + len == total)
     {
@@ -564,7 +566,10 @@ void VarioWebHandler::handleSaveWebConfig(AsyncWebServerRequest *request, uint8_
         }
     }
 
-    webParamFile.write(data, len);
+    if (len)
+    {
+        webParamFile.write(data, len);
+    }
 
     if (index + len == total)
     {
