@@ -1,4 +1,4 @@
- #include <Arduino.h>
+#include <Arduino.h>
 #include <Adafruit_I2CDevice.h>
 
 /*******************/
@@ -9,7 +9,7 @@
 #define SUB_VERSION 8
 #define BETA_CODE 5
 #define DEVNAME "JPG63/MICELPA/RATAMUSE"
-#define AUTHOR "J" //J=JPG63  P=PUNKDUMP  M=MICHELPA
+#define AUTHOR "J" //J=JPG63  P=PUNKDUMP  M=MICHELPA    R=RATAMUSE
 
 /******************************************************************************************************/
 /*                                              VERSION                                               */
@@ -295,6 +295,13 @@
 *                                    Integration code Pierre - correction site web                    *
 *                                    Reduction allocation memoire varioigcparser                      *
 *                                    Reduction allocation memoire esp32fota2                          *
+*                17/11/20            Ajout variodataprocessing                                        *
+*                21/11/20            Correction Site web                                              *
+*                25/11/20            Mise à jour date IGC                                             *
+*                01/12/20            Correction bug IGC                                               *
+*                                    maj lib busyIo                                                   *
+*                                    Modif page web                                                   *
+*                                    Mise à jour carte ESP32 IDE Arduino                              *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -305,9 +312,6 @@
 * BUG   - DISPLAY_OBJECT_LINE object ligne ne fonctionne pas                                          *
 *                                                                                                     *
 * v0.7                                                                                                *
-* BUG   - upload wifi - ne se termine pas  - bug espressif le buffer n'est pas vidé à la fin          *
-* BUG   - update manuelle - doit être lancée 2 fois                                                   *
-* BUG   - download à verifier                                                                         *
 *                                                                                                     *        
 * v0.8                                                                                                *       
 * BUG   - Grésillement Buzzer                                                                         * 
@@ -319,6 +323,13 @@
 * AJOUT - Deep-Sleep charge batterie                                                                  *
 * BUG   - % batterie au démmarage                                                                     *
 * BUG   - intergration - bip continu                                                                  *
+* BUG   - update manuelle - doit être lancée 2 fois                                                   *
+* MODIF - Altitude calibrée dans IGC                                                                  *                                                                                                    
+* BUG   - Modification des paramètres wifi                                                            *
+* BUG   - Saisie des sites de vol                                                                     * 
+* BUG   - Mise à jour n'affiche pas la version                                                        *
+* BUG   - carnet de vol - previsu carte est vide                                                      *
+* buG   - carnet de vol - info n'affiche rien                                                         *
 *                                                                                                     *
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
@@ -405,6 +416,8 @@
  *  - Ajout de la gestion du PCB V3                                     *
  *  - Gestion du GPS L86                                                *
  *  - Ajout écran de charge                                             *
+ *  - Transfert des vol sur paraglidinglogbook                          *
+ *  - Nouvelles Pages Wifi avec gestion d'un carnet de vol              *
  *                                                                      *
  ************************************************************************/
 
@@ -1068,6 +1081,7 @@ double temprature = 0;
 //*****************************
 void loop()
 {
+  SerialPort.println("loop");
   //****************************
   //****************************
 
