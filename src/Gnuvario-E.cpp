@@ -301,7 +301,15 @@
 *                01/12/20            Correction bug IGC                                               *
 *                                    maj lib busyIo                                                   *
 *                                    Modif page web                                                   *
-*                                    Mise à jour carte ESP32 IDE Arduino                              *
+*                13/12/20            Mise à jour lib GxEpd2, ...                                      *
+*                                    Correction variolanguage                                         *
+*                                    Correction varioscreenepd291                                     *
+*                20/12/20            Correction d'affichage                                           *
+*                                    Correstion ajout site (page wifi)                                *
+*                                    Correction enregistrement ICG Altitude calibrée                  *         
+*                                    Correction bug son en continu - vario integré                    *
+*                                    Correction gestion memoire json                                  *
+*                09/02/21            Ajout gestion écran 2.9'' V2 - 292                               *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -315,21 +323,13 @@
 *                                                                                                     *        
 * v0.8                                                                                                *       
 * BUG   - Grésillement Buzzer                                                                         * 
-* BUG   - altitude enregistré non compensé                                                            *
 * AJOUT - alti GPS                                                                                    *
 * BUG   - derive alti                                                                                 *
 * BUG   - sensibilité vario                                                                           *
 * BUG   - compas GPS à verifier / problème compas magnétique                                          *
 * AJOUT - Deep-Sleep charge batterie                                                                  *
-* BUG   - % batterie au démmarage                                                                     *
-* BUG   - intergration - bip continu                                                                  *
-* BUG   - update manuelle - doit être lancée 2 fois                                                   *
-* MODIF - Altitude calibrée dans IGC                                                                  *                                                                                                    
+* BUG   - intergration - bip continu  - A tester                                                      *
 * BUG   - Modification des paramètres wifi                                                            *
-* BUG   - Saisie des sites de vol                                                                     * 
-* BUG   - Mise à jour n'affiche pas la version                                                        *
-* BUG   - carnet de vol - previsu carte est vide                                                      *
-* buG   - carnet de vol - info n'affiche rien                                                         *
 *                                                                                                     *
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
@@ -1426,7 +1426,7 @@ void loop()
 
       screen.gpsBearing->setValue(tmpcap);
       screen.gpsBearingText->setValue(bearingStr);
-#if (VARIOSCREEN_SIZE == 291)
+#if ((VARIOSCREEN_SIZE == 291) && (VARIOSCREEN_SIZE == 292))
       screen.bearing->setValue(tmpcap);
       screen.bearingText->setValue(bearingStr);
 #endif
