@@ -65,17 +65,21 @@
  *    1.1.17 13/04/20   Titre en mode texte                                      *
  *    1.2.0  29/04/20   Modification font screedigit                             *
  *    1.2.1  17/05/20   Ajout setPositionTitle                                   *
+ *    1.2.2  17/05/20   Ajout setPositionTitle                                   *
+ *    1.2.3  25/05/20   Modification screendigit.setvalue                        *
+ *    1.2.4  10/02/20   Compatibilité écran 291 et 293                           *
+ *                      Compatibilité écran 290 et 292                           *
  *                                                                               *
  *********************************************************************************/
 
-#ifndef VARIOSCREENOBJECTS_290_H
-#define VARIOSCREENOBJECTS_290_H
+#ifndef VARIOSCREENOBJECTS_290B_H
+#define VARIOSCREENOBJECTS_290B_H
 
 #include <Arduino.h>
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
 
-#if (VARIOSCREEN_SIZE == 290)
+#if ((VARIOSCREEN_SIZE == 290) || (VARIOSCREEN_SIZE == 292))
 
 #include <digit.h>
 #include <variostat.h>

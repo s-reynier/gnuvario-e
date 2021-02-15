@@ -455,7 +455,7 @@ class VarioSettings {
 		
 		uint16_t REF_VOLTAGE																= DEFAULT_REF_VOLTAGE;
 	
-	//	StaticJsonDocument<1900> doc;	
+		StaticJsonDocument<1900> doc;	
  protected:
 #ifdef HAVE_SDCARD
 #ifdef SDFAT_LIB

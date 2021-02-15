@@ -62,12 +62,6 @@
 
 #if defined(ENABLE_DEBUG)
 
-
-// 							OUTPUT SERIALNMEA
-//#define SERIAL_NMEA_SERIAL_OUTPUT
-#define SERIAL_NMEA_BLUETOOTH_OUTPUT
-
-
 //              DEBUGING MODE
 #define PROG_DEBUG			  //debug principal program
 //#define HARDWARE_DEBUG
@@ -87,15 +81,25 @@
 //#define VOLTAGE_DIVISOR_DEBUG
 //#define SDCARD_DEBUG
 //#define IGC_DEBUG
-//#define DATA_DEBUG
+#define DATA_DEBUG
 //#define BT_DEBUG
-// #define WIFI_DEBUG
+//#define WIFI_DEBUG
 //#define SOUND_DEBUG
 //#define AGL_DEBUG
 //#define SQL_DEBUG
 //#define BEARING_DEBUG
 //#define TWOWIRESCH_DEBUG
 //#define POWER_DEBUG
-// #define MEMORY_DEBUG
+//#define MEMORY_DEBUG
+
+#ifdef GPS_DEBUG
+#define SERIAL_NMEA_SERIAL_OUTPUT
+#endif
+
 #endif //ENABLE_DEBUG
+
+// 							OUTPUT SERIALNMEA
+//#define SERIAL_NMEA_SERIAL_OUTPUT
+//#define SERIAL_NMEA_BLUETOOTH_OUTPUT
+
 #endif

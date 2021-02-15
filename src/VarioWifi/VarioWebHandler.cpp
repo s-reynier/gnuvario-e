@@ -484,7 +484,7 @@ void VarioWebHandler::handleFileCreate(AsyncWebServerRequest *request, uint8_t *
 AsyncWebServerResponse *VarioWebHandler::handleWifi(AsyncWebServerRequest *request)
 {
 #ifdef WIFI_DEBUG
-    SerialPort.println("handleParams");
+    SerialPort.println("handleParams - handle Wifi");
 #endif
 
     AsyncWebServerResponse *response = request->beginResponse(SD, "/wifi.cfg", "text/plain");
@@ -497,7 +497,7 @@ void VarioWebHandler::handleSaveWifi(AsyncWebServerRequest *request, uint8_t *da
 {
 
 #ifdef WIFI_DEBUG
-    SerialPort.println("handleSaveWifi");
+    SerialPort.println("handleSaveParams - Save Wifi");
 #endif
 
     String path = "/wifi.cfg";
@@ -505,17 +505,29 @@ void VarioWebHandler::handleSaveWifi(AsyncWebServerRequest *request, uint8_t *da
 
     if (!index)
     {
+			
+#ifdef WIFI_DEBUG
+				SerialPort.println("handleSaveParams - Backup");
+#endif
+			
         backupFile(path, pathBak);
         if (!(wifiParamFile = SDHAL_SD.open(path.c_str(), FILE_WRITE)))
         {
+
+#ifdef WIFI_DEBUG
+						SerialPort.println("Erreur impossible d'ouvrir wifi.cfg");
+#endif
+
             request->send(500, "text/plain", "NO FILE");
             return;
         }
     }
-    if (len)
-    {
-        wifiParamFile.write(data, len);
-    }
+
+#ifdef WIFI_DEBUG
+	  SerialPort.println("Save config wifi");
+#endif
+
+    wifiParamFile.write(data, len);
 
     if (index + len == total)
     {
@@ -529,7 +541,7 @@ void VarioWebHandler::handleSaveWifi(AsyncWebServerRequest *request, uint8_t *da
 AsyncWebServerResponse *VarioWebHandler::handleWebConfig(AsyncWebServerRequest *request)
 {
 #ifdef WIFI_DEBUG
-    SerialPort.println("handleParams");
+    SerialPort.println("handleParams Web config");
 #endif
     AsyncWebServerResponse *response;
 
@@ -566,10 +578,7 @@ void VarioWebHandler::handleSaveWebConfig(AsyncWebServerRequest *request, uint8_
         }
     }
 
-    if (len)
-    {
-        webParamFile.write(data, len);
-    }
+    webParamFile.write(data, len);
 
     if (index + len == total)
     {
@@ -923,8 +932,12 @@ void VarioWebHandler::handleSetSite(AsyncWebServerRequest *request, uint8_t *dat
         uint8_t id = p->value().toInt();
 
 #ifdef WIFI_DEBUG
+        SerialPort.println("Update Site");
+				SerialPort.print("ID : ");
         SerialPort.println(id);
+				SerialPort.print("CONTENT : ");
         SerialPort.println(content);
+				
 #endif
         varioSqlFlight.updateSite(id, content);
     }
@@ -932,6 +945,8 @@ void VarioWebHandler::handleSetSite(AsyncWebServerRequest *request, uint8_t *dat
     {
 
 #ifdef WIFI_DEBUG
+        SerialPort.println("Insert Site");
+				SerialPort.print("CONTENT : ");
         SerialPort.println(content);
 #endif
 
@@ -1045,8 +1060,10 @@ igcdata VarioWebHandler::jsonToIgcdata(String data)
 {
     igcdata myIgcData;
 
-    DynamicJsonDocument doc(1024);
-    DeserializationError err = deserializeJson(doc, data);
+		GnuSettings.doc.clear();
+
+//    DynamicJsonDocument doc(1024);
+    DeserializationError err = deserializeJson(GnuSettings.doc, data);
     if (err)
     {
 #ifdef SQL_DEBUG
@@ -1057,73 +1074,73 @@ igcdata VarioWebHandler::jsonToIgcdata(String data)
         return myIgcData;
     }
 
-    if (doc.containsKey("pilot"))
+    if (GnuSettings.doc.containsKey("pilot"))
     {
-        myIgcData.pilot = doc["pilot"].as<String>();
+        myIgcData.pilot = GnuSettings.doc["pilot"].as<String>();
     }
-    if (doc.containsKey("wing"))
+    if (GnuSettings.doc.containsKey("wing"))
     {
-        myIgcData.wing = doc["wing"].as<String>();
+        myIgcData.wing = GnuSettings.doc["wing"].as<String>();
     }
-    if (doc.containsKey("flightDate"))
+    if (GnuSettings.doc.containsKey("flightDate"))
     {
-        myIgcData.flightDate = doc["flightDate"].as<String>();
+        myIgcData.flightDate = GnuSettings.doc["flightDate"].as<String>();
     }
-    if (doc.containsKey("startFlightTime"))
+    if (GnuSettings.doc.containsKey("startFlightTime"))
     {
-        myIgcData.startFlightTime = doc["startFlightTime"].as<String>();
+        myIgcData.startFlightTime = GnuSettings.doc["startFlightTime"].as<String>();
     }
-    if (doc.containsKey("endFlightTime"))
+    if (GnuSettings.doc.containsKey("endFlightTime"))
     {
-        myIgcData.endFlightTime = doc["endFlightTime"].as<String>();
+        myIgcData.endFlightTime = GnuSettings.doc["endFlightTime"].as<String>();
     }
-    if (doc.containsKey("startHeight"))
+    if (GnuSettings.doc.containsKey("startHeight"))
     {
-        myIgcData.startHeight = doc["startHeight"];
+        myIgcData.startHeight = GnuSettings.doc["startHeight"];
     }
-    if (doc.containsKey("endHeight"))
+    if (GnuSettings.doc.containsKey("endHeight"))
     {
-        myIgcData.endHeight = doc["endHeight"];
+        myIgcData.endHeight = GnuSettings.doc["endHeight"];
     }
-    if (doc.containsKey("minHeight"))
+    if (GnuSettings.doc.containsKey("minHeight"))
     {
-        myIgcData.minHeight = doc["minHeight"];
+        myIgcData.minHeight = GnuSettings.doc["minHeight"];
     }
-    if (doc.containsKey("maxHeight"))
+    if (GnuSettings.doc.containsKey("maxHeight"))
     {
-        myIgcData.maxHeight = doc["maxHeight"];
+        myIgcData.maxHeight = GnuSettings.doc["maxHeight"];
     }
-    if (doc.containsKey("startLat"))
+    if (GnuSettings.doc.containsKey("startLat"))
     {
-        myIgcData.startLat = doc["startLat"];
+        myIgcData.startLat = GnuSettings.doc["startLat"];
     }
-    if (doc.containsKey("startLon"))
+    if (GnuSettings.doc.containsKey("startLon"))
     {
-        myIgcData.startLon = doc["startLon"];
+        myIgcData.startLon = GnuSettings.doc["startLon"];
     }
-    if (doc.containsKey("endLat"))
+    if (GnuSettings.doc.containsKey("endLat"))
     {
-        myIgcData.endLat = doc["endLat"];
+        myIgcData.endLat = GnuSettings.doc["endLat"];
     }
-    if (doc.containsKey("endLon"))
+    if (GnuSettings.doc.containsKey("endLon"))
     {
-        myIgcData.endLon = doc["endLon"];
+        myIgcData.endLon = GnuSettings.doc["endLon"];
     }
-    if (doc.containsKey("md5"))
+    if (GnuSettings.doc.containsKey("md5"))
     {
-        myIgcData.md5 = doc["md5"].as<String>();
+        myIgcData.md5 = GnuSettings.doc["md5"].as<String>();
     }
-    if (doc.containsKey("filename"))
+    if (GnuSettings.doc.containsKey("filename"))
     {
-        myIgcData.filename = doc["filename"].as<String>();
+        myIgcData.filename = GnuSettings.doc["filename"].as<String>();
     }
-    if (doc.containsKey("site_id"))
+    if (GnuSettings.doc.containsKey("site_id"))
     {
-        myIgcData.site_id = doc["site_id"];
+        myIgcData.site_id = GnuSettings.doc["site_id"];
     }
-    if (doc.containsKey("comment"))
+    if (GnuSettings.doc.containsKey("comment"))
     {
-        myIgcData.comment = doc["comment"].as<String>();
+        myIgcData.comment = GnuSettings.doc["comment"].as<String>();
     }
 
     return myIgcData;

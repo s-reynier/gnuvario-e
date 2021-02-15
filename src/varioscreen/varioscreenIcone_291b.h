@@ -1,4 +1,4 @@
-/* varioscreenIcone_291 -- 
+/* varioscreenIcone_291b -- 
  *
  * Copyright 2019 Jean-philippe GOI / Pierre FRANCIA
  * 
@@ -28,18 +28,20 @@
  *    1.0.1  13/10/19   Ajout Wind                                               *
  *    1.0.2  11/01/20   VARIOSCREEN_SIZE == 290                                  *
  *    1.0.3  03/02/20   Changement de nom passage de 29 à 290                    *
- *    1.0.4  16/02/20	Adaptation écran 2.9" mode portrait						 *
- *						VARIOSCREEN_SIZE == 291									 *
+ *    1.0.4  16/02/20	Adaptation écran 2.9" mode portrait						             *
+ *						VARIOSCREEN_SIZE == 291									                           *
  *    1.0.5  23/02/20   Ajout d'icone texte (compass, Lat, Long), changement     *
- *					    de taille des textes                                     *
+ *					    de taille des textes                                             *
+ *    1.0.6  10/02/20   Compatibilité écran 291 et 293                           *
+ *                                                                               * 
  *********************************************************************************/
 
-#ifndef VARIOSCREENICONE_291_H
-#define VARIOSCREENICONE_291_H
+#ifndef VARIOSCREENICONE_291B_H
+#define VARIOSCREENICONE_291B_H
 
 #include <HardwareConfig.h>
 
-#if (VARIOSCREEN_SIZE == 291)
+#if ((VARIOSCREEN_SIZE == 291) || (VARIOSCREEN_SIZE == 293))
 
 #if defined(ESP8266) || defined(ESP32)
 #include <pgmspace.h>

@@ -27,18 +27,20 @@
  *    1.0                                                                        *
  *    1.0.1  13/10/19   Ajout Wind                                               *
  *    1.0.2  11/01/20   VARIOSCREEN_SIZE == 290                                  *
- *    1.0.3  03/02/20   Changement de nom passage de 29 à 290 					 *
- *	  1.0.4  04/03/20	Ajout et modification de taille des icônes.				 *
- *    1.0.5  04/03/20   Ajout AGL												 *
+ *    1.0.3  03/02/20   Changement de nom passage de 29 à 290 					 				 *
+ *	  1.0.4  04/03/20	  Ajout et modification de taille des icônes.				 			 *
+ *    1.0.5  04/03/20   Ajout AGL												 												 *
+ *    1.1.9  10/02/20   Compatibilité écran 291 et 293                           *
+ *                      Compatibilité écran 290 et 292                           *
  *                                                                               *
  *********************************************************************************/
 
-#ifndef VARIOSCREENICONE_290_H
-#define VARIOSCREENICONE_290_H
+#ifndef VARIOSCREENICONE_290B_H
+#define VARIOSCREENICONE_290B_H
 
 #include <HardwareConfig.h>
 
-#if (VARIOSCREEN_SIZE == 290)
+#if ((VARIOSCREEN_SIZE == 290) || (VARIOSCREEN_SIZE == 292))
 
 #if defined(ESP8266) || defined(ESP32)
 #include <pgmspace.h>

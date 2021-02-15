@@ -1,4 +1,4 @@
-/* varioscreenObjects_290 -- 
+/* varioscreenObjects_290b -- 
  *
  * Copyright 2019 Jean-philippe GOI / Pierre FRANCIA
  * 
@@ -68,16 +68,10 @@
  *    1.2.1  10/05/20   Correction scrrentime                                    *
  *    1.2.2  17/05/20   Ajout setPositionTitle                                   *
  *    1.2.3  25/05/20   Modification screendigit.setvalue                        *
+ *    1.2.4  10/02/20   Compatibilité écran 291 et 293                           *
+ *                      Compatibilité écran 290 et 292                           *
  *                                                                               *
  *********************************************************************************/ 
- 
- 
-
-
-
-
-
-
 
 /*
  *********************************************************************************
@@ -91,9 +85,9 @@
 #include <HardwareConfig.h>
 #include <DebugConfig.h>
 
-#if (VARIOSCREEN_SIZE == 290)
+#if ((VARIOSCREEN_SIZE == 290) || (VARIOSCREEN_SIZE == 292))
 
-#include <varioscreenObjects_290.h>
+#include <varioscreenObjects_290b.h>
 
 #if defined(ESP32)
 //static const char* TAG = "VarioScreen";
@@ -127,7 +121,7 @@
 //#include "GxEPD2_more_boards_added.h" // private
 
 #include <imglib/gridicons_sync.h>
-#include <varioscreenIcone_290.h>
+#include <varioscreenIcone_290b.h>
 
 #include <VarioSettings.h>
 #include <toneHAL.h>
