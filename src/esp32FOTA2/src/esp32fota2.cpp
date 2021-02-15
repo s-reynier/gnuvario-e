@@ -24,11 +24,11 @@
 
 #include <HardwareConfig.h>
 
-// #define JSONDOCEXTERN
+#define JSONDOCEXTERN
 
-// #ifdef JSONDOCEXTERN
-// #include <VarioSettings.h>
-// #endif
+#ifdef JSONDOCEXTERN
+#include <VarioSettings.h>
+#endif
 
 #ifdef WIFI_DEBUG
 #define ARDUINOTRACE_ENABLE 1
@@ -526,15 +526,15 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
             //SerialPort.println(JSONMessage);
 #endif
 
-// #ifndef JSONDOCEXTERN
-            DynamicJsonDocument JSONDocument(1300); //Memory pool
-// 						#define JSONDOC JSONDocument
-// #else
-// 						#define JSONDOC GnuSettings.doc	
-// 						// Clearing Buffer
-// 						JSONDOC.clear();
-// #endif
-            DeserializationError err = deserializeJson(JSONDocument, JSONMessage);
+#ifndef JSONDOCEXTERN
+            StaticJsonDocument<1300> JSONDocument; //Memory pool
+						#define JSONDOC JSONDocument
+#else
+						#define JSONDOC GnuSettings.doc	
+						// Clearing Buffer
+						JSONDOC.clear();
+#endif
+            DeserializationError err = deserializeJson(JSONDOC, JSONMessage);
 
             if (err)
             { //Check for errors in parsing
@@ -554,9 +554,9 @@ uint8_t esp32FOTA2::execHTTPcheck(bool betaVersion)
             SerialPort.println(tmp);
 #endif
 
-            if (JSONDocument.containsKey(tmp))
+            if (JSONDOC.containsKey(tmp))
             {
-                JsonObject JSONDOCUpdate = JSONDocument[tmp];
+                JsonObject JSONDOCUpdate = JSONDOC[tmp];
 
                 //const char *pltype = JSONDOC["type"];
                 int plversion = JSONDOCUpdate["version"];
@@ -752,15 +752,15 @@ uint8_t esp32FOTA2::execHTTPScheck(bool betaVersion)
             char JSONMessage[str_len];
             payload.toCharArray(JSONMessage, str_len);
 
-// #ifndef JSONDOCEXTERN
-//             StaticJsonDocument<1300> JSONDocument; //Memory pool
-// 						#define JSONDOC JSONDocument
-// #else
-// 						#define JSONDOC GnuSettings.doc	
-// 						// Clearing Buffer
-// 						JSONDOC.clear();
-// #endif
-DynamicJsonDocument JSONDOC(1300);
+#ifndef JSONDOCEXTERN
+            StaticJsonDocument<1300> JSONDocument; //Memory pool
+						#define JSONDOC JSONDocument
+#else
+						#define JSONDOC GnuSettings.doc	
+						// Clearing Buffer
+						JSONDOC.clear();
+#endif
+
             DeserializationError err = deserializeJson(JSONDOC, JSONMessage);
 
             if (err)
