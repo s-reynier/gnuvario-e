@@ -52,15 +52,6 @@ public:
     void         setValue(const std::string &value);
     std::string  toString();
 
-    /**
-     * @brief Convenience template to set the descriptor value to <type\>val.
-     * @param [in] s The value to set.
-     */
-    template<typename T>
-    void setValue(const T &s) {
-        setValue((uint8_t*)&s, sizeof(T));
-    }
-
 private:
     friend class NimBLECharacteristic;
     friend class NimBLEService;
@@ -104,8 +95,6 @@ public:
     virtual void onRead(NimBLEDescriptor* pDescriptor);
     virtual void onWrite(NimBLEDescriptor* pDescriptor);
 };
-
-#include "NimBLE2904.h"
 
 #endif // #if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
 #endif /* CONFIG_BT_ENABLED */

@@ -29,9 +29,6 @@ public:
 
     static uint32_t getTimeSinceStart();
 
-/**
- * @brief A binary semaphore class that operates like a mutex, it is already given when constructed.
- */
     class Semaphore {
     public:
         Semaphore(std::string owner = "<Unknown>");
@@ -45,10 +42,6 @@ public:
         std::string toString();
         bool        timedWait(std::string owner = "<Unknown>", uint32_t timeoutMs = portMAX_DELAY);
         uint32_t    wait(std::string owner = "<Unknown>");
-        /**
-         * @brief Get the value of the semaphore.
-         * @return The value stored if the semaphore was given with give(value);
-         */
         uint32_t    value(){ return m_value; };
 
     private:
@@ -64,7 +57,7 @@ public:
 
 
 /**
- * @brief A wrapper class for a freeRTOS ringbuffer.
+ * @brief Ringbuffer.
  */
 class Ringbuffer {
 public:

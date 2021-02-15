@@ -107,10 +107,9 @@ class AdvertisedDeviceCallbacks: public NimBLEAdvertisedDeviceCallbacks {
 void notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
     std::string str = (isNotify == true) ? "Notification" : "Indication"; 
     str += " from ";
-    /** NimBLEAddress and NimBLEUUID have std::string operators */
-    str += std::string(pRemoteCharacteristic->getRemoteService()->getClient()->getPeerAddress());
-    str += ": Service = " + std::string(pRemoteCharacteristic->getRemoteService()->getUUID());
-    str += ", Characteristic = " + std::string(pRemoteCharacteristic->getUUID());
+    str += pRemoteCharacteristic->getRemoteService()->getClient()->getPeerAddress().toString();
+    str += ": Service = " + pRemoteCharacteristic->getRemoteService()->getUUID().toString();
+    str += ", Characteristic = " + pRemoteCharacteristic->getUUID().toString();
     str += ", Value = " + std::string((char*)pData, length);
     Serial.println(str.c_str());
 }
@@ -229,22 +228,17 @@ bool connectToServer() {
             }
         }
         
-        /** registerForNotify() has been deprecated and replaced with subscribe() / unsubscribe().
-         *  Subscribe parameter defaults are: notifications=true, notifyCallback=nullptr, response=false.
-         *  Unsubscribe parameter defaults are: response=false. 
-         */
         if(pChr->canNotify()) {
-            //if(!pChr->registerForNotify(notifyCB)) {
-            if(!pChr->subscribe(true, notifyCB)) {
+            /** Must send a callback to subscribe, if nullptr it will unsubscribe */
+            if(!pChr->registerForNotify(notifyCB)) {
                 /** Disconnect if subscribe failed */ 
                 pClient->disconnect();
                 return false;
             }
         }
         else if(pChr->canIndicate()) {
-            /** Send false as first argument to subscribe to indications instead of notifications */
-            //if(!pChr->registerForNotify(notifyCB, false)) {
-            if(!pChr->subscribe(false, notifyCB)) {
+            /** Send false as second argument to subscribe to indications instead of notifications */
+            if(!pChr->registerForNotify(notifyCB, false)) {
                 /** Disconnect if subscribe failed */ 
                 pClient->disconnect();
                 return false;
@@ -295,22 +289,17 @@ bool connectToServer() {
             }
         }
         
-        /** registerForNotify() has been deprecated and replaced with subscribe() / unsubscribe().
-         *  Subscribe parameter defaults are: notifications=true, notifyCallback=nullptr, response=false.
-         *  Unsubscribe parameter defaults are: response=false. 
-         */
         if(pChr->canNotify()) {
-            //if(!pChr->registerForNotify(notifyCB)) {
-            if(!pChr->subscribe(true, notifyCB)) {
+            /** Must send a callback to subscribe, if nullptr it will unsubscribe */
+            if(!pChr->registerForNotify(notifyCB)) {
                 /** Disconnect if subscribe failed */ 
                 pClient->disconnect();
                 return false;
             }
         }
         else if(pChr->canIndicate()) {
-            /** Send false as first argument to subscribe to indications instead of notifications */
-            //if(!pChr->registerForNotify(notifyCB, false)) {
-            if(!pChr->subscribe(false, notifyCB)) {
+            /** Send false as second argument to subscribe to indications instead of notifications */
+            if(!pChr->registerForNotify(notifyCB, false)) {
                 /** Disconnect if subscribe failed */ 
                 pClient->disconnect();
                 return false;

@@ -33,9 +33,9 @@ class NimBLEAdvertisedDeviceCallbacks;
 class NimBLEAddress;
 
 /**
- * @brief A class that contains and operates on the results of a BLE scan.
- * @details When a scan completes, we have a set of found devices.  Each device is described
- * by a NimBLEAdvertisedDevice object.  The number of items in the set is given by
+ * @brief The result of having performed a scan.
+ * When a scan completes, we have a set of found devices.  Each device is described
+ * by a BLEAdvertisedDevice object.  The number of items in the set is given by
  * getCount().  We can retrieve a device by calling getDevice() passing in the
  * index (starting at 0) of the desired device.
  */
@@ -62,14 +62,10 @@ class NimBLEScan {
 public:
     bool                start(uint32_t duration, void (*scanCompleteCB)(NimBLEScanResults), bool is_continue = false);
     NimBLEScanResults   start(uint32_t duration, bool is_continue = false);
-    bool                isScanning();
-    void                setAdvertisedDeviceCallbacks(NimBLEAdvertisedDeviceCallbacks* pAdvertisedDeviceCallbacks, bool wantDuplicates = false);
+    void                setAdvertisedDeviceCallbacks(NimBLEAdvertisedDeviceCallbacks* pAdvertisedDeviceCallbacks/*, bool wantDuplicates = false*/);
     void                setActiveScan(bool active);
     void                setInterval(uint16_t intervalMSecs);
     void                setWindow(uint16_t windowMSecs);
-    void                setDuplicateFilter(bool enabled);
-    void                setLimitedOnly(bool enabled);
-    void                setFilterPolicy(uint8_t filter);
     bool                stop();
     void                clearResults();
     NimBLEScanResults   getResults();
@@ -77,10 +73,8 @@ public:
 
 
 private:
-    friend class NimBLEDevice;
-
     NimBLEScan();
-    ~NimBLEScan();
+    friend class NimBLEDevice;
     static int          handleGapEvent(ble_gap_event*  event, void* arg);
     void                onHostReset();
 

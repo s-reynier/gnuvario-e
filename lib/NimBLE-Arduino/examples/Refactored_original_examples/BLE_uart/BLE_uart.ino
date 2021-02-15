@@ -112,13 +112,15 @@ void setup() {
                                         NIMBLE_PROPERTY::NOTIFY
                                        );
                                     
-  /***************************************************   
-   NOTE: DO NOT create a 2902 descriptor 
-   it will be created automatically if notifications 
-   or indications are enabled on a characteristic.
+  /******* New createDescriptor method ********   
+   NOTE: There is no need to create the 2902 descriptor 
+   as it will be created automatically if notifications or 
+   indications are enabled on a characteristic.
    
-   pCharacteristic->addDescriptor(new BLE2902());
-  ****************************************************/                  
+  pCharacteristic->addDescriptor(new BLE2902());
+  ********************************************/
+  /** Add properties the same way as characteristics now **/
+  pTxCharacteristic->createDescriptor("2902" /** , NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE **/);                      
 
   BLECharacteristic * pRxCharacteristic = pService->createCharacteristic(
                                             CHARACTERISTIC_UUID_RX,

@@ -12,6 +12,10 @@
  *      Author: chegewara
  */
 
+/** This class exists for backward compatibility - Should not be used in new code
+ * See the security functions in NimBLEDevice and callbacks in NimBLEServer / NimBLEClient
+ */
+
 #ifndef COMPONENTS_NIMBLESECURITY_H_
 #define COMPONENTS_NIMBLESECURITY_H_
 #include "sdkconfig.h"
@@ -52,12 +56,6 @@
 typedef uint8_t   esp_ble_auth_req_t;         /*!< combination of the above bit pattern */
 typedef uint8_t   esp_ble_io_cap_t;               /*!< combination of the io capability */
 
-
-/**
- * @brief A class to handle BLE security operations.
- * <b>Deprecated - provided for backward compatibility only.</b>
- * @deprecated Use the security methods provided in NimBLEDevice instead.
- */
 class NimBLESecurity {
 public:
     NimBLESecurity();
@@ -80,10 +78,8 @@ private:
 }; // BLESecurity
 
 
-/**
- * @brief Callbacks to handle GAP events related to authorization.
- * <b>Deprecated - provided for backward compatibility only.</b>
- * @deprecated Use the callbacks provided in NimBLEClientCallbacks and NimBLEServerCallbacks instead.
+/*
+ * @brief Callbacks to handle GAP events related to authorization
  */
 class NimBLESecurityCallbacks {
 public:
@@ -99,25 +95,21 @@ public:
     /**
      * @brief Provide us 6-digits code to perform authentication.
      * It requires that our device is capable to display this code to end user
-     * @param [in] pass_key The PIN provided by the peer.
+     * @param
      */
     virtual void onPassKeyNotify(uint32_t pass_key) = 0;
 
     /**
      * @brief Here we can make decision if we want to let negotiate authorization with peer device or not
-     * @return Return true if we accept this peer device request
+     * return Return true if we accept this peer device request
      */
+
     virtual bool onSecurityRequest() = 0 ;
     /**
-     * @brief Provides us information when authentication process is completed
+     * Provide us information when authentication process is completed
      */
     virtual void onAuthenticationComplete(ble_gap_conn_desc*) = 0;
 
-    /**
-     * @brief Called when using numeric comparison for authentication.
-     * @param [in] pin The PIN to compare.
-     * @return True to accept and pair.
-     */
     virtual bool onConfirmPIN(uint32_t pin) = 0;
 }; // BLESecurityCallbacks
 
