@@ -987,6 +987,7 @@ void setup()
   varioData.flystat.Display();
   screen.ScreenViewStat();
 
+
   unsigned long TmplastDisplayTimestamp = millis();
   int compteur = 0;
   while (compteur < GnuSettings.DISPLAY_STAT_DURATION)
