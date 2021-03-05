@@ -1197,11 +1197,11 @@ void VarioScreen::ScreenViewWifi(String SSID, String IP)
 
 	if ((SSID == "") && (IP == ""))
 	{
-		display.setFullWindow();
-		display.firstPage();
-		do
+		if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
 		{
+			display.setFullWindow();
 
+			display.fillScreen(GxEPD_WHITE);
 			display.setFont(&FreeSansBold9pt7b);
 			display.setTextColor(ColorText);
 			display.setTextSize(2);
@@ -1211,8 +1211,10 @@ void VarioScreen::ScreenViewWifi(String SSID, String IP)
 
 			display.setTextSize(1);
 			display.setCursor(5, 90);
-			display.print(varioLanguage.getText(TITRE_CONNECT)); //"Connection ...");
-		} while (display.nextPage());
+			display.print(varioLanguage.getText(TITRE_CONNECT));
+			display.display(true);
+			xSemaphoreGive(screen.screenMutex);
+		}
 
 #ifdef SCREEN_DEBUG
 		SerialPort.println("ScreenViewWifi : Connecting");
@@ -1220,31 +1222,35 @@ void VarioScreen::ScreenViewWifi(String SSID, String IP)
 	}
 	else if ((SSID != "") && (IP != ""))
 	{
-		display.setCursor(5, 120);
-		display.print(varioLanguage.getText(TITRE_CONNECTA)); //"Connection a ");
+		if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
+		{
+			display.setCursor(5, 120);
+			display.print(varioLanguage.getText(TITRE_CONNECTA)); //"Connection a ");
 
-		display.setCursor(0, 150);
-		display.print(SSID);
+			display.setCursor(0, 150);
+			display.print(SSID);
 
-		display.setCursor(3, 220);
-		display.print(IP);
-
+			display.setCursor(3, 220);
+			display.print(IP);
+			display.display(true);
+			xSemaphoreGive(screen.screenMutex);
+		}
 #ifdef SCREEN_DEBUG
 		SerialPort.println("ScreenViewWifi : Connected");
 #endif //SCREEN_DEBUG
-
-		updateScreen();
 	}
 	else
 	{
-		display.setCursor(30, 200);
-		display.print(varioLanguage.getText(TITRE_DEMAR)); //"START");
-
+		if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
+		{
+			display.setCursor(30, 200);
+			display.print(varioLanguage.getText(TITRE_DEMAR)); //"START");
+			display.display(true);
+			xSemaphoreGive(screen.screenMutex);
+		}
 #ifdef SCREEN_DEBUG
 		SerialPort.println("ScreenViewWifi : start");
 #endif //SCREEN_DEBUG
-
-		updateScreen();
 	}
 }
 
