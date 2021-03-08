@@ -1427,7 +1427,7 @@ void loop()
 
       screen.gpsBearing->setValue(tmpcap);
       screen.gpsBearingText->setValue(bearingStr);
-#if ((VARIOSCREEN_SIZE == 291) && (VARIOSCREEN_SIZE == 292))
+#if ((VARIOSCREEN_SIZE == 291) || (VARIOSCREEN_SIZE == 292) || (VARIOSCREEN_SIZE == 293))
       screen.bearing->setValue(tmpcap);
       screen.bearingText->setValue(bearingStr);
 #endif

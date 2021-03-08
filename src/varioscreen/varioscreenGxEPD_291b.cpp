@@ -1260,10 +1260,10 @@ void VarioScreen::ScreenViewReboot(String message)
 {
 	//  char tmpbuffer[100];
 
-	display.setFullWindow();
-	display.firstPage();
-	do
+	if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
 	{
+		display.setFullWindow();
+
 		// 	  display.fillScreen(ColorScreen);
 		//		display.clearScreen(ColorScreen);
 
@@ -1286,7 +1286,9 @@ void VarioScreen::ScreenViewReboot(String message)
 
 		display.setCursor(5, 150);
 		display.print(varioLanguage.getText(TITRE_ENCOURS)); //"en cours");
-	} while (display.nextPage());
+		display.display(true);
+		xSemaphoreGive(screen.screenMutex);
+	}
 }
 
 //****************************************************************************************************************************
@@ -1295,10 +1297,10 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 {
 	//  char tmpbuffer[100];
 
-	display.setFullWindow();
-	display.firstPage();
-	do
+	if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
 	{
+		display.setFullWindow();
+
 		// 	  display.fillScreen(ColorScreen);
 		//		display.clearScreen(ColorScreen);
 
@@ -1337,7 +1339,9 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 		//		uint16_t y = ((display.height() - tbh) / 2) - tby;
 		display.setCursor(x, VARIOSCREEN_TENSION_ANCHOR_Y); // set the postition to start printing text
 		display.print(message);
-	} while (display.nextPage());
+		display.display(true);
+		xSemaphoreGive(screen.screenMutex);
+	}
 
 	//	display.powerOff();
 
