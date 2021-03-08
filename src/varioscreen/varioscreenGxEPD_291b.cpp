@@ -1263,7 +1263,7 @@ void VarioScreen::ScreenViewReboot(String message)
 	if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
 	{
 		display.setFullWindow();
-
+		display.fillScreen(GxEPD_WHITE);
 		// 	  display.fillScreen(ColorScreen);
 		//		display.clearScreen(ColorScreen);
 
@@ -1300,7 +1300,7 @@ void VarioScreen::ScreenViewMessage(String message, int delai)
 	if (xSemaphoreTake(screen.screenMutex, portMAX_DELAY) == pdTRUE)
 	{
 		display.setFullWindow();
-
+		display.fillScreen(GxEPD_WHITE);
 		// 	  display.fillScreen(ColorScreen);
 		//		display.clearScreen(ColorScreen);
 
