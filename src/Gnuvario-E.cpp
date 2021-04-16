@@ -1082,7 +1082,7 @@ double temprature = 0;
 //*****************************
 void loop()
 {
-  SerialPort.println("loop");
+  // SerialPort.println("loop");
   //****************************
   //****************************
 
