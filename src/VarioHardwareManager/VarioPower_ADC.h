@@ -1,4 +1,4 @@
-/* VarioImuTwoWire -- 
+/* VarioPower_ADC -- 
  *
  * Copyright 2020 MichelPa / Jpg63
  * 
@@ -21,49 +21,40 @@
 /* 
  *********************************************************************************
  *                                                                               *
- *                          VarioImuTwoWire                                         *
+ *                               VarioPOWER_ADC                                  *
  *                                                                               *
  *  version    Date     Description                                              *
- *    1.0    22/03/20                                                            *
- *    1.0.1  25/03/20   Ajout haveMeasure(void)																	 *
- *    1.0.2  25/12/20   Modif getCap                                             *
+ *    1.0    14/12/20                                                            *
  *                                                                               *
  *********************************************************************************
  */
 
-#ifndef VARIOIMUTWOWIRE_H
-#define VARIOIMUTWOWIRE_H
+#ifndef VARIO_POWER_ADC_H
+#define VARIO_POWER_ADC_H
 
 #include <HardwareConfig.h>
 
-#ifdef TWOWIRESCHEDULER
-
-#include <IntTW.h>
-#include <ms5611TW.h>
-#include <vertaccel.h>
-#include <LightInvensense.h>
-#include <TwoWireScheduler.h>
-
-class VarioImuTwoWire
+#ifndef MAX_17XX
+class VarioPowerADC
 {
-
 public:
-  VarioImuTwoWire();
-  void init();
-  bool havePressure(void);
-  bool updateData();
-  void updateAlti();
-  double getAlti();
-  double getTemp();
-  double getAccel();
-
+ //   VarioAlim();
+    void init();
+		
+		long getVoltage(void);
+		float getTension(void);
+		int getCapacite(void);
+				
+		void setRefVoltage(uint16_t refVoltage);
+		uint16_t getRefVoltage(void);
+    bool getAlert(void);
+				
 private:
-  double Alti;
-  double Temp;
-  double Accel;
-	int	   CompteurAccel = 0;
+		uint16_t REF_VOLTAGE = 2280;
+
 };
 
-#endif //TWOWIRESCHEDULER
+#define VarioTension VarioPowerADC	
 
-#endif //VARIOIMUTWOWIRE_H
+#endif //MAX_17XX
+#endif //VARIO_POWER_ADC_H
