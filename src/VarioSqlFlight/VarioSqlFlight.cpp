@@ -1149,7 +1149,7 @@ bool VarioSqlFlight::getNextFlight(bool &firstline, RingBuf<char, 1024> &buffer)
                 buffer.push(unvol[i]);
                 i++;
             }
-            // SerialPort.println("ICICICICICICIC");
+            
             return true;
         }
         else if (step_res == SQLITE_ERROR)

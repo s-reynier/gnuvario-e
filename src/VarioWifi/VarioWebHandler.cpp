@@ -184,7 +184,6 @@ void VarioWebHandler::printDirectoryRecurse(AsyncResponseStream *response, Strin
         File entry;
         if (!(entry = dir.openNextFile(FILE_READ)))
         {
-            // TRACE();
             break;
         }
         String tmpName = entry.name();
