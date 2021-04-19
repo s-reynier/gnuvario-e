@@ -7,7 +7,7 @@
 
 #define VERSION 0
 #define SUB_VERSION 8
-#define BETA_CODE 5
+#define BETA_CODE 6
 #define DEVNAME "JPG63/MICELPA/RATAMUSE"
 #define AUTHOR "J" //J=JPG63  P=PUNKDUMP  M=MICHELPA    R=RATAMUSE
 
@@ -310,6 +310,13 @@
 *                                    Correction bug son en continu - vario integré                    *
 *                                    Correction gestion memoire json                                  *
 *                09/02/21            Ajout gestion écran 2.9'' V2 - 292                               *
+*                02/03/21            Correction ecran V2                                              *
+*                14/03/21            Maj librairie gxepd2, esp32-targz, esp32fota2                    *  
+*                                    Maj ESP32 v1.05                                                  *
+* 0.8 beta 6     30/03/21            Modification lib varioData                                       *                                                                                     
+*                05/04/21            Modification altitude négative                                   *                                   
+*                11/04/21            Correction probleme de démmarage avec alti négative              *
+*                12/04/21            Ajout Mute jusqu'au décollage                                    *
 *******************************************************************************************************
 *                                                                                                     *
 *                                   Developpement a venir                                             *
@@ -330,6 +337,8 @@
 * AJOUT - Deep-Sleep charge batterie                                                                  *
 * BUG   - intergration - bip continu  - A tester                                                      *
 * BUG   - Modification des paramètres wifi                                                            *
+* BUG   - trame IGC incomplete                                                                        *
+* BUG   - Affichage ecran V2                                                                          *
 *                                                                                                     *
 * VX.X                                                                                                *
 * Paramètrage des écrans                                                                              *
@@ -418,6 +427,8 @@
  *  - Ajout écran de charge                                             *
  *  - Transfert des vol sur paraglidinglogbook                          *
  *  - Nouvelles Pages Wifi avec gestion d'un carnet de vol              *
+ *  - Gestion nouvel écran pour TTGO                                    *
+ *  - Ajout Mute jusqu'au décollage                                     *
  *                                                                      *
  ************************************************************************/
 
@@ -572,7 +583,7 @@
  *                                                                                                            *    
  **************************************************************************************************************/
 
-/*************************************************************************************************************
+ /*************************************************************************************************************
   *      Literature                                                                                           *
   *                                                                                                           *
   *      MPU9250                                                                                              *                                                                                                     
@@ -582,7 +593,7 @@
   *    https://www.instructables.com/id/Tilt-Compensated-Compass/                                             *
   *                                                                                                           *
   *************************************************************************************************************/
-
+ 
 //*****************************
 // DEBBUGAGE                  *
 //*****************************
@@ -732,6 +743,12 @@ void setup()
   TestSDCARD(true);
 #endif
 
+  /*********************************/
+  /*  Init VarioHardwareManager    */
+  /*********************************/
+
+  varioHardwareManager.init();
+
   /*****************************/
   /*  Init Alimentation        */
   /*****************************/
@@ -753,11 +770,11 @@ void setup()
   SerialPort.print("VERSION : ");
   SerialPort.println(VARIOVERSION);
 
-#if (VARIOVERSION == 154)
+#if (VARIOVERSION == 154) 
   SerialPort.println("VERSION : 1");
-#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291))
+#elif ((VARIOVERSION == 254) || (VARIOVERSION == 290) || (VARIOVERSION == 291) || (VARIOVERSION == 292) || (VARIOVERSION == 293)) 
   SerialPort.println("VERSION : 2");
-#elif ((VARIOVERSION == 390) || (VARIOVERSION == 391))
+#elif ((VARIOVERSION == 354) || (VARIOVERSION == 390) || (VARIOVERSION == 391)) 
   SerialPort.println("VERSION : 3");
 #else
   SerialPort.println("VERSION : XXX");
@@ -766,11 +783,11 @@ void setup()
   SerialPort.print("PCB VERSION : ");
   SerialPort.println(PCB_VERSION);
 
-#if (VARIOSCREEN_SIZE == 154)
+#if ((VARIOSCREEN_SIZE == 154) || (VARIOSCREEN_SIZE == 254) || (VARIOSCREEN_SIZE == 354))
   SerialPort.println("ECRAN : 1.54");
-#elif (VARIOSCREEN_SIZE == 290)
+#elif ((VARIOSCREEN_SIZE == 290) || (VARIOVERSION == 292) || (VARIOVERSION == 390))
   SerialPort.println("ECRAN : 2.90 PAYSAGE");
-#elif (VARIOSCREEN_SIZE == 291)
+#elif ((VARIOSCREEN_SIZE == 291) || (VARIOVERSION == 293) || (VARIOVERSION == 391))
   SerialPort.println("ECRAN : 2.90 PORTRAIT");
 #endif
 
@@ -789,7 +806,7 @@ void setup()
 #elif defined(HAVE_BLE)
   SerialPort.println("BLE : Enable");
 #endif
-
+  
   /************************/
   /*    BOOT SEQUENCE     */
   /************************/
@@ -842,7 +859,7 @@ void setup()
 #ifdef MEMORY_DEBUG
   SerialPort.println("LANGUAGE");
   SerialPort.println(ESP.getFreeHeap());
-#endif
+ #endif
 #ifdef SDCARD_DEBUG
   SerialPort.print("TITRE_TIME : ");
   SerialPort.println(varioLanguage.getText(TITRE_TIME));
@@ -905,14 +922,14 @@ void setup()
 
 #if defined(HAVE_SDCARD) && defined(HAVE_WIFI)
   esp32FOTA.UpdateWwwDirectory();
-  if (esp32FOTA.UpdateWwwDirectoryFromGz() == 1)
+  if (esp32FOTA.UpdateWwwDirectoryFromGz() == 1) 
   {
     //Mise à jour
     beeper.generateTone(659, 150);
     beeper.generateTone(1318, 150);
     beeper.generateTone(2636, 150);
-  }
-
+  } 
+  
 #endif //HAVE_SDCARD
 
   /***************/
@@ -943,7 +960,7 @@ void setup()
   beeper.generateTone(1318, 150);
   beeper.generateTone(2636, 150);
 #endif
-
+  
   screen.ScreenViewInit(VERSION, SUB_VERSION, AUTHOR, BETA_CODE);
 #endif //HAVE_SCREEN
 
@@ -999,7 +1016,7 @@ void setup()
       compteur++;
 
       //    Messure d'altitude
-      firstAlti = varioHardwareManager.getAlti();
+      firstAlti = varioHardwareManager.firstAlti();  //getAlti();
     }
   }
 
@@ -1081,7 +1098,7 @@ double temprature = 0;
 //*****************************
 void loop()
 {
-  // SerialPort.println("loop");
+  SerialPort.println("loop");
   //****************************
   //****************************
 
@@ -1147,7 +1164,7 @@ void loop()
     {
       if (varioData.haveNewClimbRate())
       {
-        /*        double tmpvalue = varioData.getClimbRate();
+/*        double tmpvalue = varioData.getClimbRate();
 #if (VARIOSCREEN_SIZE == 154)
         if (tmpvalue > 9.9)
           tmpvalue = 9.9;
@@ -1167,7 +1184,7 @@ void loop()
     else
     {
 
-      /*      double tmpvalue = varioData.getVelocity();
+/*      double tmpvalue = varioData.getVelocity();
 #if (VARIOSCREEN_SIZE == 154)
       if (tmpvalue > 9.9)
         tmpvalue = 9.9;
@@ -1220,7 +1237,7 @@ void loop()
   //***************************************
   //  TEST
   //***************************************
-#if defined(TONEXTDAC) || defined(TONEI2S)
+#if defined(TONEXTDAC) || defined(TONEI2S) 
   toneHAL.update();
 #endif
 
@@ -1272,7 +1289,7 @@ void loop()
     SerialPort.println("Update BLE");
 #endif //GPS_DEBUG
   }
-#endif // HAVE_BLUETOOTH
+#endif // HAVE_BLUETOOTH 
 
 #ifdef HAVE_SCREEN
   if ((varioData.gpsFix > 0) && (varioData.gpsFix < 3))
@@ -1332,7 +1349,7 @@ void loop()
 #ifdef GPS_DEBUG
     SerialPort.print("Sat : ");
     SerialPort.println(nmeaParser.satelliteCount);
-#endif //GPS_DEBUG \
+#endif //GPS_DEBUG 
        //    DUMPLOG(LOG_TYPE_DEBUG,GPS_DEBUG_LOG,nmeaParser.satelliteCount);
   }
 #endif //HAVE_GPS
@@ -1503,7 +1520,7 @@ void loop()
   }
 
   varioData.displayUpdateState = false;
-
+  
 #endif //HAVE_SCREEN
 
   //**********************************************************

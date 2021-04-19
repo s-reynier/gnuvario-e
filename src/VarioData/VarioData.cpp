@@ -35,6 +35,9 @@
  *    1.0.6  30/07/20   Ajout gestion valeur maximum des données                 *
  *    1.0.7  27/09/20   Ajout test sur lecture des fichiers de config            *
  *    1.0.8  21/12/20   Mofig updateBeeper                                       *
+ *    1.0.9  25/12/20   Modif getCap                                             *
+ *    1.0.10 11/04/21   Modif getAlti                                            *
+ *    1.0.11 12/04/21   Ajout gestion Mute_VarioBegin                            *
  *                                                                               *
  *********************************************************************************
  */
@@ -75,8 +78,6 @@
 
 #include <varioscreenGxEPD.h>
 
-#include <math.h>
-
 #include <VarioXBeeper.h>
 
 //******************************************
@@ -103,7 +104,8 @@
 #define MAX_SPEED 99
 #endif
 
-#define R2D 57.2958
+#define ALTI_FILTER
+#define COEF_ALTI_FILTERED 0.1
 
 /**********************/
 /* SDCARD objects     */
@@ -165,6 +167,7 @@ void VarioData::init(uint8_t version, uint8_t sub_version, uint8_t beta_code, St
 void VarioData::initKalman(double firstAlti)
 //*******************************************
 {
+  DUMP(firstAlti);
   kalmanvert.init(firstAlti,
                   0.0,
                   POSITION_MEASURE_STANDARD_DEVIATION,
@@ -174,6 +177,9 @@ void VarioData::initKalman(double firstAlti)
 #ifdef DATA_DEBUG
   SerialPort.println("kalman init");
 #endif //KALMAN_DEBUG
+
+  TRACE();
+  SDUMP("Test INT MPU");
 }
 
 //*******************************************
@@ -429,6 +435,15 @@ void VarioData::update(void)
     compteurErrorMPU = millis();
 
     alti = varioHardwareManager.getAlti();
+    if (altiFiltered != 0)
+    {
+      altiFiltered = altiFiltered + COEF_ALTI_FILTERED * (alti - altiFiltered);
+    }
+    else
+    {
+      altiFiltered = alti; // first reading so set filtered to reading
+    }
+
     temperature = varioHardwareManager.getTemp();
     accel = varioHardwareManager.getAccel();
 
@@ -436,10 +451,19 @@ void VarioData::update(void)
     SerialPort.println("Kalman Update");
 #endif //PROG_DEBUG
 
-    kalmanvert.update(alti, accel, millis());
+    unsigned long myTime = millis();
+#ifdef ALTI_FILTER
+
+    kalmanvert.update(altiFiltered, accel, myTime);
+#else
+    kalmanvert.update(alti, accel, myTime);
+#endif
 
     velocity = kalmanvert.getVelocity();
     calibratedAlti = kalmanvert.getCalibratedPosition();
+
+    if (calibratedAlti < 0)
+      calibratedAlti = 0;
 
 #ifdef DATA_DEBUG
     SerialPort.println("VarioData Update");
@@ -837,10 +861,24 @@ void VarioData::updateState()
 #ifdef HAVE_SPEAKER
           if (GnuSettings.ALARM_GPSFIX)
           {
+#ifdef HAVE_SPEAKER
+            if (GnuSettings.MUTE_VARIOBEGIN)
+            {
+              varioHardwareManager.varioSpeaker.UnMute();
+            }
+#endif //HAVE_SPEAKER
+
             //           toneAC(BEEP_FREQ);
             beeper.generateTone(GnuSettings.BEEP_FREQ, 200);
             //            delay(200);
             //            toneAC(0);
+
+#ifdef HAVE_SPEAKER
+            if (GnuSettings.MUTE_VARIOBEGIN)
+            {
+              varioHardwareManager.varioSpeaker.Mute();
+            }
+#endif //HAVE_SPEAKER
           }
 #endif //defined(HAVE_SPEAKER)
 
@@ -904,10 +942,15 @@ void VarioData::updateState()
 
       /* check flight start condition */
 
+      DUMP(getVelocity());
+      DUMP(GnuSettings.FLIGHT_START_VARIO_LOW_THRESHOLD);
+      DUMP(GnuSettings.FLIGHT_START_VARIO_HIGH_THRESHOLD);
+
       if (millis() > GnuSettings.FLIGHT_START_MIN_TIMESTAMP)
       {
         if (!GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START)
         {
+          DUMP(GnuSettings.VARIOMETER_RECORD_WHEN_FLIGHT_START);
           enableflightStartComponents();
         }
         else
@@ -937,6 +980,7 @@ void VarioData::updateState()
               if ((millis() - TimeStartFly) > 3000)
               {
                 //          variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
+                TRACE();
                 enableflightStartComponents();
               }
             }
@@ -1019,6 +1063,13 @@ void VarioData::enableflightStartComponents(void)
 #endif //SDCARD_DEBUG
 
   variometerState = VARIOMETER_STATE_FLIGHT_STARTED;
+
+#ifdef HAVE_SPEAKER
+  if (GnuSettings.MUTE_VARIOBEGIN)
+  {
+    varioHardwareManager.varioSpeaker.UnMute();
+  }
+#endif //HAVE_SPEAKER
 
   if (!GnuSettings.NO_RECORD)
   {
@@ -1180,15 +1231,6 @@ void VarioData::updateVoltage(void)
   //  if (maxVoltage < tmpVoltage) {maxVoltage = tmpVoltage;}
 
   /* update battery level */
-
-#if defined(VOLTAGE_DIVISOR_DEBUG)
-  int val = adc1_get_raw(ADC1_CHANNEL_7);
-
-  SerialPort.print("Tension : ");
-  SerialPort.println(val);
-  if (compteurBoucle == 5)
-    DUMPLOG(LOG_TYPE_DEBUG, VOLTAGE_DEBUG_LOG, val);
-#endif //VOLTAGE_DIVISOR_DEBUG
 
   long TmpVoltage = 0;
   for (int i = 0; i < 10; i++)
