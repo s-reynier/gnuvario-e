@@ -270,6 +270,7 @@ void Vertaccel::computeNorthVector(double* vertVector, int16_t* mag, double* nor
 
 #ifndef VERTACCEL_STATIC_CALIBRATION
   int64_t calibratedMag;
+  
   calibratedMag = ((int64_t)mag[0]) << GnuSettings.VARIO_VERTACCEL_MAG_CAL_BIAS_MULTIPLIER;
   calibratedMag -= (int64_t)GnuSettings.VARIO_VERTACCEL_MAG_CAL_BIAS_00;
   calibratedMag *= ((int64_t)GnuSettings.VARIO_VERTACCEL_MAG_CAL_PROJ_SCALE + ((int64_t)1 << VERTACCEL_CAL_SCALE_MULTIPLIER));
