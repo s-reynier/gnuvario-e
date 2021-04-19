@@ -130,8 +130,8 @@ class NmeaParser {
   bool isParsing(void);
   bool isParsingRMC(void);
   bool isParsingGGA(void);
-  String Bearing_to_Ordinal2(float bearing);
-  String Bearing_to_Ordinal3(float bearing);
+  String Bearing_to_Ordinal2c(float bearing);
+  String Bearing_to_Ordinal3c(float bearing);
 
  private :
   uint16_t state;

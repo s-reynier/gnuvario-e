@@ -323,7 +323,7 @@ bool NmeaParser::isParsingGGA(void) {
   return parserState_isset(PARSE_GGA);
 }
 
-String NmeaParser::Bearing_to_Ordinal2(float bearing)
+String NmeaParser::Bearing_to_Ordinal2c(float bearing)
 {
 	if (bearing >= 0.0 && bearing < 22.5)
 		return "N";
@@ -348,7 +348,7 @@ String NmeaParser::Bearing_to_Ordinal2(float bearing)
 		return "N";
 }
 
-String NmeaParser::Bearing_to_Ordinal3(float bearing)
+String NmeaParser::Bearing_to_Ordinal3c(float bearing)
 {
 	if (bearing >= 0.0 && bearing < 11.25)
 		return "N";
