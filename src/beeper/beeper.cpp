@@ -118,12 +118,6 @@ void Beeper::init(double sinkingThreshold, double climbingThreshold, double near
   beepStartTime = 0;
   beepState = 0;
   beepType = BEEP_TYPE_SILENT;
-
-	//init le duty / cycle
-	CLIMBING_BEEP_HIGH_LENGTH = 500;
-	CLIMBING_BEEP_LOW_LENGTH  = 500;
-	CLIMBING_BEEP_LENGTH = (CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH);
-
 }
 
 /***************************************************************************************************/
@@ -203,9 +197,6 @@ void Beeper::setBeepParameters(double velocity) {
 #ifdef BEEPERVARIABLE	
 		tmpcycle = varioXBeeper.getCycle(velocity);
 		tmpduty  = varioXBeeper.getDuty(velocity) / 100.0;
-		CLIMBING_BEEP_HIGH_LENGTH = tmpcycle * tmpduty;
-		CLIMBING_BEEP_LOW_LENGTH  = tmpcycle * (1 - tmpduty);
-		CLIMBING_BEEP_LENGTH = tmpcycle;  //(CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH);
 #endif //BEEPERVARIABLE
     break;
 
@@ -219,9 +210,6 @@ void Beeper::setBeepParameters(double velocity) {
 #ifdef BEEPERVARIABLE	
 		tmpcycle = varioXBeeper.getCycle(velocity);
 		tmpduty  = varioXBeeper.getDuty(velocity) / 100.0;
-		CLIMBING_BEEP_HIGH_LENGTH = tmpcycle * tmpduty;
-		CLIMBING_BEEP_LOW_LENGTH  = tmpcycle * (1 - tmpduty);
-		CLIMBING_BEEP_LENGTH = tmpcycle; //(CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH);
 /*		CLIMBING_BEEP_LENGTH = varioXBeeper.getCycle(velocity);
 		tmpduty  = varioXBeeper.getDuty(velocity) / 100.0;
 		CLIMBING_BEEP_HIGH_LENGTH = (CLIMBING_BEEP_LENGTH * tmpduty);
@@ -235,9 +223,6 @@ void Beeper::setBeepParameters(double velocity) {
 #ifdef BEEPERVARIABLE	
 		tmpcycle = varioXBeeper.getCycle(velocity);
 		tmpduty  = varioXBeeper.getDuty(velocity) / 100.0;
-		CLIMBING_BEEP_HIGH_LENGTH = tmpcycle * tmpduty;
-		CLIMBING_BEEP_LOW_LENGTH  = tmpcycle * (1 - tmpduty);
-		CLIMBING_BEEP_LENGTH = tmpcycle; //(CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH);
 #endif //BEEPERVARIABLE
     break;
   }

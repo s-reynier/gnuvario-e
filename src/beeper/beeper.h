@@ -59,9 +59,9 @@
 /* THE CLIMBING BEEP */
 /*********************/
 /* length of beep in vertical meters */ 
-/*#define CLIMBING_BEEP_HIGH_LENGTH 0.5
+#define CLIMBING_BEEP_HIGH_LENGTH 0.5
 #define CLIMBING_BEEP_LOW_LENGTH 0.5
-#define CLIMBING_BEEP_LENGTH (CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH)*/
+#define CLIMBING_BEEP_LENGTH (CLIMBING_BEEP_HIGH_LENGTH + CLIMBING_BEEP_LOW_LENGTH)
 
 /* climbing beep sound freq computation : BEEP_FREQ_COEFF * velocity + BEEP_BASE_FREQ */
 #define CLIMBING_BEEP_BASE_FREQ 386.0
@@ -89,7 +89,7 @@
 /* THE CLIMBING ALARM */
 /**********************/
 #define CLIMBING_ALARM_HIGH_LENGTH 100 //0.10
-#define CLIMBING_ALARM_LOW_LENGTH 300 //0.30
+#define CLIMBING_ALARM_LOW_LENGTH 1400 //0.30
 #define CLIMBING_ALARM_LENGTH (CLIMBING_ALARM_HIGH_LENGTH + CLIMBING_ALARM_LOW_LENGTH)
 
 #define  CLIMBING_ALARM_FREQ 1000.0
@@ -180,14 +180,6 @@ class Beeper {
   uint8_t 			beepState;
   uint8_t 			beepType;
 	
-	/*********************/
-/* THE CLIMBING BEEP */
-/*********************/
-/* length of beep in vertical meters */ 
-	int CLIMBING_BEEP_HIGH_LENGTH;  // = 0.5;
-	int CLIMBING_BEEP_LOW_LENGTH; //  = 0.5;
-  int CLIMBING_BEEP_LENGTH;
-
 	bool 		_toneMuted = false;
 
   void 		setBeepParameters(double velocity);
